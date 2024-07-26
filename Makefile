@@ -1,6 +1,8 @@
 NAME = webserv
 
 SRC =	srcs/main.cpp			\
+		srcs/Socket.cpp			\
+		srcs/Server.cpp			\
 
 OBJT_DIR = .objt/
 
