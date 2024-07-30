@@ -40,12 +40,13 @@ void Socket::handleRead()
 	{
 		if (_eventList[i].events & EPOLLIN)
 		{
-			char request[_bodySize];
-			std::memset(request, 0, _bodySize);
-			read(_eventList[i].data.fd, request, _bodySize);
+			char buffer[_bodySize];
+			std::memset(buffer, 0, _bodySize);
+			if (read(_eventList[i].data.fd, buffer, _bodySize) < 0)
+				throw std::runtime_error("Error: read: " + std::string(strerror(errno)));
+			std::string request(buffer);
 			std::cout << "Received request:\n" << request << std::endl;
-			std::string r(request);
-			_request.insert(std::make_pair(_eventList[i].data.fd, r));
+			_request.insert(std::make_pair(_eventList[i].data.fd, request));
 		}
 	}
 }
@@ -58,8 +59,9 @@ void Socket::handleWrite()
 		{
 			std::stringstream oss;
 			oss << _eventList[i].data.fd;
-			std::string response = "Hello, world! from " + oss.str();
-			send(_eventList[i].data.fd, response.c_str(), response.size(), 0);
+			std::string response = "Hello, world! from " + oss.str() + "\n";
+			if (send(_eventList[i].data.fd, response.c_str(), response.size(), 0) < 0)
+				throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
 			_request.erase(_eventList[i].data.fd);
 		}
 	}
