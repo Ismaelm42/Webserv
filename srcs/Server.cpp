@@ -53,7 +53,7 @@ void Server::acceptConnections()
             socket.configEvent(fd);
             socket.addEvent(fd);
         }
-        if (socket._eventList.size() > 0)
+        if (socket.getEventListSize() > 0)
         {
             socket.checkEvents();
             socket.handleRead();
