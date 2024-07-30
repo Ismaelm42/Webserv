@@ -40,7 +40,8 @@ void Socket::handleRead()
 	{
 		if (_eventList[i].events & EPOLLIN)
 		{
-			char request[_bodySize] = {0};
+			char request[_bodySize];
+			std::memset(request, 0, _bodySize);
 			read(_eventList[i].data.fd, request, _bodySize);
 			std::cout << "Received request:\n" << request << std::endl;
 			std::string r(request);
@@ -55,7 +56,9 @@ void Socket::handleWrite()
 	{
 		if (_eventList[i].events & EPOLLOUT && _request.find(_eventList[i].data.fd) != _request.end())
 		{
-			std::string response = "Hello, world!\n";
+			std::stringstream oss;
+			oss << _eventList[i].data.fd;
+			std::string response = "Hello, world! from " + oss.str();
 			send(_eventList[i].data.fd, response.c_str(), response.size(), 0);
 			_request.erase(_eventList[i].data.fd);
 		}
