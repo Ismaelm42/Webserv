@@ -65,7 +65,7 @@ void Socket::handleWrite()
 			std::stringstream responseStream;
 			responseStream << "HTTP/1.1 200 OK\r\n";
             responseStream << "Content-Type: text/plain\r\n"; // Tipo de contenido como texto plano
-			responseStream << "Content-Length: " << 50 << "\r\n"; // Longitud del contenido
+			responseStream << "Content-Length: " << 29 << "\r\n"; // Longitud del contenido
             responseStream << "\r\n"; // Línea en blanco para separar encabezados del cuerpo
 			responseStream << "Hello, world! from socket " << _eventList[i].data.fd << "\r\n";
             std::string response = responseStream.str();

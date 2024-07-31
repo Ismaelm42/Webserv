@@ -50,8 +50,10 @@ void Server::acceptConnections()
             throw std::runtime_error("Error: accept: " + std::string(strerror(errno)));
         if (fd >= 0)
         {
-            socket.configEvent(fd);
-            socket.addEvent(fd);
+           std::cout << Red << "Connection accepted with socket fd " << fd << Reset << std::endl;
+           //Parece ser que las conexiones entre pestañas comparten el mismo fd si firefox las puede reutilizar
+           socket.configEvent(fd);
+           socket.addEvent(fd);
         }
         if (socket.getEventListSize() > 0)
         {
