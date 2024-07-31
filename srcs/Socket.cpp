@@ -42,8 +42,13 @@ void Socket::handleRead()
 		{
 			char buffer[_bodySize];
 			std::memset(buffer, 0, _bodySize);
-			if (read(_eventList[i].data.fd, buffer, _bodySize) < 0)
+
+			int bytesRead = read(_eventList[i].data.fd, buffer, _bodySize);
+			if (bytesRead == 0)
+				close (_eventList[i].data.fd);
+			if (bytesRead < 0)
 				throw std::runtime_error("Error: read: " + std::string(strerror(errno)));
+
 			std::string request(buffer);
 			std::cout << "Received request:\n" << request << std::endl;
 			_request.insert(std::make_pair(_eventList[i].data.fd, request));
@@ -53,16 +58,20 @@ void Socket::handleRead()
 
 void Socket::handleWrite()
 {
-	for(long unsigned i = 0; i < _eventList.size(); i++)
+	for (long unsigned i = 0; i < _eventList.size(); i++)
 	{
 		if (_eventList[i].events & EPOLLOUT && _request.find(_eventList[i].data.fd) != _request.end())
 		{
 			std::stringstream oss;
 			oss << _eventList[i].data.fd;
-			std::string response = "Hello, world! from " + oss.str() + "\n";
-			if (send(_eventList[i].data.fd, response.c_str(), response.size(), 0) < 0)
+			std::string response = "Hello, world! from socket " + oss.str() + "\n";
+			int bytesSent = send(_eventList[i].data.fd, response.c_str(), response.size(), 0);
+			if (bytesSent < 0)
 				throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
+			if (static_cast<size_t>(bytesSent) < response.size())
+				std::cout << "Send error: the message couldn't be sent totally" << std::endl;
 			_request.erase(_eventList[i].data.fd);
+			std::cout << "Message sent\n";
 		}
 	}
 }
