@@ -62,16 +62,20 @@ void Socket::handleWrite()
 	{
 		if (_eventList[i].events & EPOLLOUT && _request.find(_eventList[i].data.fd) != _request.end())
 		{
-			std::stringstream oss;
-			oss << _eventList[i].data.fd;
-			std::string response = "Hello, world! from socket " + oss.str() + "\n";
+			std::stringstream responseStream;
+			responseStream << "HTTP/1.1 200 OK\r\n";
+            responseStream << "Content-Type: text/plain\r\n"; // Tipo de contenido como texto plano
+			responseStream << "Content-Length: " << 50 << "\r\n"; // Longitud del contenido
+            responseStream << "\r\n"; // Línea en blanco para separar encabezados del cuerpo
+			responseStream << "Hello, world! from socket " << _eventList[i].data.fd << "\r\n";
+            std::string response = responseStream.str();
+
 			int bytesSent = send(_eventList[i].data.fd, response.c_str(), response.size(), 0);
 			if (bytesSent < 0)
 				throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
 			if (static_cast<size_t>(bytesSent) < response.size())
 				std::cout << "Send error: the message couldn't be sent totally" << std::endl;
 			_request.erase(_eventList[i].data.fd);
-			std::cout << "Message sent\n";
 		}
 	}
 }
