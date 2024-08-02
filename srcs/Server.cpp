@@ -2,19 +2,23 @@
 
 Server::Server(int port)
 {
-    this->_port = port;
+
+    _port = port;
+    _optval = 1;
+    _addressLen = sizeof(_address);
     _serverFd = ::socket(AF_INET, SOCK_STREAM, 0);
    	if (_serverFd < 0)
         throw std::runtime_error("Error: socket: " + std::string(strerror(errno)));
+	_epfd = epoll_create(1);
+	if (_epfd < 0)
+		throw std::runtime_error("Error: epoll_create: " + std::string(strerror(errno)));
 }
 
 void Server::configServer()
 {
-    int optval = 1;
-
-    if (setsockopt(_serverFd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) != 0)
+    if (setsockopt(_serverFd, SOL_SOCKET, SO_REUSEADDR, &_optval, sizeof(_optval)) != 0)
         throw std::runtime_error("Error: setsockopt: " + std::string(strerror(errno)));
-    if (setsockopt(_serverFd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) != 0)
+    if (setsockopt(_serverFd, SOL_SOCKET, SO_REUSEPORT, &_optval, sizeof(_optval)) != 0)
         throw std::runtime_error("Error: setsockopt: " + std::string(strerror(errno)));
     if (fcntl(_serverFd, F_SETFL, O_NONBLOCK) < 0)
         throw std::runtime_error("Error: fcntl: " + std::string(strerror(errno)));
@@ -39,27 +43,23 @@ void Server::listenning()
 
 void Server::acceptConnections()
 {
-    Socket socket;
-    int addressLen = sizeof(_address);
-    int fd;
-
     while (true)
 	{
-	    fd = accept(_serverFd, (struct sockaddr *)&_address, (socklen_t *)&addressLen);
-        if (fd < 0 && (errno != EAGAIN && errno != EWOULDBLOCK))
+	    _socketFd = accept(_serverFd, (struct sockaddr *)&_address, (socklen_t *)&_addressLen);
+        if (_socketFd < 0 && (errno != EAGAIN && errno != EWOULDBLOCK))
             throw std::runtime_error("Error: accept: " + std::string(strerror(errno)));
-        if (fd >= 0)
+        if (_socketFd >= 0)
         {
-           std::cout << Red << "Connection accepted with socket fd " << fd << Reset << std::endl;
-           //Parece ser que las conexiones entre pestañas comparten el mismo fd si firefox las puede reutilizar
-           socket.configEvent(fd);
-           socket.addEvent(fd);
+            std::cout << Red << "Connection accepted with socket fd " << _socketFd << Reset << std::endl;
+            _client.addClient(_socketFd);
+            _socket.configEvent(_socketFd);
+            _socket.addEvent(_socketFd, _epfd);
         }
-        if (socket.getEventListSize() > 0)
+        if (_socket.getEventListSize())
         {
-            socket.checkEvents();
-            socket.handleRead();
-            socket.handleWrite();
+            _socket.checkEvents(_epfd);
+            _socket.handleRead();
+            _socket.handleWrite();
         }
     }
 }
