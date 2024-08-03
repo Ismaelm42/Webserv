@@ -1,5 +1,6 @@
 #pragma once
 #include "./common.hpp"
+#include "./Client.hpp"
 
 class Socket
 {
@@ -7,7 +8,6 @@ class Socket
 		int _bodySize;
 		std::map<int, struct epoll_event> _configEvent;
 		std::vector<struct epoll_event> _eventList;
-		std::map<int, std::string> _request;
 
 	public:
 
@@ -20,8 +20,5 @@ class Socket
 		void addEvent(int fd, int epfd);
 		void deleteEvent(int fd, int epfd);
 		void checkEvents(int epfd);
-
-		void handleRead();
-		void handleWrite();
-
+		void processEvents(Client &client);
 };

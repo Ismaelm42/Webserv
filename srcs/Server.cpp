@@ -14,6 +14,11 @@ Server::Server(int port)
 		throw std::runtime_error("Error: epoll_create: " + std::string(strerror(errno)));
 }
 
+Server::~Server()
+{
+    close(_serverFd);
+}
+
 void Server::configServer()
 {
     if (setsockopt(_serverFd, SOL_SOCKET, SO_REUSEADDR, &_optval, sizeof(_optval)) != 0)
@@ -55,16 +60,11 @@ void Server::acceptConnections()
             _socket.configEvent(_socketFd);
             _socket.addEvent(_socketFd, _epfd);
         }
-        if (_socket.getEventListSize())
+        if (_client.clientCounter())
         {
             _socket.checkEvents(_epfd);
-            _socket.handleRead();
-            _socket.handleWrite();
+            _socket.processEvents(_client);
         }
     }
 }
 
-Server::~Server()
-{
-    close(_serverFd);
-}
