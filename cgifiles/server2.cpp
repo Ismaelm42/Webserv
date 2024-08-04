@@ -62,7 +62,7 @@ int main() {
 }
 
 void handle_request(int new_socket) {
-    const int buffer_size = 1024;
+    const int buffer_size = 10000;
     char buffer[buffer_size] = {0};
     read(new_socket, buffer, buffer_size);
 
@@ -85,7 +85,7 @@ void handle_request(int new_socket) {
     if (path[0] == '/') {
         path = path.substr(1);
     }
-
+	//	std::cout << "path: " << path << std::endl;
     // Ejecutar el script PHP
     int cgi_output[2];
     pipe(cgi_output);
