@@ -6,16 +6,16 @@
 class Client //Quizás debería hacerse como una clase virtual?
 {
 	private:
-		std::map<int, std::pair<Request, Response> > _data;
+		std::map<int, std::pair<Request, Response> > _data; // map of clients with request and response
 	public:
 		Client();
 		~Client();
 
-		void addClient(int fd);
-		void deleteClient(int fd);
+		void addClient(int fd); 		// add client
+		void deleteClient(int fd);		// delete client
 
-		void addRequest(int fd);
-		void sendResponse(int fd);
+		void addRequest(int fd);		// add request	
+		void sendResponse(int fd);		// send response
 
-		int clientCounter();
+		int clientCounter();			// client counter
 };
