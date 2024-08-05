@@ -28,9 +28,9 @@
 
 Server::Server(int port)
 {
-
     _port = port;
     _optval = 1;
+    _bodySize = 10000;
     _addressLen = sizeof(_address);
     _serverFd = ::socket(AF_INET, SOCK_STREAM, 0);
    	if (_serverFd < 0)
@@ -38,6 +38,7 @@ Server::Server(int port)
 	_epfd = epoll_create(1);
 	if (_epfd < 0)
 		throw std::runtime_error("Error: epoll_create: " + std::string(strerror(errno)));
+    _socket.initConfigValues(_epfd, _bodySize);
 }
 
 Server::~Server()
@@ -136,13 +137,14 @@ void Server::acceptConnections()
         if (_socketFd >= 0)
         {
             std::cout << Red << "Connection accepted with socket fd " << _socketFd << Reset << std::endl;
-            _client.addClient(_socketFd);
+            Client new_client(_socketFd);
+            _client.emplace(_socketFd, new_client);
             _socket.configEvent(_socketFd);
-            _socket.addEvent(_socketFd, _epfd);
+            _socket.addEvent(_socketFd);
         }
-        if (_client.clientCounter())
+        if (!_client.empty())
         {
-            _socket.checkEvents(_epfd);
+            _socket.checkEvents();
             _socket.processEvents(_client);
         }
     }

@@ -37,11 +37,9 @@ void Request::addRequest(int fd)
 
 	std::memset(buffer, 0, 10000);
 	bytesRead = read(fd, buffer, 10000);
+	std::cout << High_Green << "READ FD = " << fd << Reset << std::endl;
 	if (bytesRead == 0 || bytesRead < 0)
-	{
-		close(fd);
 		throw std::runtime_error("Error: read: " + std::string(strerror(errno)));
-	}
 	_request = buffer;
 	std::cout << "Received message:\n" << _request << std::endl;
 	std::cout << fd << std::endl;

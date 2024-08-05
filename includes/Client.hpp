@@ -3,19 +3,17 @@
 #include "./Request.hpp"
 #include "./Response.hpp"
 
-class Client //Quizás debería hacerse como una clase virtual?
+class Client
 {
 	private:
-		std::map<int, std::pair<Request, Response> > _data; // map of clients with request and response
+		int _fd;
+		Request _request;
+		Response _response;
+
 	public:
-		Client();
+		Client();							//Necesario para la primera instancia al crear Server.
+		Client(int fd);						//Constructor que instancia el file descriptor.
 		~Client();
-
-		void addClient(int fd); 		// add client
-		void deleteClient(int fd);		// delete client
-
-		void addRequest(int fd);		// add request	
-		void sendResponse(int fd);		// send response
-
-		int clientCounter();			// client counter
+		void handleRequest();				//Función que delega las peticiones a la clase Request.
+		void handleResponse();				//Función que delega las respuestas a la clase Response.
 };

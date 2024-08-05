@@ -5,6 +5,7 @@
 class Socket
 {
 	private:
+		int _epfd;
 		int _bodySize;
 		std::map<int, struct epoll_event> _configEvent;
 		std::vector<struct epoll_event> _eventList;
@@ -14,11 +15,12 @@ class Socket
 		Socket();
 		~Socket();
 
+		void initConfigValues(int epfd, int bodySize);
 		int getEventListSize();
 
 		void configEvent(int fd);
-		void addEvent(int fd, int epfd);
-		void deleteEvent(int fd, int epfd);
-		void checkEvents(int epfd);
-		void processEvents(Client &client);
+		void addEvent(int fd);
+		void deleteEvent(int fd);
+		void checkEvents();
+		void processEvents(std::map<int, Client> &client);
 };

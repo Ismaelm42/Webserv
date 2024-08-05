@@ -2,8 +2,14 @@
 
 Socket::Socket()
 {
-	_bodySize = 1024;
 }
+
+void Socket::initConfigValues(int epfd, int bodySize)
+{
+	_epfd = epfd;
+	_bodySize = bodySize;
+}
+
 
 int Socket::getEventListSize()
 {
@@ -18,34 +24,54 @@ void Socket::configEvent(int fd)
 	_configEvent[fd] = event;
 }
 
-void Socket::addEvent(int fd, int epfd)
+void Socket::addEvent(int fd)
 {
-	if (epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &_configEvent[fd]) == -1)
+	if (epoll_ctl(_epfd, EPOLL_CTL_ADD, fd, &_configEvent[fd]) == -1)
 		throw std::runtime_error("Error: epoll_ctl_add: " + std::string(strerror(errno)));
 }
 
-void Socket::deleteEvent(int fd, int epfd)
+void Socket::deleteEvent(int fd)
 {
-	if (epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
+	if (epoll_ctl(_epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
         throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
 	_configEvent.erase(fd);
+	close(fd);
 }
 
-void Socket::checkEvents(int epfd)
+void Socket::checkEvents()
 {
-	_eventList.resize(_configEvent.size());
-	if (epoll_wait(epfd, _eventList.data(), _eventList.size(), -1) == -1)
+	_eventList.resize(_configEvent.size() + 1);
+	if (epoll_wait(_epfd, _eventList.data(), _eventList.size(), -1) == -1)
+	{
 		throw std::runtime_error("Error: epoll_wait: " + std::string(strerror(errno)));
+
+	}
 }
 
-void Socket::processEvents(Client &client)
+/*
+Función que procesa los eventos. Se utiliza un try catch para procesar los errores en caso de lectura y
+poder eliminar el evento de la estructura socket.
+*/
+
+void Socket::processEvents(std::map<int, Client> &client)
 {
 	for (long unsigned i = 0; i < _eventList.size(); i++)
 	{
-		if (_eventList[i].events & EPOLLIN)
-			client.addRequest(_eventList[i].data.fd);
-		if (_eventList[i].events & EPOLLOUT)
-			client.sendResponse(_eventList[i].data.fd);
+		try
+		{
+			if (_eventList[i].events & EPOLLERR || _eventList[i].events & EPOLLHUP)
+				throw std::runtime_error("Error: Epoller | Epollhup: " + std::string(strerror(errno)));
+			if (_eventList[i].events & EPOLLIN)
+				client[_eventList[i].data.fd].handleRequest();
+			if (_eventList[i].events & EPOLLOUT)
+				client[_eventList[i].data.fd].handleResponse();
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			int fd = _eventList[i].data.fd;
+			deleteEvent(fd);
+		}
 	}
 }
 
