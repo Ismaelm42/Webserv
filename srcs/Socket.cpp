@@ -2,18 +2,13 @@
 
 Socket::Socket()
 {
+
 }
 
 void Socket::initConfigValues(int epfd, int bodySize)
 {
 	_epfd = epfd;
 	_bodySize = bodySize;
-}
-
-
-int Socket::getEventListSize()
-{
-	return _eventList.size();
 }
 
 void Socket::configEvent(int fd)
@@ -30,25 +25,28 @@ void Socket::addEvent(int fd)
 		throw std::runtime_error("Error: epoll_ctl_add: " + std::string(strerror(errno)));
 }
 
-void Socket::deleteEvent(int fd)
+void Socket::deleteEvent(int fd) //Eliminar el fd de _eventList. Crear un map _evenlist para ello?
 {
 	if (epoll_ctl(_epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
-	{
-		std::cout << "\nfd delete event = " << fd << std::endl;
         throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
-	}
+	std::cout << Yellow << "Delete has been done gracefully for fd " << fd << Reset << std::endl;
 	_configEvent.erase(fd);
+	for (std::vector<struct epoll_event>::iterator it = _eventList.begin(); it != _eventList.end(); it++)
+	{
+		if (it->data.fd == fd)
+		{
+			it = _eventList.erase(it);
+			break;
+		}
+	}
 	close(fd);
 }
 
-void Socket::checkEvents()
-{
-	_eventList.resize(_configEvent.size() + 500);
+void Socket::checkEvents() // Posible error en checkEvents reportando file descriptors que están cerrados?
+{	
+	_eventList.resize(_configEvent.size());
 	if (epoll_wait(_epfd, _eventList.data(), _eventList.size(), -1) == -1)
-	{
 		throw std::runtime_error("Error: epoll_wait: " + std::string(strerror(errno)));
-
-	}
 }
 
 /*

@@ -20,7 +20,6 @@ void Client::handleRequest()
 	_request.addRequest(_fd);
 }
 
-
 void Client::handleResponse()
 {
 	std::string str = _request.getRequest();

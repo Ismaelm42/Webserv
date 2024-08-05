@@ -4,7 +4,7 @@
 class Response
 {
 	private:
-
+		
 	public:
 		Response();
 		~Response();

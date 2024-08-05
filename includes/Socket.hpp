@@ -16,7 +16,6 @@ class Socket
 		~Socket();
 
 		void initConfigValues(int epfd, int bodySize);
-		int getEventListSize();
 
 		void configEvent(int fd);
 		void addEvent(int fd);
