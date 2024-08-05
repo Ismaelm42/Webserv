@@ -33,14 +33,17 @@ void Socket::addEvent(int fd)
 void Socket::deleteEvent(int fd)
 {
 	if (epoll_ctl(_epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
+	{
+		std::cout << "\nfd delete event = " << fd << std::endl;
         throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
+	}
 	_configEvent.erase(fd);
 	close(fd);
 }
 
 void Socket::checkEvents()
 {
-	_eventList.resize(_configEvent.size() + 1);
+	_eventList.resize(_configEvent.size() + 500);
 	if (epoll_wait(_epfd, _eventList.data(), _eventList.size(), -1) == -1)
 	{
 		throw std::runtime_error("Error: epoll_wait: " + std::string(strerror(errno)));
@@ -59,8 +62,8 @@ void Socket::processEvents(std::map<int, Client> &client)
 	{
 		try
 		{
-			if (_eventList[i].events & EPOLLERR || _eventList[i].events & EPOLLHUP)
-				throw std::runtime_error("Error: Epoller | Epollhup: " + std::string(strerror(errno)));
+			// if (_eventList[i].events & EPOLLERR || _eventList[i].events & EPOLLHUP)
+			// 	throw std::runtime_error("Error: Epoller | Epollhup: " + std::string(strerror(errno)));
 			if (_eventList[i].events & EPOLLIN)
 				client[_eventList[i].data.fd].handleRequest();
 			if (_eventList[i].events & EPOLLOUT)
@@ -68,9 +71,10 @@ void Socket::processEvents(std::map<int, Client> &client)
 		}
 		catch(const std::exception& e)
 		{
-			std::cerr << e.what() << std::endl;
 			int fd = _eventList[i].data.fd;
+			std::cerr << e.what() << " fd = " << fd << std::endl;
 			deleteEvent(fd);
+			client.erase(fd);
 		}
 	}
 }
