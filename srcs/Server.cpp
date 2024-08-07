@@ -112,7 +112,7 @@ void Server::listenning()
 {
     if (listen(_serverFd, 1) < 0)
         throw std::runtime_error("Error: listen: " + std::string(strerror(errno)));
-    std::cout << "Server started listenning on port " << _port << std::endl;
+    std::cout << Yellow << "Server started listenning on port " << _port << Reset << std::endl;
 }
 
 /**
@@ -136,7 +136,7 @@ void Server::acceptConnections()
             throw std::runtime_error("Error: accept: " + std::string(strerror(errno)));
         if (_socketFd >= 0)
         {
-            std::cout << Red << "Connection accepted with socket fd " << _socketFd << Reset << std::endl;
+            std::cout << Green << "Connection accepted with socket fd " << _socketFd << Reset << std::endl;
             Client new_client(_socketFd);
             _client.emplace(_socketFd, new_client);
             _socket.configEvent(_socketFd);

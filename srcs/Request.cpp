@@ -40,8 +40,8 @@ void Request::addRequest(int fd)
 	if (bytesRead == 0 || bytesRead < 0)
 		throw std::runtime_error("Error: read: " + std::string(strerror(errno)));
 	_request = buffer;
-	std::cout << "Message received from fd " << fd << std::endl;
-	std::cout << fd << std::endl;
+	std::cout << High_Cyan << "Message received from fd " << fd << ":" << Reset << std::endl;
+	std::cout << Cyan << _request << Reset << std::endl;
 }
 
 /**

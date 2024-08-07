@@ -25,7 +25,7 @@ void Socket::addEvent(int fd)
 		throw std::runtime_error("Error: epoll_ctl_add: " + std::string(strerror(errno)));
 }
 
-void Socket::deleteEvent(int fd) //Eliminar el fd de _eventList. Crear un map _evenlist para ello?
+void Socket::deleteEvent(int fd)
 {
 	if (epoll_ctl(_epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
         throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
@@ -42,7 +42,7 @@ void Socket::deleteEvent(int fd) //Eliminar el fd de _eventList. Crear un map _e
 	close(fd);
 }
 
-void Socket::checkEvents() // Posible error en checkEvents reportando file descriptors que están cerrados?
+void Socket::checkEvents()
 {	
 	_eventList.resize(_configEvent.size());
 	if (epoll_wait(_epfd, _eventList.data(), _eventList.size(), -1) == -1)
@@ -60,8 +60,8 @@ void Socket::processEvents(std::map<int, Client> &client)
 	{
 		try
 		{
-			// if (_eventList[i].events & EPOLLERR || _eventList[i].events & EPOLLHUP)
-			// 	throw std::runtime_error("Error: Epoller | Epollhup: " + std::string(strerror(errno)));
+			if (_eventList[i].events & EPOLLERR || _eventList[i].events & EPOLLHUP)
+				throw std::runtime_error("Error: Epoller | Epollhup: " + std::string(strerror(errno)));
 			if (_eventList[i].events & EPOLLIN)
 				client[_eventList[i].data.fd].handleRequest();
 			if (_eventList[i].events & EPOLLOUT)
@@ -69,10 +69,9 @@ void Socket::processEvents(std::map<int, Client> &client)
 		}
 		catch(const std::exception& e)
 		{
-			int fd = _eventList[i].data.fd;
-			std::cerr << e.what() << " fd = " << fd << std::endl;
-			deleteEvent(fd);
-			client.erase(fd);
+			std::cerr << e.what() << std::endl;
+			deleteEvent(_eventList[i].data.fd);
+			client.erase(_eventList[i].data.fd);
 		}
 	}
 }
