@@ -43,3 +43,10 @@
 #define	High_White	"\e[0;97m"
 
 #define Reset	"\e[0m"
+
+struct Epoll_events
+{
+	int epfd;										// Epoll fd
+	std::map<int, struct epoll_event> added;		// Configuración de Eventos
+	std::vector<struct epoll_event> log;		// Notificaciones de Eventos
+};

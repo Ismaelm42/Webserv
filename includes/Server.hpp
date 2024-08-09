@@ -1,27 +1,25 @@
 #pragma once
 #include "./common.hpp"
-#include "./Socket.hpp"
 #include "./Client.hpp"
 
 class Server
 {
 	private:
-		Socket _socket; 				// socket instance
-		std::map<int, Client> _client;	// client instance
-		struct sockaddr_in _address; 	// address structure
-		int _addressLen; 				// address length
-		int _serverFd; 					// server file descriptor
-		int _bodySize;
-		int _optval; 					// to cheange the socket propeties
-		int _port; 						// conection port
-		int _epfd; 						// epoll file descriptor
-		int _socketFd; 					// socket file descriptor
-
-	public:
-		Server(int port);
-		~Server();
-		void configServer();		    // config server
-		void bindServer();				// bind server
-		void listenning();				// listenning
-		void acceptConnections();		// accept connections
+		int _socket;													// File descriptor del Server
+		int _port;														// Puerto del servidor
+		int _sockaddrlen;												// Tamaño de la estructura _sockaddr
+		struct sockaddr_in _sockaddr;									// _sockaddr del Server
+		struct Epoll_events *_events; 									// Puntero a estructura Epoll
+		std::map<int, Client*> _clients;								// fd + cliente
+	public:		
+		Server(int port, struct Epoll_events *events);
+		int acceptConnections();
+		void addClient(int fd);
+		void deleteClient(int fd);
+		void recordEvent(int fd);
+		void deleteEvent(int fd);
+		void handleRequest(int fd);										
+		void handleResponse(int fd);
+		bool hasClientsToProcess();
+		void handleEvents();
 };

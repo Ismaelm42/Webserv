@@ -1,19 +1,12 @@
 #include "../includes/lib.hpp"
 
-/** 
-    Instancia de Server con puerto 8080 usado para inciar las pruebas y conectarse con la ip http://127.0.0.1:8080/
-    Entiendo que este valor se deberá coger del archvio de configuración del valor liste: 8080;
-    lanzamos try catch para capturar excepciones y mostrarlas por pantalla
- */
 int main()
 {
-    Server server(8080); 
+    Webserv webserv; 
     try
     {
-        server.configServer();
-        server.bindServer();
-        server.listenning();
-        server.acceptConnections();
+        webserv.initializeServers();
+        webserv.run();
     }
     catch(const std::exception& e)
     {
