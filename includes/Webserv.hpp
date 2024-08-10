@@ -12,6 +12,7 @@ class Webserv
 
 	public:
 		Webserv();
+		~Webserv();
 		void initializeServers();					// Crea e inicializa los servers y la estructura Epoll
 		void run();									// Run
 };

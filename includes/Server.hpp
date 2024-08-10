@@ -13,6 +13,7 @@ class Server
 		std::map<int, Client*> _clients;								// fd + cliente
 	public:		
 		Server(int port, struct Epoll_events *events);
+		~Server();
 		int acceptConnections();
 		void addClient(int fd);
 		void deleteClient(int fd);

@@ -10,6 +10,7 @@ class Client
 		std::string _response;
 	public:
 		Client(int fd);
+		~Client();
 		int getStatus();
 		int getRequest();
 		int sendResponse();

@@ -12,6 +12,12 @@ Webserv::Webserv()
 	_ports.push_back(9090);
 }
 
+Webserv::~Webserv()
+{
+	delete _events;
+	for (std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); it++)
+		delete *it;
+}
 
 void Webserv::initializeServers()
 {
@@ -22,14 +28,15 @@ void Webserv::initializeServers()
 	}
 }
 
-
 void Webserv::run()
 {
+	initializeServers();
+	
 	std::vector<Server*>::iterator it = _servers.begin();
 	Server *server;
 	int fd;
 
-	while (!_servers.empty())
+	while (!globalSigint)
 	{
 		server = *it;
 		fd = server->acceptConnections();

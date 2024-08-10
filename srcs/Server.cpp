@@ -28,6 +28,12 @@ Server::Server(int port, struct Epoll_events *events)
     std::cout << Yellow << "Server started listenning on port " << _port << Reset << std::endl;
 }
 
+Server::~Server()
+{
+	for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
+		delete it->second;
+}
+
 int Server::acceptConnections()
 {
 	int client;
@@ -47,6 +53,7 @@ void Server::addClient(int fd)
 
 void Server::deleteClient(int fd)
 {
+	delete _clients[fd];
     _clients.erase(fd);
 }
 
@@ -79,7 +86,7 @@ void Server::deleteEvent(int fd)
 
 void Server::handleRequest(int fd)
 {
-	if (_clients.find(fd) != _clients.end())
+	if (_clients.count(fd))
 	{
 		if (_clients[fd]->getRequest() < 0)
 		{
@@ -96,9 +103,7 @@ void Server::handleResponse(int fd)
 
 bool Server::hasClientsToProcess()
 {
-	if (_clients.empty())
-		return false;
-	return true;
+	return !_clients.empty();
 }
 
 void Server::handleEvents()
@@ -109,18 +114,7 @@ void Server::handleEvents()
 	for (long unsigned i = 0; i < _events->log.size(); i++)
 	{
 		if (_events->log[i].events & EPOLLERR || _events->log[i].events & EPOLLHUP)
-		{
-			std::cout << "PORT = " << _port << std::endl;
-			std::cout << "FD = " << _events->log[i].data.fd << std::endl;
-			std::cout << "FDs EN _EVENTS_LOG:" << std::endl;
-			for (std::vector<struct epoll_event>::iterator it = _events->log.begin(); it != _events->log.end(); it++)
-				std::cout << it->data.fd << std::endl;
-		
-			std::cout << "FDs EN _EVENTS_ADDED:" << std::endl;
-			for (std::map<int, struct epoll_event>::iterator it = _events->added.begin(); it != _events->added.end(); it++)
-				std::cout << it->second.data.fd << std::endl;
 			throw std::runtime_error("Error: Epoller | Epollhup: " + std::string(strerror(errno)));
-		}
 		if (_events->log[i].events & EPOLLIN)
 			handleRequest(_events->log[i].data.fd);
 		if (_events->log[i].events & EPOLLOUT)

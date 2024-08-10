@@ -6,6 +6,11 @@ Client::Client(int fd)
 	
 }
 
+Client::~Client()
+{
+	
+}
+
 int Client::getStatus()
 {
 	return _status;
@@ -20,7 +25,7 @@ int Client::getRequest()
 	bytesRead = read(_fd, buffer, 10000);
 	if (bytesRead == 0 || bytesRead < 0)
 	{
-		std::cout << "Error: read: " << std::string(strerror(errno)) << std::endl;
+		std::cout << "Connection closed on fd " << _fd << std::endl;
 		return -1;
 	}
 	_request = buffer;

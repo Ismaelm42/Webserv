@@ -44,6 +44,8 @@
 
 #define Reset	"\e[0m"
 
+extern int globalSigint;
+
 struct Epoll_events
 {
 	int epfd;										// Epoll fd
