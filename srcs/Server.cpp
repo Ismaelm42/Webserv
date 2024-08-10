@@ -1,5 +1,18 @@
 #include "../includes/lib.hpp"
 
+/*
+	Constructor de la clase Server que configura el socket y lo prepara para aceptar conexiones.
+		Inicializa el socket usando AF_INET (IPv4) y SOCK_STREAM (TCP).
+		Configura opciones del socket:
+			- SO_REUSEADDR: Permite reutilizar la dirección local.
+			- SO_REUSEPORT: Permite que varios sockets se vinculen al mismo puerto.
+		Configura el socket en modo no bloqueante usando fcntl.
+		Configura la estructura sockaddr_in para que el socket acepte conexiones en cualquier dirección IP 
+		y puerto especificado por _port.
+		Asocia el socket con la dirección y puerto especificados mediante bind.
+		Configura el socket para que escuche conexiones entrantes con una cola de 50 conexiones pendientes usando listen.
+		Imprime un mensaje de confirmación indicando que el servidor está escuchando en el puerto especificado.
+*/
 Server::Server(int port, struct Epoll_events *events)
 :_port(port), _events(events)
 {
@@ -23,17 +36,33 @@ Server::Server(int port, struct Epoll_events *events)
     if (bind(_socket, (struct sockaddr *)&_sockaddr, sizeof(_sockaddr)) < 0)
         throw std::runtime_error("Error: bind: " + std::string(strerror(errno)));
 
-    if (listen(_socket, 1) < 0)
+    if (listen(_socket, 50) < 0)
         throw std::runtime_error("Error: listen: " + std::string(strerror(errno)));
     std::cout << Yellow << "Server started listenning on port " << _port << Reset << std::endl;
 }
-
+/*
+	Destructor de la clase Server.
+		Recorre el contenedor _clients, que es un std::map de descriptores de cliente (fd) a punteros de objetos Client.
+		Para cada elemento del std::map, elimina el objeto Client asociado al descriptor de cliente utilizando delete.
+			- Esto libera la memoria dinámica asignada a cada objeto Client.
+		El contenedor _clients se limpia automáticamente después de que el destructor haya terminado, ya que solo se eliminan los objetos, no el propio contenedor.
+*/
 Server::~Server()
 {
 	for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
 		delete it->second;
 }
 
+/*
+	Método que acepta nuevas conexiones entrantes en el socket.
+		Declara una variable client para almacenar el descriptor del nuevo socket de cliente.
+		Llama a accept para aceptar una conexión entrante en el socket _socket.
+			- _sockaddr se utiliza para almacenar la dirección del cliente que se está conectando.
+			- _sockaddrlen es el tamaño de la estructura _sockaddr.
+		Si accept devuelve un valor menor a 0 (indicando un error) y el error no es EAGAIN ni EWOULDBLOCK,
+		   lanza una excepción con el mensaje de error correspondiente usando strerror para obtener la descripción del error.
+		Devuelve el descriptor del socket del cliente (client) si la conexión fue aceptada exitosamente.
+*/
 int Server::acceptConnections()
 {
 	int client;
@@ -44,19 +73,37 @@ int Server::acceptConnections()
 		throw std::runtime_error("Error: accept: " + std::string(strerror(errno)));
 	return client;
 }
-
+/*
+	Agrega un nuevo cliente a la lista de clientes.
+		Crea un nuevo objeto Client utilizando el descriptor de archivo fd.
+		Asocia este objeto al descriptor de archivo en el contenedor _clients (un std::map de descriptores de archivo a punteros de Client).
+		La función asegura que cada descriptor de archivo tenga un objeto Client asociado.
+*/
 void Server::addClient(int fd)
 {
     Client *client = new Client(fd);
     _clients[fd] = client;
 }
 
+/*
+	Elimina un cliente de la lista de clientes.
+		Borra el objeto Client asociado al descriptor de archivo fd del contenedor _clients.
+		La memoria del objeto Client se libera utilizando delete.
+		El descriptor de archivo se elimina del contenedor _clients.
+*/
 void Server::deleteClient(int fd)
 {
 	delete _clients[fd];
     _clients.erase(fd);
 }
 
+/*
+	Registra un nuevo evento en el epoll.
+		Configura un objeto epoll_event con los eventos EPOLLIN y EPOLLOUT para el descriptor de archivo fd.
+		Almacena el evento en el contenedor _events->added.
+		Usa epoll_ctl para añadir el descriptor de archivo y el evento al epoll.
+		Lanza una excepción si epoll_ctl falla.
+*/
 void Server::recordEvent(int fd)
 {
 	struct epoll_event event;
@@ -67,6 +114,13 @@ void Server::recordEvent(int fd)
 		throw std::runtime_error("Error: epoll_ctl_add: " + std::string(strerror(errno)));
 }
 
+/*
+	Elimina un evento del epoll y del contenedor de eventos.
+		Usa epoll_ctl para eliminar el descriptor de archivo fd del epoll.
+		Borra el evento correspondiente del contenedor _events->added.
+		Recorre el contenedor _events->log para encontrar y eliminar el evento asociado al descriptor de archivo fd.
+		Cierra el descriptor de archivo utilizando close.
+*/
 void Server::deleteEvent(int fd)
 {
 	if (epoll_ctl(_events->epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
@@ -84,6 +138,12 @@ void Server::deleteEvent(int fd)
 	close(fd);    
 }
 
+/*
+	Maneja la solicitud de un cliente.
+		Verifica si el descriptor de archivo fd está en el contenedor _clients.
+		Si el cliente está presente, llama a getRequest() para procesar la solicitud.
+		Si getRequest() devuelve un valor negativo, elimina el evento y el cliente, indicando que la conexión ha fallado o se ha cerrado.
+*/
 void Server::handleRequest(int fd)
 {
 	if (_clients.count(fd))
@@ -95,17 +155,36 @@ void Server::handleRequest(int fd)
 		}
 	}
 }
+
+/*
+	Maneja la respuesta para un cliente.
+		Verifica si el descriptor de archivo fd está en el contenedor _clients y si el cliente tiene un estado que requiere una respuesta.
+		Si es así, llama a sendResponse() del cliente para enviar la respuesta.
+*/
 void Server::handleResponse(int fd)
 {
 	if (_clients.find(fd) != _clients.end() && _clients[fd]->getStatus())
 		_clients[fd]->sendResponse();
 }
 
+
+/*
+	Verifica si hay clientes en el contenedor _clients que necesitan ser procesados.
+*/
 bool Server::hasClientsToProcess()
 {
 	return !_clients.empty();
 }
 
+/*
+	Maneja los eventos de epoll.
+		Ajusta el tamaño del contenedor _events->log para que coincida con el número de eventos en _events->added.
+		Usa epoll_wait para esperar eventos y llenar _events->log con los eventos que han ocurrido.
+		Recorre _events->log y maneja cada evento:
+			- Si el evento indica un error (EPOLLERR) o una desconexión (EPOLLHUP), lanza una excepción.
+			- Si el evento es de lectura (EPOLLIN), llama a handleRequest() para procesar la solicitud del cliente.
+			- Si el evento es de escritura (EPOLLOUT), llama a handleResponse() para enviar una respuesta al cliente.
+*/
 void Server::handleEvents()
 {
 	_events->log.resize(_events->added.size());

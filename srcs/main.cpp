@@ -2,7 +2,9 @@
 
 int globalSigint = 0;
 
-
+/*
+    Gestiona la señal SIGINT para apagar el servidor.
+*/
 void	handleSignal(int signal)
 {
 	static_cast<void>(signal);

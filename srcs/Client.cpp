@@ -15,7 +15,10 @@ int Client::getStatus()
 {
 	return _status;
 }
-
+/*
+	Gestiona la request y si la lectura del socket no es posible cierra la conexión con el socket.
+	En desarrollo.
+*/
 int Client::getRequest()
 {
 	char buffer[10000];
@@ -34,6 +37,10 @@ int Client::getRequest()
 	return 0;
 }
 
+/*
+	Gestiona la response.
+	En desarrollo.
+*/
 int Client::sendResponse()
 {
 	int bytesSent;

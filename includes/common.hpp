@@ -50,5 +50,5 @@ struct Epoll_events
 {
 	int epfd;										// Epoll fd
 	std::map<int, struct epoll_event> added;		// Configuración de Eventos
-	std::vector<struct epoll_event> log;		// Notificaciones de Eventos
+	std::vector<struct epoll_event> log;			// Notificaciones de Eventos
 };
