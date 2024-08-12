@@ -167,7 +167,6 @@ void Server::handleResponse(int fd)
 		_clients[fd]->sendResponse();
 }
 
-
 /*
 	Verifica si hay clientes en el contenedor _clients que necesitan ser procesados.
 */

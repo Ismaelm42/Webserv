@@ -46,6 +46,25 @@
 
 extern int globalSigint;
 
+struct Location_config
+{
+	std::string location;
+	std::vector<std::string> methods;
+	bool autoindex;
+	std::map<int, std::string> re;
+};
+
+struct Server_config
+{
+	std::string server_name;
+	int port;
+	std::string root;
+	std::string html;
+	std::map<int, std::string> error_pages;
+	int body_size;
+	std::vector<Location_config> locations;
+};
+
 struct Epoll_events
 {
 	int epfd;										// Epoll fd

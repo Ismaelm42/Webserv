@@ -12,12 +12,13 @@ void	handleSignal(int signal)
 	std::cout << Red << "\nServer shutdown" << Reset << std::endl;
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	signal(SIGINT, handleSignal);
-    Webserv webserv; 
     try
     {
+        Configuration config(argc, argv);
+        Webserv webserv;
         webserv.run();
     }
     catch(const std::exception& e)
