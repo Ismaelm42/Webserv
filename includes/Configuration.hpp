@@ -23,8 +23,8 @@ class Configuration
 		void setListenPort();
 		void setServerName();
 		void setRootDirectory();
-		void setIndexFile();
-		void setErrorPage();
+		void setIndexFiles();
+		void setErrorPages();
 		void setMaxBodySize();
 		void endServerBlock();
 		void checkFormatError();

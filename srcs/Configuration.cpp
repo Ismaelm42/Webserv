@@ -89,9 +89,9 @@ void Configuration::setListenPort()
 	size_t c2Pos = _itt->find(";");
 
 	if (_itt == _tokens.end() || c2Pos == 0)
-		throw std::runtime_error(logError("Error: no arguments"));
+		throw std::runtime_error(logError("Error: listen has no arguments"));
 	if (_itt != _tokens.end() - 1)
-		throw std::runtime_error(logError("Error: too many arguments"));
+		throw std::runtime_error(logError("Error: listen has too many arguments"));
 	if (c2Pos != _itt->size() - 1)
 		throw std::runtime_error(logError("Error: listen syntax error"));
 	if (cPos == std::string::npos)
@@ -110,7 +110,7 @@ void Configuration::setServerName()
 	_itt = _tokens.begin() + 1;
 
 	if (_itt == _tokens.end())
-		throw std::runtime_error(logError("Error: no arguments"));
+		throw std::runtime_error(logError("Error: server_name has no arguments"));
 	for (; _itt != _tokens.end(); _itt++)
 	{
 		cPos = _itt->find(";");
@@ -137,12 +137,12 @@ void Configuration::setRootDirectory()
 	_itt = _tokens.begin() + 1;
 	size_t cPos = _itt->find(";");
 
-	if (_itt == _tokens.end())
-		throw std::runtime_error(logError("Error: no arguments"));
+	if (_itt == _tokens.end() || cPos == 0)
+		throw std::runtime_error(logError("Error: root has no arguments"));
 	if (_itt != _tokens.end() - 1)
-		throw std::runtime_error(logError("Error: too many arguments"));
+		throw std::runtime_error(logError("Error: root has too many arguments"));
 	if (cPos != _itt->size() - 1)
-		throw std::runtime_error(logError("Error: listen syntax error"));
+		throw std::runtime_error(logError("Error: root syntax error"));
 	_itt->erase(_itt->size() - 1);
 	if (stat(_itt->c_str(), &stat_buffer) < 0)
         throw std::runtime_error(logError("Error: " + *_itt + ": " + std::string(strerror(errno))));
@@ -154,28 +154,89 @@ void Configuration::setRootDirectory()
 	_tokens.clear();
 }
 
-void Configuration::setIndexFile()
+void Configuration::setIndexFiles()
 {
+	struct stat stat_buffer;
+	size_t cPos;
 
+	Server_config *it = *_its;
+	_itt = _tokens.begin() + 1;
+
+	if (_itt == _tokens.end())
+		throw std::runtime_error(logError("Error: index has no arguments"));
+	for (; _itt != _tokens.end(); _itt++)
+	{
+		cPos = _itt->find(";");
+		if (cPos != std::string::npos && (_itt + 1 != _tokens.end() || cPos != _itt->size() - 1 || cPos == 0))
+			throw std::runtime_error(logError("Error: index syntax error"));
+		if (cPos == std::string::npos && _itt == _tokens.end() - 1)
+			throw std::runtime_error(logError("Error: index syntax error"));
+		if (cPos != std::string::npos)
+		{
+			_itt->erase(_itt->size() - 1);
+			if (stat(_itt->c_str(), &stat_buffer) < 0)
+        		throw std::runtime_error(logError("Error: " + *_itt + ": " + std::string(strerror(errno))));
+			if (S_ISDIR(stat_buffer.st_mode))
+				throw std::runtime_error(logError("Error: " + *_itt + ": is a directory"));
+    		if (!(stat_buffer.st_mode & S_IRUSR))
+				throw std::runtime_error(logError("Error: " + *_itt + ": permission denied"));
+			it->index.push_back(*_itt);
+		}
+		else
+			it->index.push_back(*_itt);
+	}
+	_tokens.clear();
 }
 
-void Configuration::setErrorPage()
+void Configuration::setErrorPages()
 {
+	_tokens.clear();
 
 }
 
 void Configuration::setMaxBodySize()
 {
+	std::string body;
+	unsigned i;
 
+	Server_config *it = *_its;
+	_itt = _tokens.begin() + 1;
+	size_t cPos = _itt->find(";");
+
+	if (_itt == _tokens.end() || cPos == 0)
+		throw std::runtime_error(logError("Error: client_max_body_size has no arguments"));
+	if (_itt != _tokens.end() - 1)
+		throw std::runtime_error(logError("Error: client_max_body_size has too many arguments"));
+	if (cPos != _itt->size() - 1)
+		throw std::runtime_error(logError("Error: client_max_body_size syntax error"));
+	_itt->erase(_itt->size() - 1);
+	body = *_itt;
+	for (i = 0; body[i] != 0; i++)
+		if (body[i] < '0' || body[i] > '9')
+			break ;
+	if ((i != body.size() && i != body.size() - 1) || (i == body.size() - 1 && (body[i] != 'K' && body[i] != 'M' && body[i] != 'G')))
+		throw std::runtime_error(logError("Error: client_max_body_size unexpected \"" + body + "\""));
+	it->body_size = std::atoi(body.c_str());
+	if (body[i] == 'K')
+		it->body_size *= 1024;
+	if (body[i] == 'M')
+		it->body_size *= 1024 * 1024;
+	if (body[i] == 'G')
+		it->body_size *= 1024 * 1024 * 1024;
+	if (it->body_size > 5368709120)
+		throw std::runtime_error(logError("Error: client_max_body_size limited to 5GB"));
+	_tokens.clear();
 }
 
 void Configuration::endServerBlock()
 {
+	_tokens.clear();
 
 }
 
 void Configuration::checkFormatError()
 {
+	_tokens.clear();
 
 }
 
@@ -194,15 +255,15 @@ void Configuration::handleConfigLine()
 	else if (_tokens[0] == "root")
 		setRootDirectory();
 	else if (_tokens[0] == "index")
-		setIndexFile();
+		setIndexFiles();
 	else if (_tokens[0] == "error_page")
-		setErrorPage();
+		setErrorPages();
 	else if (_tokens[0] == "client_max_body_size")
 		setMaxBodySize();
 	else if (_tokens[0] == "}")
 		endServerBlock();
-	else
-		checkFormatError();
+	// else
+	// 	throw std::runtime_error(logError("Error: unexpected \"" + _tokens[0] + "\""));
 }
 
 void Configuration::parsing()

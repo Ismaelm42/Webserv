@@ -64,7 +64,7 @@ struct Server_config
 	std::vector<std::string> index;
 	std::map<int, std::string> error_pages;
 	std::vector<Location_config> locations;
-	int body_size;
+	size_t body_size;
 	Server_config() : body_size(0) {};
 };
 
