@@ -18,8 +18,9 @@ int main(int argc, char **argv)
     try
     {
         Configuration config(argc, argv);
-        Webserv webserv;
-        webserv.run();
+        config.parsing();
+        // Webserv webserv;
+        // webserv.run();
     }
     catch(const std::exception& e)
     {

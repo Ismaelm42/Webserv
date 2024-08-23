@@ -5,6 +5,7 @@
 #include <cstring>
 #include <dirent.h>
 #include <fcntl.h>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <netdb.h>
@@ -50,19 +51,21 @@ struct Location_config
 {
 	std::string location;
 	std::vector<std::string> methods;
+	std::map<int, std::string> redir;
 	bool autoindex;
-	std::map<int, std::string> re;
+	Location_config() : autoindex(false) {};
 };
 
 struct Server_config
 {
-	std::string server_name;
-	int port;
+	std::vector<std::string> server_names;
+	std::vector<std::pair<std::string, int> > ip_port;
 	std::string root;
-	std::string html;
+	std::vector<std::string> index;
 	std::map<int, std::string> error_pages;
-	int body_size;
 	std::vector<Location_config> locations;
+	int body_size;
+	Server_config() : body_size(0) {};
 };
 
 struct Epoll_events
