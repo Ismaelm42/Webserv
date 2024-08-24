@@ -5,7 +5,7 @@ Configuration::Configuration(int argc, char **argv)
 	struct stat stat_buffer;
 	
 	if (argc > 2)
-		throw std::runtime_error("Error: expected only one argument");
+		throw std::runtime_error("Error: Invalid number of arguments. You must specify exactly one configuration file.");
 	argc == 1 ? _fileName = "./default.conf" : _fileName = argv[1];
 	if (stat(_fileName.c_str(), &stat_buffer) < 0)
         throw std::runtime_error("Error: " + _fileName + ": " + std::string(strerror(errno)));
@@ -58,7 +58,7 @@ void Configuration::splitWords(std::string& line)
 void Configuration::initServerBlock()
 {
 	if (_tokens.size() > 2)
-		throw std::runtime_error(logError("Error: syntax error"));
+		throw std::runtime_error(logError("Error: syntax error in \"server\" directive"));
 	if (_tokens.size() == 2)
 	{
 		if (_tokens[0] != "server")
@@ -77,8 +77,24 @@ void Configuration::handleLocations()
 {
 
 }
-// Comprobar? Quedaría bien guapo
-// 0.0.0.0 a 255.255.255.255 y de 0 a 65535
+
+void Configuration::checkHostandPort(std::string host, std::string port, std::pair<std::string, int> &pair)
+{
+	struct sockaddr_in host_check;
+	int port_check;
+
+	if (inet_pton(AF_INET, host.c_str(), &(host_check.sin_addr)) != 1)
+		throw std::runtime_error(logError("Error: ip adress is not valid \"" + host + "\" in \"listen\" directive"));
+	port.erase(port.size() - 1);
+	for (int i = 0; port[i] != 0; i++)
+		if (port[i] < '0' || port[i] > '9')
+			throw std::runtime_error(logError("Error: unexpected \"" + port + "\""));
+	port_check = std::atoi(port.c_str());
+	if (port_check < 0 || port_check > 65536)
+		throw std::runtime_error(logError("Error: port number is out of range: \"" + port + "\" in \"listen\" directive"));
+	pair = std::make_pair(host, std::atoi(port.c_str()));
+}
+
 void Configuration::setListenPort()
 {
 	std::pair<std::string, int> pair;
@@ -88,16 +104,14 @@ void Configuration::setListenPort()
 	size_t cPos = _itt->find(":");
 	size_t c2Pos = _itt->find(";");
 
-	if (_itt == _tokens.end() || c2Pos == 0)
-		throw std::runtime_error(logError("Error: listen has no arguments"));
-	if (_itt != _tokens.end() - 1)
-		throw std::runtime_error(logError("Error: listen has too many arguments"));
+	if (_itt == _tokens.end() || c2Pos == 0 || _itt != _tokens.end() - 1)
+		throw std::runtime_error(logError("Error: invalid number of arguments in \"listen\" directive"));
 	if (c2Pos != _itt->size() - 1)
-		throw std::runtime_error(logError("Error: listen syntax error"));
+		throw std::runtime_error(logError("Error: syntax error in \"listen\" directive"));
 	if (cPos == std::string::npos)
-		pair = std::make_pair("0.0.0.0", std::atoi(_itt->c_str()));
+		checkHostandPort("0.0.0.0", *_itt, pair);
 	else
-		pair = std::make_pair(_itt->substr(0, cPos),std::atoi(_itt->substr(cPos + 1, 5).c_str()));
+		checkHostandPort(_itt->substr(0, cPos), _itt->substr(cPos + 1, 6), pair);
 	it->ip_port.push_back(pair);
 	_tokens.clear();
 }
@@ -110,14 +124,14 @@ void Configuration::setServerName()
 	_itt = _tokens.begin() + 1;
 
 	if (_itt == _tokens.end())
-		throw std::runtime_error(logError("Error: server_name has no arguments"));
+		throw std::runtime_error(logError("Error: invalid number of arguments in \"server_name\" directive"));
 	for (; _itt != _tokens.end(); _itt++)
 	{
 		cPos = _itt->find(";");
 		if (cPos != std::string::npos && (_itt + 1 != _tokens.end() || cPos != _itt->size() - 1 || cPos == 0))
-			throw std::runtime_error(logError("Error: server_name syntax error"));
+			throw std::runtime_error(logError("Error: syntax error in \"server_name\" directive"));
 		if (cPos == std::string::npos && _itt == _tokens.end() - 1)
-			throw std::runtime_error(logError("Error: server_name syntax error"));
+			throw std::runtime_error(logError("Error: syntax error in \"server_name\" directive"));
 		if (cPos != std::string::npos)
 		{
 			_itt->erase(_itt->size() - 1);
@@ -138,11 +152,11 @@ void Configuration::setRootDirectory()
 	size_t cPos = _itt->find(";");
 
 	if (_itt == _tokens.end() || cPos == 0)
-		throw std::runtime_error(logError("Error: root has no arguments"));
+		throw std::runtime_error(logError("Error: invalid number of arguments in \"root\" directive"));
 	if (_itt != _tokens.end() - 1)
-		throw std::runtime_error(logError("Error: root has too many arguments"));
+		throw std::runtime_error(logError("Error: too many arguments in \"root\" directive"));
 	if (cPos != _itt->size() - 1)
-		throw std::runtime_error(logError("Error: root syntax error"));
+		throw std::runtime_error(logError("Error: syntax error in \"root\" directive"));
 	_itt->erase(_itt->size() - 1);
 	if (stat(_itt->c_str(), &stat_buffer) < 0)
         throw std::runtime_error(logError("Error: " + *_itt + ": " + std::string(strerror(errno))));
@@ -163,14 +177,14 @@ void Configuration::setIndexFiles()
 	_itt = _tokens.begin() + 1;
 
 	if (_itt == _tokens.end())
-		throw std::runtime_error(logError("Error: index has no arguments"));
+		throw std::runtime_error(logError("Error: invalid number of arguments in \"index\" directive"));
 	for (; _itt != _tokens.end(); _itt++)
 	{
 		cPos = _itt->find(";");
 		if (cPos != std::string::npos && (_itt + 1 != _tokens.end() || cPos != _itt->size() - 1 || cPos == 0))
-			throw std::runtime_error(logError("Error: index syntax error"));
+			throw std::runtime_error(logError("Error: syntax error in \"index\" directive"));
 		if (cPos == std::string::npos && _itt == _tokens.end() - 1)
-			throw std::runtime_error(logError("Error: index syntax error"));
+			throw std::runtime_error(logError("Error: syntax error in \"index\" directive"));
 		if (cPos != std::string::npos)
 		{
 			_itt->erase(_itt->size() - 1);
@@ -188,10 +202,28 @@ void Configuration::setIndexFiles()
 	_tokens.clear();
 }
 
+//Los códigos de error van de 100 a 599 y de 10x a 59x
 void Configuration::setErrorPages()
 {
-	_tokens.clear();
+	// Server_config *it = *_its;
+	_itt = _tokens.begin() + 1;
+	std::string error;
+	// size_t cPos;
+	int nbr;
 
+	if (_itt == _tokens.end() || _tokens.begin() + 2 == _tokens.end())
+		throw std::runtime_error(logError("Error: invalid number of arguments in \"error_page\" directive"));
+	error = *_itt;
+	if (error.size() != 3)
+		throw std::runtime_error(logError("Error: error code must be exactly 3 digits in \"error_page\" directive"));
+	if (!std::isdigit(error[0]) || !std::isdigit(error[1]) || (!std::isdigit(error[2]) && error[2] != 'x'))
+		throw std::runtime_error(logError("Error: unexpected \"" + error + "\" in \"error_page\" directive"));
+	nbr = std::atoi(error.c_str());
+	if ((error[2] == 'x' && (nbr < 9 || nbr > 59)) || (error[2] != 'x' && (nbr < 100 || nbr > 599)))
+		throw std::runtime_error(logError("Error: error code is out of range: \"" + error + "\" in \"error_page\" directive"));
+
+
+	_tokens.clear();
 }
 
 void Configuration::setMaxBodySize()
@@ -204,18 +236,18 @@ void Configuration::setMaxBodySize()
 	size_t cPos = _itt->find(";");
 
 	if (_itt == _tokens.end() || cPos == 0)
-		throw std::runtime_error(logError("Error: client_max_body_size has no arguments"));
+		throw std::runtime_error(logError("Error: invalid number of arguments in \"client_max_body_size\" directive"));
 	if (_itt != _tokens.end() - 1)
-		throw std::runtime_error(logError("Error: client_max_body_size has too many arguments"));
+		throw std::runtime_error(logError("Error: too many arguments in \"client_max_body_size\" directive"));
 	if (cPos != _itt->size() - 1)
-		throw std::runtime_error(logError("Error: client_max_body_size syntax error"));
+		throw std::runtime_error(logError("Error: syntax error in \"client_max_body_size\" directive"));
 	_itt->erase(_itt->size() - 1);
 	body = *_itt;
 	for (i = 0; body[i] != 0; i++)
 		if (body[i] < '0' || body[i] > '9')
 			break ;
 	if ((i != body.size() && i != body.size() - 1) || (i == body.size() - 1 && (body[i] != 'K' && body[i] != 'M' && body[i] != 'G')))
-		throw std::runtime_error(logError("Error: client_max_body_size unexpected \"" + body + "\""));
+		throw std::runtime_error(logError("Error: unexpected \"" + body + "\" in \"client_max_body_size\" directive"));
 	it->body_size = std::atoi(body.c_str());
 	if (body[i] == 'K')
 		it->body_size *= 1024;
@@ -224,7 +256,7 @@ void Configuration::setMaxBodySize()
 	if (body[i] == 'G')
 		it->body_size *= 1024 * 1024 * 1024;
 	if (it->body_size > 5368709120)
-		throw std::runtime_error(logError("Error: client_max_body_size limited to 5GB"));
+		throw std::runtime_error(logError("Error: size limited to 5GB in \"client_max_body_size\" directive"));
 	_tokens.clear();
 }
 
