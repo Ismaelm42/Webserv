@@ -20,7 +20,6 @@ class Configuration
 		void splitWords(std::string &line);
 		void initServerBlock();
 		void handleLocations();
-		void checkHostandPort(std::string host, std::string port, std::pair<std::string, int> &pair);
 		void setListenPort();
 		void setServerName();
 		void setRootDirectory();

@@ -11,6 +11,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <set>
 #include <signal.h>
 #include <sstream>
 #include <stdio.h>
@@ -50,8 +51,8 @@ extern int globalSigint;
 struct Location_config
 {
 	std::string location;
-	std::vector<std::string> methods;
-	std::map<int, std::string> redir;
+	std::set<std::string> methods;
+	std::pair<int, std::string> redir;
 	bool autoindex;
 	Location_config() : autoindex(false) {};
 };
