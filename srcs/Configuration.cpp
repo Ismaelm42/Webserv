@@ -2,15 +2,10 @@
 
 Configuration::Configuration(int argc, char **argv)
 {
-	struct stat stat_buffer;
-	
 	if (argc > 2)
 		throw std::runtime_error("Error: Invalid number of arguments. You must specify exactly one configuration file.");
 	argc == 1 ? _fileName = "./default.conf" : _fileName = argv[1];
-	if (stat(_fileName.c_str(), &stat_buffer) < 0)
-        throw std::runtime_error("Error: " + _fileName + ": " + std::string(strerror(errno)));
-	if (!S_ISREG(stat_buffer.st_mode))
-		throw std::runtime_error("Error: " + _fileName + ": is a directory");
+	checkFileOrDirectory(_fileName, "file");
 	_file.open(_fileName.c_str());
 	if (!_file.is_open())
 		throw std::runtime_error("Error: " + _fileName + ": " + std::string(strerror(errno)));
@@ -35,29 +30,43 @@ std::string Configuration::logError(std::string message)
 	return error_message;
 }
 
-void Configuration::splitWords(std::string& line)
+void Configuration::checkFileOrDirectory(std::string &path, const std::string type)
+{
+	struct stat stat_buffer;
+
+	if (stat(path.c_str(), &stat_buffer) < 0)
+	       throw std::runtime_error(logError("Error: \"" + path + "\": " + std::string(strerror(errno))));
+	if (type == "dir" && !S_ISDIR(stat_buffer.st_mode))
+		throw std::runtime_error(logError("Error: \"" + path + "\": is not a directory"));
+	if (type == "file" && S_ISDIR(stat_buffer.st_mode))
+		throw std::runtime_error(logError("Error: \"" + *_itToken + "\": is a directory"));
+	if (!(stat_buffer.st_mode & S_IRUSR))
+		throw std::runtime_error(logError("Error: \"" + path + "\": permission denied"));
+}
+
+void Configuration::createTokens(std::string& line)
 {
 	std::istringstream stream(line);
-	std::string word;
+	std::string token;
 	size_t cPos;
 
-	while (stream >> word)
+	while (stream >> token)
 	{
-		cPos = word.find('#');
+		cPos = token.find('#');
 		if (cPos != std::string::npos)
 		{
-			word.erase(cPos);
-			if (!word.empty())
-				_tokens.push_back(word);
+			token.erase(cPos);
+			if (!token.empty())
+				_tokens.push_back(token);
 			break ;
 		}
-        _tokens.push_back(word);
+        _tokens.push_back(token);
 	}
 }
 
 void Configuration::initServerBlock()
 {
-	if (_tokens.size() > 2)
+	if (_tokens.size() != 2)
 		throw std::runtime_error(logError("Error: syntax error in \"server\" directive"));
 	if (_tokens.size() == 2)
 	{
@@ -68,253 +77,204 @@ void Configuration::initServerBlock()
 		_inServerBlock = true;
 		Server_config* config = new Server_config;
 		_serversConfig.push_back(config);
-		_its = _serversConfig.end() - 1;
-		_tokens.clear();
+		_itServer = _serversConfig.end() - 1;
+		_itConfig = *_itServer;
+	}
+}
+
+void Configuration::setAllowedMethods()
+{
+	_itToken++;
+	for (; _itToken != _tokens.end(); _itToken++)
+	{
+		std::string str = *_itToken;
+		if (_itToken == _tokens.end() - 1)
+		{
+			if (str.find(";") != str.size() - 1)
+				throw std::runtime_error(logError("Error: syntax error in \"allow_methods\" directive"));
+			str.erase(str.size() - 1);
+		}
+		if (str != "GET" && str != "POST" && str != "DELETE")
+			throw std::runtime_error(logError("Error: unexpected \"" + str + "\" in \"allow_methods\" directive"));
+		_itConfig->locations.back().methods.insert(str);
+	}
+}
+
+void Configuration::setAutoindex()
+{
+	if (_tokens.end() - _tokens.begin() != 2)
+		throw std::runtime_error(logError("Error: invalid number of arguments in \"autoindex\" directive"));
+	std::string str = *(_tokens.begin() + 1);
+	if (str.find(";") != str.size() - 1)
+		throw std::runtime_error(logError("Error: syntax error in \"autoindex\" directive"));
+	str.erase(str.size() - 1);
+	if (str != "on" && str != "off")
+		throw std::runtime_error(logError("Error: unexpected \"" + str + "\" in \"autoindex\" directive"));
+	if (str == "on")
+		_itConfig->locations.back().autoindex = true;
+}
+
+void Configuration::setReturn()
+{
+	if (_tokens.end() - _tokens.begin() != 2 && _tokens.end() - _tokens.begin() != 3)
+		throw std::runtime_error(logError("Error: invalid number of arguments in \"return\" directive"));
+	std::string str = *(_itToken + 1);
+	if (_tokens.end() - _tokens.begin() == 2)
+	{
+		if (str.find(";") != str.size() - 1)
+			throw std::runtime_error(logError("Error: syntax error in \"return\" directive"));
+		str.erase(str.size() - 1);
+	}
+	if (str.size() != 3)
+		throw std::runtime_error(logError("Error: error code must be exactly 3 digits in \"return\" directive"));
+	if (!std::isdigit(str[0]) || !std::isdigit(str[1]) || !std::isdigit(str[2]))
+		throw std::runtime_error(logError("Error: unexpected \"" + str + "\" in \"return\" directive"));
+	int nbr = std::atoi(str.c_str());
+	if (nbr < 100 || nbr > 599)
+		throw std::runtime_error(logError("Error: error code is out of range: \"" + str + "\" in \"return\" directive"));
+	_itConfig->locations.back().redir.first = nbr;
+	if (_tokens.end() - _tokens.begin() == 3)
+	{
+		str = *(_itToken + 2);
+		if (str.rfind(";") != str.size() - 1)
+			throw std::runtime_error(logError("Error: syntax error in \"return\" directive"));
+		str.erase(str.size() - 1);
+		_itConfig->locations.back().redir.second = str;
 	}
 }
 
 void Configuration::handleLocations()
 {
-	Server_config *it = *_its;
-	struct stat stat_buffer;
-	std::string str;
-	_itt = _tokens.begin();
-
+	if (_itConfig->root == "")
+		throw std::runtime_error(logError("Error: \"root\" directive is required to set \"location\" directive"));
+	_itToken = _tokens.begin();
 	if (_inLocationBlock == false)
 	{
 		if (_tokens.end() - _tokens.begin() != 3)
 			throw std::runtime_error(logError("Error: invalid number of arguments in \"location\" directive"));
-		str = *(_tokens.begin() + 1);
-		if (stat(str.c_str(), &stat_buffer) < 0)
-	        throw std::runtime_error(logError("Error: \"" + str + "\": " + std::string(strerror(errno))));
-		if (!S_ISDIR(stat_buffer.st_mode))
-			throw std::runtime_error(logError("Error: \"" + str + "\": is not a directory"));
-		if (!(stat_buffer.st_mode & S_IRUSR))
-			throw std::runtime_error(logError("Error: \"" + str + "\": permission denied"));
-		if (*(_tokens.begin() + 2) != "{")
-			throw std::runtime_error(logError("Error: unexpected \"" + *(_tokens.begin() + 2) + "\". open curly brace missing in \"location\" directive"));
+		*(_itToken + 1) = _itConfig->root + *(_itToken + 1);
+		checkFileOrDirectory(*(_itToken + 1), "dir");
+		if (*(_itToken + 2) != "{")
+			throw std::runtime_error(logError("Error: unexpected \"" + *(_itToken + 2) + "\". open curly brace missing in \"location\" directive"));
 		Location_config config;
-		it->locations.push_back(config);
-		it->locations.back().location = str;
+		_itConfig->locations.push_back(config);
+		_itConfig->locations.back().location = *(_itToken + 1);
 		_inLocationBlock = true;
 	}
-	else if (*_itt == "allow_methods")
-	{
-		_itt++;
-		for (; _itt != _tokens.end(); _itt++)
-		{
-			str = *_itt;
-			if (_itt == _tokens.end() - 1)
-			{
-				if (str.find(";") != str.size() - 1)
-					throw std::runtime_error(logError("Error: syntax error in \"allow_methods\" directive"));
-				str.erase(str.size() - 1);
-			}
-			if (str != "GET" && str != "POST" && str != "DELETE")
-				throw std::runtime_error(logError("Error: unexpected \"" + str + "\" in \"allow_methods\" directive"));
-			it->locations.back().methods.insert(str);
-		}
-	}
-	else if (*_itt == "autoindex")
-	{
-		if (_tokens.end() - _tokens.begin() != 2)
-			throw std::runtime_error(logError("Error: invalid number of arguments in \"autoindex\" directive"));
-		str = *(_tokens.begin() + 1);
-		if (str.find(";") != str.size() - 1)
-			throw std::runtime_error(logError("Error: syntax error in \"autoindex\" directive"));
-		str.erase(str.size() - 1);
-		if (str != "on" && str != "off")
-			throw std::runtime_error(logError("Error: unexpected \"" + str + "\" in \"autoindex\" directive"));
-		if (str == "on")
-			it->locations.back().autoindex = true;
-	}
-	else if (*_itt == "return" && !it->locations.back().redir.first)
-	{
-		if (_tokens.end() - _tokens.begin() != 2 && _tokens.end() - _tokens.begin() != 3)
-			throw std::runtime_error(logError("Error: invalid number of arguments in \"return\" directive"));
-		str = *(_itt + 1);
-		if (_tokens.end() - _tokens.begin() == 2)
-		{
-			if (str.find(";") != str.size() - 1)
-				throw std::runtime_error(logError("Error: syntax error in \"return\" directive1"));
-			str.erase(str.size() - 1);
-		}
-		if (str.size() != 3)
-			throw std::runtime_error(logError("Error: error code must be exactly 3 digits in \"return\" directive"));
-		if (!std::isdigit(str[0]) || !std::isdigit(str[1]) || !std::isdigit(str[2]))
-			throw std::runtime_error(logError("Error: unexpected \"" + str + "\" in \"return\" directive"));
-		int nbr = std::atoi(str.c_str());
-		if (nbr < 100 || nbr > 599)
-			throw std::runtime_error(logError("Error: error code is out of range: \"" + str + "\" in \"return\" directive"));
-		it->locations.back().redir.first = nbr;
-		if (_tokens.end() - _tokens.begin() == 3)
-		{
-			str = *(_itt + 2);
-			if (str.rfind(";") != str.size() - 1)
-				throw std::runtime_error(logError("Error: syntax error in \"return\" directive2"));
-			str.erase(str.size() - 1);
-			it->locations.back().redir.second = str;
-		}
-	}
-	else if (*_itt == "}" && _itt + 1 == _tokens.end())
+	else if (*_itToken == "allow_methods")
+		setAllowedMethods();
+	else if (*_itToken == "autoindex")
+		setAutoindex();
+	else if (*_itToken == "return" && !_itConfig->locations.back().redir.first)
+		setReturn();
+	else if (*_itToken == "}" && (_itToken + 1) == _tokens.end())
 		_inLocationBlock = false;
 	else
-		throw std::runtime_error(logError("Error: unexpected \"" + *_itt + "\" in \"location\" directive"));
-	_tokens.clear();
+		throw std::runtime_error(logError("Error: unexpected \"" + *(_itToken) + "\" in \"location\" directive"));
 }
 
 void Configuration::setListenPort()
 {
-	std::pair<std::string, int> pair;
-	struct sockaddr_in host_check;
-	Server_config *it = *_its;
-	std::string host;
-	std::string port;
-	int port_check;
-
-	_itt = _tokens.begin() + 1;
-	size_t cPos = _itt->find(":");
-	size_t c2Pos = _itt->find(";");
-
-	if (_itt == _tokens.end() || c2Pos == 0 || _itt != _tokens.end() - 1)
+	size_t cPos = _itToken->find(":");
+	size_t c2Pos = _itToken->find(";");
+	if (_itToken == _tokens.end() || c2Pos == 0 || _itToken != _tokens.end() - 1)
 		throw std::runtime_error(logError("Error: invalid number of arguments in \"listen\" directive"));
-	if (c2Pos != _itt->size() - 1)
+	if (c2Pos != _itToken->size() - 1)
 		throw std::runtime_error(logError("Error: syntax error in \"listen\" directive"));
-	if (cPos == std::string::npos)
-	{
-		host = "0.0.0.0";
-		port = *_itt;
-	}
-	else
-	{
-		host = _itt->substr(0, cPos);
-		port = _itt->substr(cPos + 1, 6);
-	}
+	std::string host = (cPos == std::string::npos) ? "0.0.0.0" : _itToken->substr(0, cPos);
+	std::string port = (cPos == std::string::npos) ? *_itToken : _itToken->substr(cPos + 1, 6);
+	struct sockaddr_in host_check;
 	if (inet_pton(AF_INET, host.c_str(), &(host_check.sin_addr)) != 1)
 		throw std::runtime_error(logError("Error: ip adress is not valid \"" + host + "\" in \"listen\" directive"));
 	port.erase(port.size() - 1);
 	for (int i = 0; port[i] != 0; i++)
 		if (port[i] < '0' || port[i] > '9')
 			throw std::runtime_error(logError("Error: unexpected \"" + port + "\""));
-	port_check = std::atoi(port.c_str());
+	int port_check = std::atoi(port.c_str());
 	if (port_check < 0 || port_check > 65536)
 		throw std::runtime_error(logError("Error: port number is out of range: \"" + port + "\" in \"listen\" directive"));
-	pair = std::make_pair(host, std::atoi(port.c_str()));
-	it->ip_port.push_back(pair);
-	_tokens.clear();
+	std::pair<std::string, int> pair = std::make_pair(host, std::atoi(port.c_str()));
+	_itConfig->ip_port.push_back(pair);
 }
 
 void Configuration::setServerName()
 {
-	size_t cPos;
-
-	Server_config *it = *_its;
-	_itt = _tokens.begin() + 1;
-
-	if (_itt == _tokens.end())
+	if (_itToken == _tokens.end())
 		throw std::runtime_error(logError("Error: invalid number of arguments in \"server_name\" directive"));
-	for (; _itt != _tokens.end(); _itt++)
+	for (; _itToken != _tokens.end(); _itToken++)
 	{
-		cPos = _itt->find(";");
-		if (cPos != std::string::npos && (_itt + 1 != _tokens.end() || cPos != _itt->size() - 1 || cPos == 0))
+		size_t cPos = _itToken->find(";");
+		if (cPos != std::string::npos && (_itToken + 1 != _tokens.end() || cPos != _itToken->size() - 1 || cPos == 0))
 			throw std::runtime_error(logError("Error: syntax error in \"server_name\" directive"));
-		if (cPos == std::string::npos && _itt == _tokens.end() - 1)
+		if (cPos == std::string::npos && _itToken == _tokens.end() - 1)
 			throw std::runtime_error(logError("Error: syntax error in \"server_name\" directive"));
 		if (cPos != std::string::npos)
 		{
-			_itt->erase(_itt->size() - 1);
-			it->server_names.push_back(*_itt);
+			_itToken->erase(_itToken->size() - 1);
+			_itConfig->server_names.push_back(*_itToken);
 		}
 		else
-			it->server_names.push_back(*_itt);
+			_itConfig->server_names.push_back(*_itToken);
 	}
-	_tokens.clear();
 }
 
 void Configuration::setRootDirectory()
 {
-	struct stat stat_buffer;
-
-	Server_config *it = *_its;
-	_itt = _tokens.begin() + 1;
-	size_t cPos = _itt->find(";");
-
-	if (_itt == _tokens.end() || cPos == 0)
+	size_t cPos = _itToken->find(";");
+	if (_itToken == _tokens.end() || cPos == 0)
 		throw std::runtime_error(logError("Error: invalid number of arguments in \"root\" directive"));
-	if (_itt != _tokens.end() - 1)
+	if (_itToken != _tokens.end() - 1)
 		throw std::runtime_error(logError("Error: too many arguments in \"root\" directive"));
-	if (cPos != _itt->size() - 1)
+	if (cPos != _itToken->size() - 1)
 		throw std::runtime_error(logError("Error: syntax error in \"root\" directive"));
-	_itt->erase(_itt->size() - 1);
-	if (stat(_itt->c_str(), &stat_buffer) < 0)
-        throw std::runtime_error(logError("Error: \"" + *_itt + "\": " + std::string(strerror(errno))));
-	if (!S_ISDIR(stat_buffer.st_mode))
-		throw std::runtime_error(logError("Error: \"" + *_itt + "\": is not a directory"));
-    if (!(stat_buffer.st_mode & S_IRUSR))
-		throw std::runtime_error(logError("Error: \"" + *_itt + "\": permission denied"));
-	it->root = *_itt;
-	_tokens.clear();
+	_itToken->erase(_itToken->size() - 1);
+	while (_itToken->rfind("/") == _itToken->size() - 1)
+		_itToken->erase(_itToken->size() - 1);
+	checkFileOrDirectory(*_itToken, "dir");
+	_itConfig->root = *_itToken;
 }
 
 void Configuration::setIndexFiles()
 {
-	struct stat stat_buffer;
-	size_t cPos;
-
-	Server_config *it = *_its;
-	_itt = _tokens.begin() + 1;
-
-	if (_itt == _tokens.end())
+	if (_itConfig->root == "")
+		throw std::runtime_error(logError("Error: \"root\" directive is required to set \"index\" directive"));
+	if (_itToken == _tokens.end())
 		throw std::runtime_error(logError("Error: invalid number of arguments in \"index\" directive"));
-	for (; _itt != _tokens.end(); _itt++)
+	for (; _itToken != _tokens.end(); _itToken++)
 	{
-		cPos = _itt->find(";");
-		if (cPos != std::string::npos && (_itt + 1 != _tokens.end() || cPos != _itt->size() - 1 || cPos == 0))
+		size_t cPos = _itToken->find(";");
+		if (cPos != std::string::npos && (_itToken + 1 != _tokens.end() || cPos != _itToken->size() - 1 || cPos == 0))
 			throw std::runtime_error(logError("Error: syntax error in \"index\" directive"));
-		if (cPos == std::string::npos && _itt == _tokens.end() - 1)
+		if (cPos == std::string::npos && _itToken == _tokens.end() - 1)
 			throw std::runtime_error(logError("Error: syntax error in \"index\" directive"));
 		if (cPos != std::string::npos)
-		{
-			_itt->erase(_itt->size() - 1);
-			if (stat(_itt->c_str(), &stat_buffer) < 0)
-        		throw std::runtime_error(logError("Error: \"" + *_itt + "\": " + std::string(strerror(errno))));
-			if (S_ISDIR(stat_buffer.st_mode))
-				throw std::runtime_error(logError("Error: \"" + *_itt + "\": is a directory"));
-    		if (!(stat_buffer.st_mode & S_IRUSR))
-				throw std::runtime_error(logError("Error: \"" + *_itt + "\": permission denied"));
-			it->index.push_back(*_itt);
-		}
-		else
-			it->index.push_back(*_itt);
+			_itToken->erase(_itToken->size() - 1);
+		if (_itToken->find('/') != 0)
+			*_itToken = "/" + *_itToken;
+		*_itToken = _itConfig->root + *_itToken;
+		checkFileOrDirectory(*_itToken, "file");
+		_itConfig->index.push_back(*_itToken);
 	}
-	_tokens.clear();
 }
 
 void Configuration::setErrorPages()
 {
-	Server_config *it = *_its;
-	_itt = _tokens.begin() + 1;
-	struct stat stat_buffer;
-	std::string file;
-	std::string code;
-	size_t cPos;
-
-	if (_itt == _tokens.end() || _tokens.begin() + 2 == _tokens.end())
+	if (_itConfig->root == "")
+		throw std::runtime_error(logError("Error: \"root\" directive is required to set \"error_page\" directive"));
+	if (_itToken == _tokens.end() || _tokens.begin() + 2 == _tokens.end())
 		throw std::runtime_error(logError("Error: invalid number of arguments in \"error_page\" directive"));
-	file = *(_tokens.end() - 1);
-	cPos = file.find(";");
+	std::string file = *(_tokens.end() - 1);
+	size_t cPos = file.find(";");
 	if (cPos != file.size() - 1)
 		throw std::runtime_error(logError("Error: syntax error in \"error_page\" directive"));
 	file.erase(file.size() - 1);
-	if (stat(file.c_str(), &stat_buffer) < 0)
-    	throw std::runtime_error(logError("Error: \"" + file + "\": " + std::string(strerror(errno))));
-	if (S_ISDIR(stat_buffer.st_mode))
-		throw std::runtime_error(logError("Error: \"" + file + "\": is a directory"));
-    if (!(stat_buffer.st_mode & S_IRUSR))
-		throw std::runtime_error(logError("Error: \"" + file + "\": permission denied"));
-	for (; _itt != _tokens.end() - 1; _itt++)
+	if (file.find('/') != 0)
+		file = "/" + file;
+	file = _itConfig->root + file;
+	checkFileOrDirectory(file, "file");
+	for (; _itToken != _tokens.end() - 1; _itToken++)
 	{
-		code = *_itt;
+		std::string code = *_itToken;
 		if (code.size() != 3)
 			throw std::runtime_error(logError("Error: error code must be exactly 3 digits in \"error_page\" directive"));
 		if (!std::isdigit(code[0]) || !std::isdigit(code[1]) || (!std::isdigit(code[2]) && code[2] != 'x'))
@@ -322,60 +282,54 @@ void Configuration::setErrorPages()
 		int nbr = std::atoi(code.c_str());
 		if ((code[2] == 'x' && (nbr < 9 || nbr > 59)) || (code[2] != 'x' && (nbr < 100 || nbr > 599)))
 			throw std::runtime_error(logError("Error: error code is out of range: \"" + code + "\" in \"error_page\" directive"));
-		if (code[2] == 'x' && (_itt != _tokens.end() - 2 || _itt != _tokens.begin() + 1))
+		if (code[2] == 'x' && (_itToken != _tokens.end() - 2 || _itToken != _tokens.begin() + 1))
 			throw std::runtime_error(logError("Error: syntax error in \"error_page\" directive"));
 		if (code[2] == 'x')
 			for (int i = 0; i < 10; i++)
-				it->error_pages[(nbr * 10) + i] = file;
+				_itConfig->error_pages[(nbr * 10) + i] = file;
 		else
-			it->error_pages[nbr] = file;
+			_itConfig->error_pages[nbr] = file;
 	}
-	_tokens.clear();
 }
 
 void Configuration::setMaxBodySize()
 {
-	std::string body;
-	unsigned i;
-
-	Server_config *it = *_its;
-	_itt = _tokens.begin() + 1;
-	size_t cPos = _itt->find(";");
-
-	if (_itt == _tokens.end() || cPos == 0)
+	size_t cPos = _itToken->find(";");
+	if (_itToken == _tokens.end() || cPos == 0)
 		throw std::runtime_error(logError("Error: invalid number of arguments in \"client_max_body_size\" directive"));
-	if (_itt != _tokens.end() - 1)
+	if (_itToken != _tokens.end() - 1)
 		throw std::runtime_error(logError("Error: too many arguments in \"client_max_body_size\" directive"));
-	if (cPos != _itt->size() - 1)
+	if (cPos != _itToken->size() - 1)
 		throw std::runtime_error(logError("Error: syntax error in \"client_max_body_size\" directive"));
-	_itt->erase(_itt->size() - 1);
-	body = *_itt;
-	for (i = 0; body[i] != 0; i++)
+	_itToken->erase(_itToken->size() - 1);
+	std::string body = *_itToken;
+	unsigned i = 0;
+	for (; body[i] != 0; i++)
 		if (body[i] < '0' || body[i] > '9')
 			break ;
 	if ((i != body.size() && i != body.size() - 1) || (i == body.size() - 1 && (body[i] != 'K' && body[i] != 'M' && body[i] != 'G')))
 		throw std::runtime_error(logError("Error: unexpected \"" + body + "\" in \"client_max_body_size\" directive"));
-	it->body_size = std::atoi(body.c_str());
+	_itConfig->body_size = std::atoi(body.c_str());
 	if (body[i] == 'K')
-		it->body_size *= 1024;
+		_itConfig->body_size *= 1024;
 	if (body[i] == 'M')
-		it->body_size *= 1024 * 1024;
+		_itConfig->body_size *= 1024 * 1024;
 	if (body[i] == 'G')
-		it->body_size *= 1024 * 1024 * 1024;
-	if (it->body_size > 5368709120)
+		_itConfig->body_size *= 1024 * 1024 * 1024;
+	if (_itConfig->body_size > 5368709120)
 		throw std::runtime_error(logError("Error: size limited to 5GB in \"client_max_body_size\" directive"));
-	_tokens.clear();
 }
 
 void Configuration::endServerBlock()
 {
-	_tokens.clear();
-
+	if (_itToken == _tokens.end())
+		_inServerBlock = false;
+	else
+		throw std::runtime_error(logError("Error: syntax error after closing brace"));
 }
 
 void Configuration::checkFormatError()
 {
-	_tokens.clear();
 
 }
 
@@ -387,22 +341,26 @@ void Configuration::handleConfigLine()
 		initServerBlock();
 	else if (_inLocationBlock == true || _tokens[0] == "location")
 		handleLocations();
-	else if (_tokens[0] == "listen")
-		setListenPort();
-	else if (_tokens[0] == "server_name")
-		setServerName();
-	else if (_tokens[0] == "root")
-		setRootDirectory();
-	else if (_tokens[0] == "index")
-		setIndexFiles();
-	else if (_tokens[0] == "error_page")
-		setErrorPages();
-	else if (_tokens[0] == "client_max_body_size")
-		setMaxBodySize();
-	else if (_tokens[0] == "}")
-		endServerBlock();
-	// else
-	// 	throw std::runtime_error(logError("Error: unexpected \"" + _tokens[0] + "\""));
+	else
+	{
+		_itToken = _tokens.begin() + 1;
+		if (_tokens[0] == "listen")
+			setListenPort();
+		else if (_tokens[0] == "server_name")
+			setServerName();
+		else if (_tokens[0] == "root")
+			setRootDirectory();
+		else if (_tokens[0] == "index")
+			setIndexFiles();
+		else if (_tokens[0] == "error_page")
+			setErrorPages();
+		else if (_tokens[0] == "client_max_body_size")
+			setMaxBodySize();
+		else if (_tokens[0] == "}")
+			endServerBlock();
+		else
+			throw std::runtime_error(logError("Error: unexpected \"" + _tokens[0] + "\""));
+	}
 }
 
 void Configuration::parsing()
@@ -412,8 +370,9 @@ void Configuration::parsing()
 	while (getline(_file, line))
 	{
 		_loopCounter++;
-		splitWords(line);
+		createTokens(line);
 		handleConfigLine();
+		_tokens.clear();
 	}
 	printServerConfig();
 }
@@ -441,10 +400,10 @@ void Configuration::parsing()
 void Configuration::printServerConfig()
 {
 	int i = 0;
-	for (_its = _serversConfig.begin(); _its != _serversConfig.end(); _its++)
+	for (_itServer = _serversConfig.begin(); _itServer != _serversConfig.end(); _itServer++)
 	{
-		Server_config *it = *_its;
-		std::cout << Yellow << "[SERVER " << i << "]" << Reset << std::endl << std::endl;
+		Server_config *it = *_itServer;
+		std::cout << Yellow << "[SERVER " << i + 1 << "]" << Reset << std::endl << std::endl;
 		for (std::vector<std::pair<std::string, int> >::iterator itip = it->ip_port.begin(); itip != it->ip_port.end(); itip++)
 		{
 			std::cout << "Listen IP:\t\t" << itip->first << std::endl;
@@ -474,7 +433,7 @@ void Configuration::printServerConfig()
 		std::cout << "Client max body size:\t" << it->body_size << " bytes" << std::endl;
 		for (std::vector<Location_config>::iterator itl = it->locations.begin(); itl != it->locations.end(); itl++)
 		{
-			std::cout << "Location:\t\t" << itl->location << std::endl;
+			std::cout << "\nLocation:\t\t" << itl->location << std::endl;
 			std::cout << "\tmethods\t\t";
 			for (std::set<std::string>::iterator it = itl->methods.begin(); it != itl->methods.end(); it++)
 			{
@@ -485,7 +444,8 @@ void Configuration::printServerConfig()
 				std::cout << "\tautoindex:\ton" << std::endl;
 			else
 				std::cout << "\tautoindex:\toff" << std::endl;
-			std::cout << "\tredir code:\t" << itl->redir.first << std::endl;
+			if (itl->redir.first != 0)
+				std::cout << "\tredir code:\t" << itl->redir.first << std::endl;
 			if (itl->redir.second != "")
 				std::cout << "\tredir URI:\t" << itl->redir.second << std::endl;
 		}

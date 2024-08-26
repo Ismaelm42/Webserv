@@ -65,10 +65,8 @@ Server::~Server()
 */
 int Server::acceptConnections()
 {
-	int client;
-
 	_sockaddrlen = sizeof(_sockaddr);
-	client = accept(_socket, (struct sockaddr *)&_sockaddr, (socklen_t *)&_sockaddrlen);
+	int client = accept(_socket, (struct sockaddr *)&_sockaddr, (socklen_t *)&_sockaddrlen);
 	if (client < 0 && (errno != EAGAIN && errno != EWOULDBLOCK))
 		throw std::runtime_error("Error: accept: " + std::string(strerror(errno)));
 	return client;
