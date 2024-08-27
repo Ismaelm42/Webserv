@@ -66,7 +66,7 @@ struct Server_config
 	std::map<int, std::string> error_pages;
 	std::vector<Location_config> locations;
 	size_t body_size;
-	Server_config() : body_size(0) {};
+	Server_config() : body_size(1000000) {};
 };
 
 struct Epoll_events
