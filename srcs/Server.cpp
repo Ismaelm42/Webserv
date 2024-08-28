@@ -13,15 +13,14 @@
 		Configura el socket para que escuche conexiones entrantes con una cola de 50 conexiones pendientes usando listen.
 		Imprime un mensaje de confirmación indicando que el servidor está escuchando en el puerto especificado.
 */
-Server::Server(int port, struct Epoll_events *events)
-:_port(port), _events(events)
+Server::Server(std::string ip, int port, struct Epoll_events *events, Server_config *config)
+:_port(port), _ip(ip), _config(config), _events(events)
 {
 	int optval = 1;
 
     _socket = ::socket(AF_INET, SOCK_STREAM, 0);
    	if (_socket < 0)
         throw std::runtime_error("Error: socket: " + std::string(strerror(errno)));
-
     if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) != 0)
         throw std::runtime_error("Error: setsockopt: " + std::string(strerror(errno)));
     if (setsockopt(_socket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) != 0)
@@ -29,7 +28,7 @@ Server::Server(int port, struct Epoll_events *events)
     if (fcntl(_socket, F_SETFL, O_NONBLOCK) < 0)
         throw std::runtime_error("Error: fcntl: " + std::string(strerror(errno)));
 	
-    _sockaddr.sin_addr.s_addr = INADDR_ANY;
+    _sockaddr.sin_addr.s_addr = inet_addr(_ip.c_str());
 	_sockaddr.sin_family = AF_INET;
 	_sockaddr.sin_port = htons(_port);
 

@@ -17,10 +17,8 @@ int main(int argc, char **argv)
 	signal(SIGINT, handleSignal);
     try
     {
-        Configuration config(argc, argv);
-        config.parsing();
-        // Webserv webserv;
-        // webserv.run();
+        Webserv webserv(argc, argv);
+        webserv.run();
     }
     catch(const std::exception& e)
     {

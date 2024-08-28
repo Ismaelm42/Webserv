@@ -7,15 +7,14 @@
 			- Si epoll_create falla, lanza una excepción con el mensaje de error correspondiente.
 		Añade puertos predeterminados (8080, 4040, 9090) a la lista _ports para que el servidor los use.
 */
-Webserv::Webserv()
+Webserv::Webserv(int argc, char **argv)
 {
+	_config = new Configuration(argc, argv);
+	_config->parsing();
 	_events = new Epoll_events;
 	_events->epfd = epoll_create(1);
 	if (_events->epfd < 0)
 		throw std::runtime_error("Error: epoll_create: " + std::string(strerror(errno)));
-	_ports.push_back(8080);
-	_ports.push_back(4040);
-	_ports.push_back(9090);
 }
 /*
 	Destructor de la clase Webserv.
@@ -25,6 +24,7 @@ Webserv::Webserv()
 */
 Webserv::~Webserv()
 {
+	delete _config;
 	delete _events;
 	for (std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); it++)
 		delete *it;
@@ -38,10 +38,16 @@ Webserv::~Webserv()
 */
 void Webserv::initializeServers()
 {
-	for(unsigned i = 0; i < _ports.size(); i++)
+	std::vector<std::pair<std::string, int> >::iterator it;
+
+	for (_config->_itServer = _config->_serversConfig.begin(); _config->_itServer != _config->_serversConfig.end(); _config->_itServer++)
 	{
-		Server *server = new Server(_ports[i], _events);
-		_servers.push_back(server);
+		_config->_itConfig = *_config->_itServer;
+		for (it = _config->_itConfig->ip_port.begin(); it != _config->_itConfig->ip_port.end(); it++)
+		{
+			Server *server = new Server(it->first, it->second, _events, _config->_itConfig);
+			_servers.push_back(server);
+		}
 	}
 }
 

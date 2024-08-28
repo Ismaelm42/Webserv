@@ -2,13 +2,13 @@
 
 /*
 	Constructor que inicializa una instancia de la clase Configuration. 
-	Verifica el número de argumentos recibidos, asegurándose de que se proporcione 
-	exactamente un archivo de configuración. Si no se especifica un archivo, 
-	utiliza un archivo de configuración predeterminado. A continuación, comprueba 
-	si el archivo existe y es accesible. Si no lo es, lanza una excepción. 
-	Finalmente, inicializa variables internas que gestionan el número de línea 
-	y en qué bloque se está leyendo del archivo (si estamos dentro de un bloque server
-	o en una directiva de location).
+		Verifica el número de argumentos recibidos, asegurándose de que se proporcione 
+		exactamente un archivo de configuración. Si no se especifica un archivo, 
+		utiliza un archivo de configuración predeterminado. A continuación, comprueba 
+		si el archivo existe y es accesible. Si no lo es, lanza una excepción. 
+		Finalmente, inicializa variables internas que gestionan el número de línea 
+		y en qué bloque se está leyendo del archivo (si estamos dentro de un bloque server
+		o en una directiva de location).
 */
 Configuration::Configuration(int argc, char **argv)
 {
@@ -26,8 +26,8 @@ Configuration::Configuration(int argc, char **argv)
 
 /*
 	Destructor que se encarga de liberar los recursos utilizados por la instancia de Configuration.
-	Libera la memoria asignada a los objetos Server_config almacenados en el vector _serversConfig,
-	y cierra el archivo de configuración si aún está abierto.
+		Libera la memoria asignada a los objetos Server_config almacenados en el vector _serversConfig,
+		y cierra el archivo de configuración si aún está abierto.
 */ 
 Configuration::~Configuration()
 {
@@ -48,10 +48,11 @@ std::string Configuration::logError(std::string message)
 	std::string error_message = ss.str();
 	return error_message;
 }
+
 /*
 	Verifica si una ruta específica corresponde a un archivo o directorio y si es accesible.
-	Si la ruta no cumple con los criterios o no tiene permisos de lectura, lanza una excepción
-	con un mensaje de error.
+		Si la ruta no cumple con los criterios o no tiene permisos de lectura, lanza una excepción
+		con un mensaje de error.
 */
 void Configuration::checkFileOrDirectory(std::string &path, const std::string type)
 {
@@ -69,10 +70,10 @@ void Configuration::checkFileOrDirectory(std::string &path, const std::string ty
 
 /*
 	Divide una línea de texto en tokens separados por espacios.
-	Si se encuentra un símbolo de comentario ('#'), elimina todo el contenido posterior
-	y agrega el token resultante al vector _tokens, terminando el proceso.
-	Los tokens válidos (no vacíos) anteriores al comentario se almacenan en el vector 
-	_tokens.
+		Si se encuentra un símbolo de comentario ('#'), elimina todo el contenido posterior
+		y agrega el token resultante al vector _tokens, terminando el proceso.
+		Los tokens válidos (no vacíos) anteriores al comentario se almacenan en el vector 
+		_tokens.
 */
 void Configuration::createTokens(std::string& line)
 {
@@ -96,11 +97,11 @@ void Configuration::createTokens(std::string& line)
 
 /*
 	Inicializa un bloque de configuración del servidor a partir de los tokens proporcionados.
-	Verifica que la directiva "server" esté correctamente configurada con exactamente dos tokens, 
-	donde el primero debe ser "server" y el segundo debe ser una llave de apertura ("{"). 
-	Si la configuración es válida, establece el indicador _inServerBlock en true, crea una nueva 
-	instancia de Server_config, la agrega al vector _serversConfig, y actualiza los iteradores 
-	_itServer e _itConfig para apuntar a la nueva configuración del servidor.
+		Verifica que la directiva "server" esté correctamente configurada con exactamente dos tokens, 
+		donde el primero debe ser "server" y el segundo debe ser una llave de apertura ("{"). 
+		Si la configuración es válida, establece el indicador _inServerBlock en true, crea una nueva 
+		instancia de Server_config, la agrega al vector _serversConfig, y actualiza los iteradores 
+		_itServer e _itConfig para apuntar a la nueva configuración del servidor.
 */
 void Configuration::initServerBlock()
 {
@@ -122,11 +123,11 @@ void Configuration::initServerBlock()
 
 /*
 	Establece los métodos HTTP permitidos para la configuración actual de la ubicación.
-	Itera sobre los tokens agregando cada método permitido (debe ser "GET", "POST" o "DELETE")
-	al conjunto de métodos permitidos de la última ubicación en la configuración.
-	Verifica que el último token termine con un punto y coma (";") y asegura que solo se acepten
-	los métodos válidos. Lanza una excepción si se encuentra un método inesperado o un error
-	de sintaxis en la directiva.
+		Itera sobre los tokens agregando cada método permitido (debe ser "GET", "POST" o "DELETE")
+		al conjunto de métodos permitidos de la última ubicación en la configuración.
+		Verifica que el último token termine con un punto y coma (";") y asegura que solo se acepten
+		los métodos válidos. Lanza una excepción si se encuentra un método inesperado o un error
+		de sintaxis en la directiva.
 */
 void Configuration::setAllowedMethods()
 {
@@ -148,11 +149,11 @@ void Configuration::setAllowedMethods()
 
 /*
 	Configura el índice automático para la última ubicación en la configuración.
-	Verifica que la directiva "autoindex" tenga exactamente dos argumentos, donde el segundo 
-	debe ser "on" o "off". Asegura que el argumento termine con un punto y coma (";") y 
-	remueve este carácter antes de realizar la verificación. Si el argumento es válido, 
-	configura el índice automático de la última ubicación en la configuración. Lanza una 
-	excepción si el número de argumentos es incorrecto o si el valor proporcionado es inesperado.
+		Verifica que la directiva "autoindex" tenga exactamente dos argumentos, donde el segundo 
+		debe ser "on" o "off". Asegura que el argumento termine con un punto y coma (";") y 
+		remueve este carácter antes de realizar la verificación. Si el argumento es válido, 
+		configura el índice automático de la última ubicación en la configuración. Lanza una 
+		excepción si el número de argumentos es incorrecto o si el valor proporcionado es inesperado.
 */
 void Configuration::setAutoindex()
 {
@@ -170,13 +171,13 @@ void Configuration::setAutoindex()
 
 /*
 	Configura la directiva de redirección para la última ubicación en la configuración.
-	Verifica que la directiva "return" tenga dos o tres argumentos. Si tiene dos, asegura que el 
-	segundo argumento termine con un punto y coma (";") y remueve este carácter antes de la 
-	validación. Verifica que el código de error sea exactamente de 3 dígitos, que esté dentro 
-	del rango válido (100-599) y que sea numérico. Si el número de argumentos es tres, el tercer 
-	argumento debe ser una URL de redirección que también debe terminar con un punto y coma. 
-	La configuración del redireccionamiento se actualiza en la última ubicación de la configuración. 
-	Lanza excepciones en caso de errores de sintaxis o valores inválidos.
+		Verifica que la directiva "return" tenga dos o tres argumentos. Si tiene dos, asegura que el 
+		segundo argumento termine con un punto y coma (";") y remueve este carácter antes de la 
+		validación. Verifica que el código de error sea exactamente de 3 dígitos, que esté dentro 
+		del rango válido (100-599) y que sea numérico. Si el número de argumentos es tres, el tercer 
+		argumento debe ser una URL de redirección que también debe terminar con un punto y coma. 
+		La configuración del redireccionamiento se actualiza en la última ubicación de la configuración. 
+		Lanza excepciones en caso de errores de sintaxis o valores inválidos.
 */
 void Configuration::setReturn()
 {
@@ -209,13 +210,13 @@ void Configuration::setReturn()
 
 /*
 	Procesa las directivas dentro de un bloque de ubicación en la configuración.
-	Primero, verifica que la directiva "root" esté configurada antes de definir ubicaciones. Si no 
-	estamos dentro de un bloque de ubicación, valida que la directiva "location" tenga exactamente 
-	tres argumentos y que la ubicación especificada sea un directorio válido. Luego, añade la 
-	configuración de la ubicación y establece en true que estamos dentro de un bloque de ubicación. Si ya 
-	estamos en un bloque de ubicación, maneja directivas específicas como "allow_methods", 
-	"autoindex", y "return". Si se encuentra un cierre de bloque "}" y no hay más tokens, sale del 
-	bloque de ubicación. Lanza excepciones en caso de errores de sintaxis o configuraciones inesperadas.
+		Primero, verifica que la directiva "root" esté configurada antes de definir ubicaciones. Si no 
+		estamos dentro de un bloque de ubicación, valida que la directiva "location" tenga exactamente 
+		tres argumentos y que la ubicación especificada sea un directorio válido. Luego, añade la 
+		configuración de la ubicación y establece en true que estamos dentro de un bloque de ubicación. Si ya 
+		estamos en un bloque de ubicación, maneja directivas específicas como "allow_methods", 
+		"autoindex", y "return". Si se encuentra un cierre de bloque "}" y no hay más tokens, sale del 
+		bloque de ubicación. Lanza excepciones en caso de errores de sintaxis o configuraciones inesperadas.
 */
 void Configuration::handleLocations()
 {
@@ -249,11 +250,11 @@ void Configuration::handleLocations()
 
 /*
 	Configura la directiva "listen" del servidor, que especifica la dirección IP y el puerto en el 
-	que el servidor debe escuchar. Primero, valida que la directiva tenga el formato correcto, 
-	incluyendo la presencia de un carácter de separación ":" y un carácter de finalización ";". 
-	Determina la dirección IP y el puerto a partir del token, utilizando valores predeterminados si 
-	es necesario. Verifica que la dirección IP sea válida y que el puerto esté en el rango permitido 
-	(0-65535). Finalmente, agrega el par IP-puerto a la configuración del servidor.
+		que el servidor debe escuchar. Primero, valida que la directiva tenga el formato correcto, 
+		incluyendo la presencia de un carácter de separación ":" y un carácter de finalización ";". 
+		Determina la dirección IP y el puerto a partir del token, utilizando valores predeterminados si 
+		es necesario. Verifica que la dirección IP sea válida y que el puerto esté en el rango permitido 
+		(0-65535). Finalmente, agrega el par IP-puerto a la configuración del servidor.
 */
 void Configuration::setListen()
 {
@@ -281,8 +282,8 @@ void Configuration::setListen()
 
 /*
 	Valida y procesa los nombres del servidor en la configuración.
-	Verifica si el número de argumentos es correcto y si hay errores de sintaxis.
-	Procesa cada token que representa un nombre de servidor, asegurándose de que el token finaliza en un punto y coma.
+		Verifica si el número de argumentos es correcto y si hay errores de sintaxis.
+		Procesa cada token que representa un nombre de servidor, asegurándose de que el token finaliza en un punto y coma.
 */
 void Configuration::setServerName()
 {
@@ -307,9 +308,9 @@ void Configuration::setServerName()
 
 /*
 	Establece el directorio raíz en la configuración.
-	La función verifica que el número de argumentos sea el esperado y que no haya errores de sintaxis.
-	Elimina el punto y coma final del token y asegura que el directorio raíz no termine en una barra inclinada.
-	Verifica que el directorio raíz exista y se pueda acceder, y luego lo asigna a la configuración.
+		La función verifica que el número de argumentos sea el esperado y que no haya errores de sintaxis.
+		Elimina el punto y coma final del token y asegura que el directorio raíz no termine en una barra inclinada.
+		Verifica que el directorio raíz exista y se pueda acceder, y luego lo asigna a la configuración.
 */
 void Configuration::setRootDirectory()
 {
@@ -329,8 +330,9 @@ void Configuration::setRootDirectory()
 
 /*
 	Establece los archivos de índice en la configuración.
-	La función asegura que se haya definido una directiva "root" y verifica los argumentos.
-	Procesa cada token como un archivo de índice, ajusta su ruta en función del directorio raíz y verifica si el archivo existe.
+		La función asegura que se haya definido una directiva "root" y verifica los argumentos.
+		Procesa cada token como un archivo de índice, ajusta su ruta en función del directorio raíz y
+		verifica si el archivo existe.
 */
 void Configuration::setIndexFiles()
 {
@@ -356,15 +358,15 @@ void Configuration::setIndexFiles()
 }
 
 /*
-	Establece las páginas de error en la configuración. La función asegura que se haya definido una directiva
-	"root" antes de configurar las páginas de error.
-	Valida la cantidad de argumentos y la sintaxis de la directiva "error_page".
-	Procesa el último token como la ruta del archivo de página de error, asegurándose de que esté correctamente formateado
-	y que el punto y coma final se elimine.
-	Verifica que la ruta del archivo exista y sea accesible. Itera sobre los códigos de error especificados en los tokens,
-	validando su formato y rango. Los códigos de error deben tener exactamente 3 dígitos o 2 dígitos y la x como wildcard
-	en la tercera posición. Actualiza el mapa de páginas de error en la configuración con la ruta del archivo para cada
-	código de error especificado.
+	Establece las páginas de error en la configuración.
+		La función asegura que se haya definido una directiva "root" antes de configurar las páginas de error.
+		Valida la cantidad de argumentos y la sintaxis de la directiva "error_page".
+		Procesa el último token como la ruta del archivo de página de error, asegurándose de que esté correctamente formateado
+		y que el punto y coma final se elimine.
+		Verifica que la ruta del archivo exista y sea accesible. Itera sobre los códigos de error especificados en los tokens,
+		validando su formato y rango. Los códigos de error deben tener exactamente 3 dígitos o 2 dígitos y la x como wildcard
+		en la tercera posición. Actualiza el mapa de páginas de error en la configuración con la ruta del archivo para cada
+		código de error especificado.
 */
 void Configuration::setErrorPages()
 {
@@ -403,14 +405,14 @@ void Configuration::setErrorPages()
 
 /*
 	Establece el tamaño máximo permitido para el cuerpo de las solicitudes del cliente.
-	La función valida la directiva "client_max_body_size" para asegurarse de que esté correctamente formateada
-	y que contenga el número adecuado de argumentos. Verifica que la directiva termine con un punto y coma.
-	Analiza el valor del tamaño del cuerpo, el cual puede estar en bytes, kilobytes (K), megabytes (M) o gigabytes (G).
-	Valida que el valor sea un número entero o un número seguido de una unidad (K, M o G).
-	Si no tiene una unidad, se asume que el valor está en bytes.
-	Convierte el valor del tamaño del cuerpo a bytes de acuerdo con la unidad especificada y actualiza
-	el tamaño máximo permitido en la configuración. Verifica que el tamaño máximo no exceda el límite de 5 GB.
-	Si el tamaño excede este límite, lanza un error.
+		La función valida la directiva "client_max_body_size" para asegurarse de que esté correctamente formateada
+		y que contenga el número adecuado de argumentos. Verifica que la directiva termine con un punto y coma.
+		Analiza el valor del tamaño del cuerpo, el cual puede estar en bytes, kilobytes (K), megabytes (M) o gigabytes (G).
+		Valida que el valor sea un número entero o un número seguido de una unidad (K, M o G).
+		Si no tiene una unidad, se asume que el valor está en bytes.
+		Convierte el valor del tamaño del cuerpo a bytes de acuerdo con la unidad especificada y actualiza
+		el tamaño máximo permitido en la configuración. Verifica que el tamaño máximo no exceda el límite de 5 GB.
+		Si el tamaño excede este límite, lanza un error.
 */
 void Configuration::setMaxBodySize()
 {
@@ -442,13 +444,13 @@ void Configuration::setMaxBodySize()
 
 /*
 	Verifica la validez y la completitud del bloque de configuración del servidor.
-	La función realiza las siguientes comprobaciones:
-	1. Verifica que haya al menos una directiva "listen" en el bloque del servidor. Si no hay ninguna, lanza un error.
-	2. Verifica que haya al menos una directiva "server_name" en el bloque del servidor. Si no hay ninguna, lanza un error.
-	3. Recorre la lista de configuraciones de ubicación ("locations") para asegurarse de que haya una configuración de ubicación para la raíz ("/"). 
-	   Si no se encuentra una directiva "location" para la raíz, lanza un error.
-	La directiva "root" también es esencial en el archivo de configuración pero no es necesario revisarlo ya que es imprescindible para
-	location "/" por lo que el error está controlado a la hora de implementar otras partes.
+		La función realiza las siguientes comprobaciones:
+			1. Verifica que haya al menos una directiva "listen" en el bloque del servidor. Si no hay ninguna, lanza un error.
+			2. Verifica que haya al menos una directiva "server_name" en el bloque del servidor. Si no hay ninguna, lanza un error.
+			3. Recorre la lista de configuraciones de ubicación ("locations") para asegurarse de que haya una configuración de ubicación para la raíz ("/"). 
+		Si no se encuentra una directiva "location" para la raíz, lanza un error.
+		La directiva "root" también es esencial en el archivo de configuración pero no es necesario revisarlo ya que es imprescindible para
+		location "/" por lo que el error está controlado a la hora de implementar otras partes.
 */
 void Configuration::checkServerBlockErrors()
 {
@@ -465,9 +467,9 @@ void Configuration::checkServerBlockErrors()
 }
 /*
 	Finaliza el bloque de configuración del servidor. 
-	Si no hay más tokens después de la llave de cierre "}", marca el fin del bloque del servidor.
-	Si hay más tokens, lanza una excepción por error de sintaxis.
-	Luego, se verifica errores en el bloque del servidor con checkServerBlockErrors().
+		Si no hay más tokens después de la llave de cierre "}", marca el fin del bloque del servidor.
+		Si hay más tokens, lanza una excepción por error de sintaxis.
+		Luego, se verifica errores en el bloque del servidor con checkServerBlockErrors().
 */
 void Configuration::endServerBlock()
 {
@@ -480,11 +482,11 @@ void Configuration::endServerBlock()
 
 /*
 	Maneja cada línea de configuración de acuerdo a su contexto. 
-	Verifica si _tokens está vacío, en cuyo caso no hace nada. 
-	Si no se está en un bloque de servidor, se inicializa el bloque del servidor. 
-	Si estamos en un bloque de ubicación o el primer _token es "location", maneja las directivas de ubicación. 
-	De lo contrario, analiza el primer _token y llama a la función correspondiente según éste. 
-	Si se encuentra una directiva no reconocida, lanza una excepción. 
+		Verifica si _tokens está vacío, en cuyo caso no hace nada. 
+		Si no se está en un bloque de servidor, se inicializa el bloque del servidor. 
+		Si estamos en un bloque de ubicación o el primer _token es "location", maneja las directivas de ubicación. 
+		De lo contrario, analiza el primer _token y llama a la función correspondiente según éste. 
+		Si se encuentra una directiva no reconocida, lanza una excepción. 
 */
 void Configuration::handleConfigLine()
 {
@@ -518,11 +520,11 @@ void Configuration::handleConfigLine()
 
 /*
 	Función principal.
-	Lee y procesa cada línea del archivo de configuración.
-	Incrementa el contador de líneas leídas.
-	Crea tokens a partir de la línea.
-	Gestiona la línea de configuración con la función handleConfigLine();
-	Limpia el contenedor de tokens.
+		Lee y procesa cada línea del archivo de configuración.
+		Incrementa el contador de líneas leídas.
+		Crea tokens a partir de la línea.
+		Gestiona la línea de configuración con la función handleConfigLine();
+		Limpia el contenedor de tokens.
 */
 void Configuration::parsing()
 {
@@ -535,7 +537,7 @@ void Configuration::parsing()
 		handleConfigLine();
 		_tokens.clear();
 	}
-	printServerConfig();
+	//printServerConfig();
 }
 
 /*
