@@ -1,11 +1,10 @@
 NAME = webserv
 
 SRC =	srcs/main.cpp			\
+		srcs/Configuration.cpp	\
 		srcs/Client.cpp			\
 		srcs/Server.cpp			\
-		srcs/Socket.cpp			\
-		srcs/Request.cpp		\
-		srcs/Response.cpp		\
+		srcs/Webserv.cpp		\
 
 OBJT_DIR = .objt/
 
@@ -15,7 +14,7 @@ C++ = c++
 
 CFLAGS = -Wall -Wextra -Werror
 
-C++FLAG = -std=c++11
+C++FLAG = -std=c++98
 
 RM = rm -f
 

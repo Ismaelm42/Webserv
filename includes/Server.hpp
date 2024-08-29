@@ -1,26 +1,28 @@
 #pragma once
 #include "./common.hpp"
-#include "./Socket.hpp"
 #include "./Client.hpp"
 
 class Server
 {
 	private:
-		Socket _socket; 				// socket instance
-		Client _client; 				// client instance
-		struct sockaddr_in _address; 	// address structure
-		int _addressLen; 				// address length
-		int _serverFd; 					// server file descriptor
-		int _optval; 					// to cheange the socket propeties
-		int _port; 						// conection port
-		int _epfd; 						// epoll file descriptor
-		int _socketFd; 					// socket file descriptor
-
-	public:
-		Server(int port);
+		int _socket;													// File descriptor del Server
+		int _port;														// Puerto del servidor
+		std::string _ip;												// IP
+		int _sockaddrlen;												// Tamaño de la estructura _sockaddr
+		Server_config *_config;											// Puntero a la estructura de configuración del server
+		struct sockaddr_in _sockaddr;									// _sockaddr del Server
+		struct Epoll_events *_events; 									// Puntero a estructura Epoll
+		std::map<int, Client*> _clients;								// fd + cliente
+	public:		
+		Server(std::string ip, int port, struct Epoll_events *events, Server_config *config);	// Se crea y configura el socket del server
 		~Server();
-		void configServer();		    // config server
-		void bindServer();				// bind server
-		void listenning();				// listenning
-		void acceptConnections();		// accept connections
+		int acceptConnections();																// Acepta las conexiones
+		void addClient(int fd);																	// Añade un nuevo cliente
+		void deleteClient(int fd);																// Elimina un cliente
+		void recordEvent(int fd);																// Añade un nuevo evento a la estructura Epoll (_events->added)
+		void deleteEvent(int fd);																// Elimina un evento de la estructura Epoll (_events->added / _events_log)
+		void handleRequest(int fd);																// Gestiona la request del cliente				
+		void handleResponse(int fd);															// Gestiona la response del cliente
+		bool hasClientsToProcess();																// Verifica si hay clientes en el container _clients
+		void handleEvents();																	// Procesa los eventos ocurridos y llama a las funciones de lectura o respuesta
 };

@@ -1,21 +1,17 @@
 #pragma once
 #include "./common.hpp"
-#include "./Request.hpp"
-#include "./Response.hpp"
 
-class Client //Quizás debería hacerse como una clase virtual?
+class Client
 {
 	private:
-		std::map<int, std::pair<Request, Response> > _data; // map of clients with request and response
+		int _fd;								// Fd del cliente
+		int _status;							// Flag que indica si el cliente ha recibido una request
+		std::string _request;					// Request (quizás sea interesante guardar la request en un stream para despiezarla luego en varios strings)
+		std::string _response;					// Response
 	public:
-		Client();
+		Client(int fd);
 		~Client();
-
-		void addClient(int fd); 		// add client
-		void deleteClient(int fd);		// delete client
-
-		void addRequest(int fd);		// add request	
-		void sendResponse(int fd);		// send response
-
-		int clientCounter();			// client counter
+		int getStatus();
+		int getRequest();
+		int sendResponse();
 };

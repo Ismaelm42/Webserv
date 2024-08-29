@@ -1,5 +1,5 @@
 #pragma once
+#include "./Configuration.hpp"
 #include "./Server.hpp"
-#include "./Socket.hpp"
-#include "./Request.hpp"
-#include "./Response.hpp"
+#include "./Webserv.hpp"
+

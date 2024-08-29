@@ -1,79 +1,61 @@
 #include "../includes/lib.hpp"
 
-Client::Client()
+Client::Client(int fd)
+:_fd(fd), _status(0)
 {
- //std::cerr << "Client constructor" << std::endl;
+	
 }
 
 Client::~Client()
 {
-
+	
 }
 
-/**
- * @brief Add client to the map
- * 
- * @param fd file descriptor
- * instancia un request para el primer elemento del par dentro del mapa cuyo 
- * primer elemento es _data[fd] y un response para el segundo asociando cada 
- * uno de ellos con el file descriptor.	
- */
-
-void Client::addClient(int fd)
+int Client::getStatus()
 {
-	_data[fd].first = Request();
-	_data[fd].second = Response();
+	return _status;
 }
-
-/**
- * @brief borra el cliente del mapa.
- * 
- * @param fd file descriptor
- * 
- */
-
-void Client::deleteClient(int fd)
+/*
+	Gestiona la request y si la lectura del socket no es posible cierra la conexión con el socket.
+	En desarrollo.
+*/
+int Client::getRequest()
 {
-	_data.erase(fd);
-}
+	char buffer[10000];
+	int bytesRead;
 
-/**
- * @brief añade una petición al cliente.
- * Llamando a la porpia función addRequest de la clase Request.
- * @param fd file descriptor
- *
- */
-void Client::addRequest(int fd)
-{
-	_data[fd].first.addRequest(fd);
+	std::memset(buffer, 0, 10000);
+	bytesRead = read(_fd, buffer, 10000);
+	if (bytesRead == 0 || bytesRead < 0)
+	{
+		std::cout << "Connection closed on fd " << _fd << std::endl;
+		return -1;
+	}
+	_request = buffer;
+	std::cout << High_Cyan << "Message received from fd " << _fd << ":" << Reset << std::endl;
+	_status = 1;
+	return 0;
 }
 
 /*
- * @brief envía la respuesta al cliente asociado a fd conviritendola antes en un string.	
- *	ver si hay que incluir la codificación en este punto o en la propia clase response.
- * @param fd file descriptor
- * Antes de enviar la respuesta comprobamos si la petición no está vacía y si no lo está 
- * añadimos la respuesta al cliente y borramos la petición (tanto request como response).
- * al cliente
- */
-void Client::sendResponse(int fd)
+	Gestiona la response.
+	En desarrollo.
+*/
+int Client::sendResponse()
 {
-	std::string request = _data[fd].first.getRequest();
+	int bytesSent;
+	std::stringstream responseStream;
 
-	if (!request.empty())
-	{
-		_data[fd].second.addResponse(fd, request);
-		_data[fd].first.eraseRequest();
-		_data[fd].second.eraseResponse();
-	}
-}
+	responseStream << "HTTP/1.1 200 OK\r\n";
+	responseStream << "Content-Type: text/plain\r\n";
+	responseStream << "Content-Length: " << 29 << "\r\n";
+	responseStream << "\r\n";
+	responseStream << "Hello, world! from socket " << _fd << "\r\n";
 
-/**
- * @brief cuenta la cantidad de clientes.
- * 
- * @return int cantidad de clientes (fds en el mapa)
- */
-int Client::clientCounter()
-{
-	return _data.size();
+	std::string response = responseStream.str();
+	bytesSent = send(_fd, response.c_str(), response.size(), 0);
+	if (bytesSent < 0)
+		throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
+	_status = 0;
+	return 0;
 }
