@@ -8,7 +8,6 @@ class Server
 		int _socket;													// File descriptor del Server
 		int _port;														// Puerto del servidor
 		std::string _ip;												// IP
-		int _sockaddrlen;												// Tamaño de la estructura _sockaddr
 		Server_config *_config;											// Puntero a la estructura de configuración del server
 		struct sockaddr_in _sockaddr;									// _sockaddr del Server
 		struct Epoll_events *_events; 									// Puntero a estructura Epoll

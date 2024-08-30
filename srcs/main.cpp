@@ -26,3 +26,13 @@ int main(int argc, char **argv)
     }
     return 0;
 }
+
+// MEJORAS:
+
+// El container de std::vector<struct epoll_event> log está cada vez que procesa eventos haciendo resize.
+// Quizás sea interesante establecer un tamaño fijo e incrementarlo por dos si necesita más para trackear
+// los eventos de las conexiones de los clientes.
+// Tamaño de 100 inicial. En cuanto necesita 1 conexión mas: 100x2 y así sucesivamente¿?
+
+// Echar un ojo al método de handle request y handle response ya que creo que es bastante malo
+// para seguir tal como está implementado.
