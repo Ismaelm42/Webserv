@@ -38,7 +38,7 @@ Server::Server(std::string ip, int port, struct Epoll_events *events, Server_con
 
     if (listen(_socket, 50) < 0)
         throw std::runtime_error("Error: listen: " + std::string(strerror(errno)));
-    std::cout << Yellow << "Server started listenning on port " << _port << Reset << std::endl;
+    std::cout << High_Green << "Server listenning on " << _ip << ":" << _port << Reset << std::endl;
 }
 /*
 	Destructor de la clase Server.
@@ -50,11 +50,7 @@ Server::Server(std::string ip, int port, struct Epoll_events *events, Server_con
 Server::~Server()
 {
 	for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
-		std::cout << Yellow <<"\tBefore shutdown fd: " << it->first << " port: " << it->second->_port << Reset << std::endl;
-	for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
-	{
 		delete it->second;
-	}
 	_clients.clear();
 }
 
@@ -65,7 +61,8 @@ Server::~Server()
 			- _sockaddr se utiliza para almacenar la dirección del cliente que se está conectando.
 			- _sockaddrlen es el tamaño de la estructura _sockaddr.
 		Si accept devuelve un valor menor a 0 (indicando un error) y el error no es EAGAIN ni EWOULDBLOCK,
-		   lanza una excepción con el mensaje de error correspondiente usando strerror para obtener la descripción del error.
+		lanza una excepción con el mensaje de error correspondiente usando strerror para obtener la descripción del error.
+		Configura el fd en modo no bloqueante usando fcntl (en principio necesario para las siguientes operaciones de lectura).
 		Devuelve el descriptor del socket del cliente (client) si la conexión fue aceptada exitosamente.
 */
 int Server::acceptConnections()
@@ -94,9 +91,12 @@ void Server::addEventandClient(int fd)
 {
 	if (fd > 0)
 	{
-		std::cout << High_Purple << "FD " << fd << " created" << Reset << std::endl;
-    	Client *client = new Client(_ip, _port, fd, _config);
-    	_clients[fd] = client;
+		if (_clients.find(fd) == _clients.end())
+		{
+			std::cout << High_Cyan << "Socket with fd " << fd << " has been created" << Reset << std::endl;
+    		Client *client = new Client(_ip, _port, fd, _config);
+    		_clients[fd] = client;
+		}
 		struct epoll_event event;
 		event.events = EPOLLIN | EPOLLOUT;
 		event.data.fd = fd;
@@ -131,7 +131,6 @@ void Server::deleteEventandClient(int fd)
     }
 	delete _clients[fd];
 	_clients.erase(fd);
-	std::cout << High_Purple << "FD " << fd << "Destroyed" << Reset << std::endl;
 	close(fd);
 	std::cout << "Event and client associated with fd " << fd << " has been removed." << std::endl;   
 }
@@ -144,12 +143,9 @@ void Server::deleteEventandClient(int fd)
 */
 void Server::handleRequest(int fd)
 {
-	if (_clients.count(fd) && _clients[fd]->getRequest() < 0)
-	{
-		for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
-			std::cout << Yellow <<"\tBefore handle request fd: " << it->first << " port: " << it->second->_port << Reset << std::endl;
-		deleteEventandClient(fd);
-	}
+	if (_clients.find(fd) != _clients.end())
+		if (_clients[fd]->getRequest() < 0)
+			deleteEventandClient(fd);
 }
 
 /*
@@ -160,10 +156,7 @@ void Server::handleRequest(int fd)
 void Server::handleResponse(int fd)
 {
 	if (_clients.find(fd) != _clients.end() && _clients[fd]->getStatus())
-	{
 		_clients[fd]->sendResponse();
-		deleteEventandClient(fd);
-	}
 }
 
 /*
@@ -171,7 +164,9 @@ void Server::handleResponse(int fd)
 		Ajusta el tamaño del contenedor _events->log para que coincida con el número de eventos en _events->added.
 		Usa epoll_wait para esperar eventos y llenar _events->log con los eventos que han ocurrido.
 		Recorre _events->log y maneja cada evento:
-			- Si el evento indica un error (EPOLLERR) o una desconexión (EPOLLHUP), lanza una excepción.
+			- Si el evento indica un error (EPOLLERR) o una desconexión (EPOLLHUP), es que una desconexión
+				abrupta por parte del cliente se ha originado. Se elimina el cliente y los eventos relacionados con
+				ese fd.
 			- Si el evento es de lectura (EPOLLIN), llama a handleRequest() para procesar la solicitud del cliente.
 			- Si el evento es de escritura (EPOLLOUT), llama a handleResponse() para enviar una respuesta al cliente.
 */
@@ -186,9 +181,8 @@ void Server::handleEvents()
 	{
 		if (_events->log[i].events & EPOLLERR || _events->log[i].events & EPOLLHUP)
 		{
-			int fd = _events->log[i].data.fd;
-			std::cout << Red << "Connection reset by peer" << Reset << std::endl;
-			deleteEventandClient(fd);
+			std::cout << Red << "Connection unexpectedly reset by peer" << Reset << std::endl;
+			deleteEventandClient(_events->log[i].data.fd);
 		}
 		else
 		{
@@ -199,8 +193,3 @@ void Server::handleEvents()
 		}
 	}
 }
-
-// Modificar el Server de forma que mantenga conexiones keep it alive.
-// Después de enviar la respuesta no se debe eliminar el cliente.
-// Hay que ver cómo realizar eso sin que dé memory leaks
-// Comprobar que Webserv es realmente un server en HTTP 1.1
