@@ -1,6 +1,7 @@
 #pragma once
 #include "./common.hpp"
 #include "./Client.hpp"
+#include "./Request.hpp"
 
 class Server
 {

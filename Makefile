@@ -5,6 +5,7 @@ SRC =	srcs/main.cpp			\
 		srcs/Client.cpp			\
 		srcs/Server.cpp			\
 		srcs/Webserv.cpp		\
+		srcs/Request.cpp		
 
 OBJT_DIR = .objt/
 

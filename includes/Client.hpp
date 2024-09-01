@@ -1,5 +1,6 @@
 #pragma once
 #include "./common.hpp"
+#include "./Request.hpp"
 
 class Client
 {
@@ -14,6 +15,7 @@ class Client
 	public:
 		Client(std::string _ip, int port, int fd, Server_config *config);
 		~Client();
+		Request request;
 		int getStatus();
 		int getRequest();
 		int sendResponse();

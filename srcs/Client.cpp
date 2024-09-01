@@ -31,6 +31,7 @@ int Client::getRequest()
 		std::cout << Red << "Connection closed on fd " << _fd << Reset << std::endl;
 		return -1;
 	}
+	request.fillRequest(buffer, bytesRead);
 	_request = buffer;
 	std::cout << Cyan << "Message received from fd " << _fd << "\tadress " << _ip << ":" << _port << Reset << std::endl;
 	_status = 1;
@@ -57,5 +58,6 @@ int Client::sendResponse()
 	if (bytesSent < 0)
 		throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
 	_status = 0;
+	request.reset();			// Reseteamos la request para la siguiente iteración
 	return 0;
 }
