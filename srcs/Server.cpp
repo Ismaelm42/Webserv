@@ -21,6 +21,7 @@ Server::Server(std::string ip, int port, struct Epoll_events *events, Server_con
     _socket = ::socket(AF_INET, SOCK_STREAM, 0);
    	if (_socket < 0)
         throw std::runtime_error("Error: socket: " + std::string(strerror(errno)));
+
     if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) != 0)
         throw std::runtime_error("Error: setsockopt: " + std::string(strerror(errno)));
     if (setsockopt(_socket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval)) != 0)
@@ -37,7 +38,7 @@ Server::Server(std::string ip, int port, struct Epoll_events *events, Server_con
 
     if (listen(_socket, 50) < 0)
         throw std::runtime_error("Error: listen: " + std::string(strerror(errno)));
-    std::cout << Yellow << "Server started listenning on port " << _port << Reset << std::endl;
+    std::cout << High_Green << "Server listenning on " << _ip << ":" << _port << Reset << std::endl;
 }
 /*
 	Destructor de la clase Server.
@@ -50,6 +51,7 @@ Server::~Server()
 {
 	for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); it++)
 		delete it->second;
+	_clients.clear();
 }
 
 /*
@@ -59,72 +61,67 @@ Server::~Server()
 			- _sockaddr se utiliza para almacenar la dirección del cliente que se está conectando.
 			- _sockaddrlen es el tamaño de la estructura _sockaddr.
 		Si accept devuelve un valor menor a 0 (indicando un error) y el error no es EAGAIN ni EWOULDBLOCK,
-		   lanza una excepción con el mensaje de error correspondiente usando strerror para obtener la descripción del error.
+		lanza una excepción con el mensaje de error correspondiente usando strerror para obtener la descripción del error.
+		Configura el fd en modo no bloqueante usando fcntl (en principio necesario para las siguientes operaciones de lectura).
 		Devuelve el descriptor del socket del cliente (client) si la conexión fue aceptada exitosamente.
 */
 int Server::acceptConnections()
 {
-	_sockaddrlen = sizeof(_sockaddr);
+	int _sockaddrlen = sizeof(_sockaddr);
 	int client = accept(_socket, (struct sockaddr *)&_sockaddr, (socklen_t *)&_sockaddrlen);
 	if (client < 0 && (errno != EAGAIN && errno != EWOULDBLOCK))
 		throw std::runtime_error("Error: accept: " + std::string(strerror(errno)));
+    if (client > 0 && fcntl(client, F_SETFL, O_NONBLOCK) < 0)
+		throw std::runtime_error("Error: fcntl: " + std::string(strerror(errno)));
 	return client;
 }
-/*
-	Agrega un nuevo cliente a la lista de clientes.
-		Crea un nuevo objeto Client utilizando el descriptor de archivo fd.
-		Asocia este objeto al descriptor de archivo en el contenedor _clients (un std::map de descriptores de archivo a punteros de Client).
-		La función asegura que cada descriptor de archivo tenga un objeto Client asociado.
-*/
-void Server::addClient(int fd)
-{
-    Client *client = new Client(fd);
-    _clients[fd] = client;
-}
 
 /*
-	Elimina un cliente de la lista de clientes.
-		Borra el objeto Client asociado al descriptor de archivo fd del contenedor _clients.
-		La memoria del objeto Client se libera utilizando delete.
-		El descriptor de archivo se elimina del contenedor _clients.
-*/
-void Server::deleteClient(int fd)
-{
-	delete _clients[fd];
-    _clients.erase(fd);
-}
-
-/*
-	Registra un nuevo evento en el epoll.
+	Registra un nuevo evento en el epoll y añade un nuevo cliente a la lista de clientes.
+		Si accept devuelve por un fd válido y no -1 se asigna un nuevo cliente con ese fd y se crea un nuevo cliente.
 		Configura un objeto epoll_event con los eventos EPOLLIN y EPOLLOUT para el descriptor de archivo fd.
 		Almacena el evento en el contenedor _events->added.
 		Usa epoll_ctl para añadir el descriptor de archivo y el evento al epoll.
 		Lanza una excepción si epoll_ctl falla.
+		Crea un nuevo objeto Client utilizando el descriptor de archivo fd.
+		Asocia este objeto al descriptor de archivo en el contenedor _clients (un std::map de descriptores de archivo a punteros de Client).
+		La función asegura que cada descriptor de archivo tenga un objeto Client asociado.
 */
-void Server::recordEvent(int fd)
+void Server::addEventandClient(int fd)
 {
-	struct epoll_event event;
-	event.events = EPOLLIN | EPOLLOUT;
-	event.data.fd = fd;
-	_events->added[fd] = event;
-	if (epoll_ctl(_events->epfd, EPOLL_CTL_ADD, fd, &_events->added[fd]) == -1)
-		throw std::runtime_error("Error: epoll_ctl_add: " + std::string(strerror(errno)));
+	if (fd > 0)
+	{
+		if (_clients.find(fd) == _clients.end())
+		{
+			std::cout << High_Cyan << "Socket with fd " << fd << " has been created" << Reset << std::endl;
+    		Client *client = new Client(_ip, _port, fd, _config);
+    		_clients[fd] = client;
+		}
+		struct epoll_event event;
+		event.events = EPOLLIN | EPOLLOUT;
+		event.data.fd = fd;
+		_events->added[fd] = event;
+		if (epoll_ctl(_events->epfd, EPOLL_CTL_ADD, fd, &_events->added[fd]) == -1)
+			throw std::runtime_error("Error: epoll_ctl_add: " + std::string(strerror(errno)));
+	}
 }
 
 /*
-	Elimina un evento del epoll y del contenedor de eventos.
+	Elimina un evento del epoll y del contenedor de eventos y elimina el cliente de la lista de clientes.
 		Usa epoll_ctl para eliminar el descriptor de archivo fd del epoll.
 		Borra el evento correspondiente del contenedor _events->added.
 		Recorre el contenedor _events->log para encontrar y eliminar el evento asociado al descriptor de archivo fd.
 		Cierra el descriptor de archivo utilizando close.
+		Borra el objeto Client asociado al descriptor de archivo fd del contenedor _clients.
+		La memoria del objeto Client se libera utilizando delete.
+		El descriptor de archivo se elimina del contenedor _clients.
 */
-void Server::deleteEvent(int fd)
+void Server::deleteEventandClient(int fd)
 {
 	if (epoll_ctl(_events->epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
 		throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
     _events->added.erase(fd);
-    std::vector<struct epoll_event>::iterator it;
-    for (it = _events->log.begin(); it != _events->log.end(); it++)
+	for (std::vector<struct epoll_event>::iterator it = _events->log.begin(); it != _events->log.end(); it++)
     {
         if (it->data.fd == fd)
         {
@@ -132,7 +129,10 @@ void Server::deleteEvent(int fd)
             break ;
         }
     }
-	close(fd);    
+	delete _clients[fd];
+	_clients.erase(fd);
+	close(fd);
+	std::cout << "Event and client associated with fd " << fd << " has been removed." << std::endl;   
 }
 
 /*
@@ -143,14 +143,9 @@ void Server::deleteEvent(int fd)
 */
 void Server::handleRequest(int fd)
 {
-	if (_clients.count(fd))
-	{
+	if (_clients.find(fd) != _clients.end())
 		if (_clients[fd]->getRequest() < 0)
-		{
-			deleteEvent(fd);
-			deleteClient(fd);
-		}
-	}
+			deleteEventandClient(fd);
 }
 
 /*
@@ -165,34 +160,36 @@ void Server::handleResponse(int fd)
 }
 
 /*
-	Verifica si hay clientes en el contenedor _clients que necesitan ser procesados.
-*/
-bool Server::hasClientsToProcess()
-{
-	return !_clients.empty();
-}
-
-/*
 	Maneja los eventos de epoll.
 		Ajusta el tamaño del contenedor _events->log para que coincida con el número de eventos en _events->added.
 		Usa epoll_wait para esperar eventos y llenar _events->log con los eventos que han ocurrido.
 		Recorre _events->log y maneja cada evento:
-			- Si el evento indica un error (EPOLLERR) o una desconexión (EPOLLHUP), lanza una excepción.
+			- Si el evento indica un error (EPOLLERR) o una desconexión (EPOLLHUP), es que una desconexión
+				abrupta por parte del cliente se ha originado. Se elimina el cliente y los eventos relacionados con
+				ese fd.
 			- Si el evento es de lectura (EPOLLIN), llama a handleRequest() para procesar la solicitud del cliente.
 			- Si el evento es de escritura (EPOLLOUT), llama a handleResponse() para enviar una respuesta al cliente.
 */
 void Server::handleEvents()
 {
+	if (_events->added.empty())
+		return;
 	_events->log.resize(_events->added.size());
     if (epoll_wait(_events->epfd, _events->log.data(), _events->log.size(), -1) == -1)
 		throw std::runtime_error("Error: epoll_wait: " + std::string(strerror(errno)));
 	for (long unsigned i = 0; i < _events->log.size(); i++)
 	{
 		if (_events->log[i].events & EPOLLERR || _events->log[i].events & EPOLLHUP)
-			throw std::runtime_error("Error: Epoller | Epollhup: " + std::string(strerror(errno)));
-		if (_events->log[i].events & EPOLLIN)
-			handleRequest(_events->log[i].data.fd);
-		if (_events->log[i].events & EPOLLOUT)
-			handleResponse(_events->log[i].data.fd);
+		{
+			std::cout << Red << "Connection unexpectedly reset by peer" << Reset << std::endl;
+			deleteEventandClient(_events->log[i].data.fd);
+		}
+		else
+		{
+			if (_events->log[i].events & EPOLLIN)
+				handleRequest(_events->log[i].data.fd);
+			if (_events->log[i].events & EPOLLOUT)
+				handleResponse(_events->log[i].data.fd);
+		}
 	}
 }

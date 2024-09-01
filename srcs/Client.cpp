@@ -1,14 +1,14 @@
 #include "../includes/lib.hpp"
 
-Client::Client(int fd)
-:_fd(fd), _status(0)
+Client::Client(std::string ip, int port, int fd, Server_config *config)
+:_fd(fd), _port(port), _status(0), _ip(ip), _config(config)
 {
 	
 }
 
 Client::~Client()
 {
-	
+
 }
 
 int Client::getStatus()
@@ -28,11 +28,11 @@ int Client::getRequest()
 	bytesRead = read(_fd, buffer, 10000);
 	if (bytesRead == 0 || bytesRead < 0)
 	{
-		std::cout << "Connection closed on fd " << _fd << std::endl;
+		std::cout << Red << "Connection closed on fd " << _fd << Reset << std::endl;
 		return -1;
 	}
 	_request = buffer;
-	std::cout << High_Cyan << "Message received from fd " << _fd << ":" << Reset << std::endl;
+	std::cout << Cyan << "Message received from fd " << _fd << "\tadress " << _ip << ":" << _port << Reset << std::endl;
 	_status = 1;
 	return 0;
 }

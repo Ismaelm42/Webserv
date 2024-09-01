@@ -537,7 +537,8 @@ void Configuration::parsing()
 		handleConfigLine();
 		_tokens.clear();
 	}
-	//printServerConfig();
+	printServerConfig();
+	std::cout << std::endl << std::endl;
 }
 
 /*
@@ -550,7 +551,7 @@ void Configuration::printServerConfig()
 	for (_itServer = _serversConfig.begin(); _itServer != _serversConfig.end(); _itServer++)
 	{
 		Server_config *it = *_itServer;
-		std::cout << Yellow << "[SERVER " << i + 1 << "]" << Reset << std::endl << std::endl;
+		std::cout << Yellow << "[SERVER CONFIG " << i + 1 << "]" << Reset << std::endl << std::endl;
 		for (std::vector<std::pair<std::string, int> >::iterator itip = it->ip_port.begin(); itip != it->ip_port.end(); itip++)
 		{
 			std::cout << "Listen IP:\t\t" << itip->first << std::endl;
