@@ -23,15 +23,8 @@ enum fillStatusEnum
 	get_URI_Path,
 	get_URI_Query,
 	get_URI_Fragment,
-	get_Version,
-	// // get_HT,
-	// // get_HTT,
-	// // get_HTTP,
-	// // get_HTTP_Slash,
-	// get_first_version,
-	// get_Dot,
-	// get_second_version,
-	// get_CR,
+	get_Protocol,
+	get_CR,
 	// get_LF,
 	// header_Name_Start,
 	// headers_End,
@@ -57,17 +50,17 @@ class Request
 	public:
 		Request();
 		~Request();
-	//	Methods									  &getMethod();
+	//	Methods									 &getMethod();
 	//	std::string								 &getPath();
 	//	std::string								 &getQuery();
 	//	std::string								 &getFragment();
 	//	std::string								 getHeader(std::string const &);
-	//	const std::map<std::string, std::string>	&getHeaders() const;
+	//	const std::map<std::string, std::string> &getHeaders() const;
 	// 	std::string								 getMethodStr();
 	//	std::string								 &getBody();
 	//	std::string								 getServerName();
 	//	std::string								 &getBoundary();
-	//	bool										getMultiformFlag();
+	//	bool									 getMultiformFlag();
 		
 	//	 void		setMethod(HttpMethod &);
 	//	 void		setHeader(std::string &, std::string &);
@@ -77,31 +70,30 @@ class Request
 	//	 bool		parsingCompleted();
 	//	 void		printMessage();
 		void		reset();
-	//	 short	   errorCode();
+	//	 short	    errorCode();
 	//	 bool		keepAlive();
 	//	 void		cutReqBody(int bytes);
 
 	private:
-		void	_initMethodStr(); 
-		void	returnErr(int err, std::string msg,uint8_t charRead);
+		void		_initMethodStr(); 
+		void		returnErr(int err, std::string msg,uint8_t charRead);
 	
 		std::string							_path;				  // se usa para almacenar la ruta del recurso solicitado
-	//	 std::string						 _query;
-	//	 std::string						 _fragment;
-	//	 std::map<std::string, std::string>  _request_headers;
-	//	 std::vector<u_int8_t>			   _body;
-	//	 std::string						 _boundary;
-		Methods								 _method;				// se usa para almacenar el método a comparar con el metodo recibido basado en la primera letra
+		//	 std::string						_query;
+		//	 std::string						_fragment;
+		//	 std::map<std::string, std::string> _request_headers;
+		//	 std::vector<u_int8_t>			   	_body;
+		// std::string							_boundary;
+		Methods								_method;				// se usa para almacenar el método a comparar con el metodo recibido basado en la primera letra
 		std::map<u_int8_t, std::string>		_methods_str;			// se usa para comparar el metodo recibido alacendo strings  de los métodos recibidos 
-		fillStatusEnum						 _fillStatus;				 // se usa para almacenar el estado actual del parser y lo que buscamos o esperamos en cada momento
-	//	 size_t							  _max_body_size;
-	//	 size_t							  _body_length;		   // se usa para almacenar la longitud del cuerpo de la solicitud aportado por el heade content-length
+		fillStatusEnum						_fillStatus;				 // se usa para almacenar el estado actual del parser y lo que buscamos o esperamos en cada momento
+		//	 size_t							  _max_body_size;
+		//	 size_t							  _body_length;		   // se usa para almacenar la longitud del cuerpo de la solicitud aportado por el heade content-length
 		int									_error_code;
-	//	size_t							  _chunk_length;
+		// size_t							  	_chunk_length;
 		std::string							_temp;			   // se usa para almacenar los datos recibidos limpios
-	//	std::string						  _key_storage;		   // se usa para almacenar el nombre del header antes de pasarlo a setHeader
-		int									 _method_ix;		  // se usa para avanzar sobre el nombre del metodo y comparar con el metodo recibido
-	//	int									 _http_ix;
+		// std::string							_key_storage;		   // se usa para almacenar el nombre del header antes de pasarlo a setHeader
+		int									 _ix;		  		// se usa para avanzar sobre el nombre del metodo, el tipo HTTP y la version con el string recibido
 	//	 u_int8_t							_ver_major;			 // se usa para almacenar la versión mayor del protocolo http
 	//	 u_int8_t							_ver_minor;			 // se usa para almacenar la versión menor del protocolo http
 	//	 std::string						 _server_name;

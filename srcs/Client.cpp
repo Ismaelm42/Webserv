@@ -2,13 +2,11 @@
 
 Client::Client(std::string ip, int port, int fd, Server_config *config)
 :_fd(fd), _port(port), _status(0), _ip(ip), _config(config)
-{
-	
+{	
 }
 
 Client::~Client()
 {
-
 }
 
 int Client::getStatus()
