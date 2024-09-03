@@ -34,5 +34,15 @@ int main(int argc, char **argv)
 // los eventos de las conexiones de los clientes.
 // Tamaño de 100 inicial. En cuanto necesita 1 conexión mas: 100x2 y así sucesivamente¿?
 
+
+
+
+
 // Echar un ojo al método de handle request y handle response ya que creo que es bastante malo
 // para seguir tal como está implementado.
+
+// Un cliente puede generar varias request al mismo tiempo? Es decir, tenemos que implementar un
+// array de request en la estructura client e ir procesándolas o por muchas solicitudes que haga
+// se procesan una a una?
+// Ejemplo varias request: (request 1, request 2, request 3, request 4) -> (response 2, response 3, response 1, etc.)
+// Ejemplo request de 1 en 1: (request 1) -> (response 1) / (request 2) -> (response 2)

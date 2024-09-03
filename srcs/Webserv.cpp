@@ -10,12 +10,10 @@
 Webserv::Webserv(int argc, char **argv)
 {
 	_config = new Configuration(argc, argv);
-	_config->parsing();
 	_events = new Epoll_events;
 	_events->epfd = epoll_create(1);
-	if (_events->epfd < 0)
-		throw std::runtime_error("Error: epoll_create: " + std::string(strerror(errno)));
 }
+
 /*
 	Destructor de la clase Webserv.
 		Libera la memoria asignada a _events utilizando delete.
@@ -38,8 +36,10 @@ Webserv::~Webserv()
 */
 void Webserv::initializeServers()
 {
+	_config->parsing();
+	if (_events->epfd < 0)
+		throw std::runtime_error("Error: epoll_create: " + std::string(strerror(errno)));
 	std::vector<std::pair<std::string, int> >::iterator it;
-
 	for (_config->_itServer = _config->_serversConfig.begin(); _config->_itServer != _config->_serversConfig.end(); _config->_itServer++)
 	{
 		_config->_itConfig = *_config->_itServer;

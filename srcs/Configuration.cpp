@@ -15,7 +15,13 @@ Configuration::Configuration(int argc, char **argv)
 	if (argc > 2)
 		throw std::runtime_error("Error: Invalid number of arguments. You must specify exactly one configuration file.");
 	argc == 1 ? _fileName = "./default.conf" : _fileName = argv[1];
-	checkFileOrDirectory(_fileName, "file");
+	struct stat stat_buffer;
+	if (stat(_fileName.c_str(), &stat_buffer) < 0)
+	       throw std::runtime_error("Error: \"" + _fileName + "\": " + std::string(strerror(errno)));
+	if (S_ISDIR(stat_buffer.st_mode))
+		throw std::runtime_error("Error: \"" + _fileName + "\": is a directory");
+	if (!(stat_buffer.st_mode & S_IRUSR))
+		throw std::runtime_error("Error: \"" + _fileName + "\": permission denied");
 	_file.open(_fileName.c_str());
 	if (!_file.is_open())
 		throw std::runtime_error("Error: " + _fileName + ": " + std::string(strerror(errno)));
@@ -464,6 +470,22 @@ void Configuration::checkServerBlockErrors()
 			break ;
 	if (it == _itConfig->locations.end())
 		throw std::runtime_error("Error: no location \"/\" directive found in server block");
+	std::pair<std::set<std::pair<std::string, int> >::iterator, bool> dup_check;
+    std::set<std::pair<std::string, int> > dup_cont;
+	for (_itServer = _serversConfig.begin(); _itServer != _serversConfig.end(); _itServer++)
+	{
+		_itConfig = *_itServer;
+		for (std::vector<std::pair<std::string, int> >::iterator it = _itConfig->ip_port.begin(); it != _itConfig->ip_port.end(); it++)
+		{
+			dup_check = dup_cont.insert(*it);
+			if (dup_check.second == false)
+			{
+				std::ostringstream ss;
+				ss << it->first << ":" << it->second;
+				throw std::runtime_error("Error: invalid configuration: \"" + ss.str() + "\" is configured more than once or is duplicated.");
+			}
+		}
+	}
 }
 /*
 	Finaliza el bloque de configuración del servidor. 

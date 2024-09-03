@@ -32,7 +32,7 @@ int Client::getRequest()
 		return -1;
 	}
 	_request = buffer;
-	std::cout << Cyan << "Message received from fd " << _fd << "\tadress " << _ip << ":" << _port << Reset << std::endl;
+	std::cout << Cyan << "Message received from fd " << _fd << "\taddress " << _ip << ":" << _port << Reset << std::endl;
 	_status = 1;
 	return 0;
 }
