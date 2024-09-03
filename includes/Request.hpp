@@ -25,12 +25,12 @@ enum fillStatusEnum
 	get_URI_Fragment,
 	get_Protocol,
 	get_CR,
-	// get_LF,
-	// header_Name_Start,
-	// headers_End,
-	// header_Name,
-	// header_Value,
-	// header_Value_End,
+	get_LF,
+	header_Name_Start,
+	headers_End,
+	header_Name,
+	header_Value,
+	header_Value_End,
 	// Chunk_Length_Begin,
 	// Chunk_Length,
 	// Chunk_Ignore,
@@ -41,7 +41,7 @@ enum fillStatusEnum
 	// Chunk_body_LF,
 	// Chunk_End_CR,
 	// Chunk_End_LF,
-	// Message_Body,
+	get_Body,
 	Parsed
 };
 
@@ -63,7 +63,7 @@ class Request
 	//	bool									 getMultiformFlag();
 		
 	//	 void		setMethod(HttpMethod &);
-	//	 void		setHeader(std::string &, std::string &);
+		void		saveHeader(std::string &, std::string &);
 	//	 void		setMaxBodySize(size_t);
 	//	 void		setBody(std::string name);
 		void		fillRequest(char *data, size_t size);
@@ -77,36 +77,40 @@ class Request
 	private:
 		void		_initMethodStr(); 
 		void		returnErr(int err, std::string msg,uint8_t charRead);
+		void		_handle_headers();
 	
 		std::string							_path;				  // se usa para almacenar la ruta del recurso solicitado
 		//	 std::string						_query;
 		//	 std::string						_fragment;
-		//	 std::map<std::string, std::string> _request_headers;
+		std::map<std::string, std::string> _headers;
 		//	 std::vector<u_int8_t>			   	_body;
-		// std::string							_boundary;
+		std::string							_boundary;
 		Methods								_method;				// se usa para almacenar el método a comparar con el metodo recibido basado en la primera letra
 		std::map<u_int8_t, std::string>		_methods_str;			// se usa para comparar el metodo recibido alacendo strings  de los métodos recibidos 
-		fillStatusEnum						_fillStatus;				 // se usa para almacenar el estado actual del parser y lo que buscamos o esperamos en cada momento
+		fillStatusEnum						_fillStatus;			// se usa para almacenar el estado actual del parser y lo que buscamos o esperamos en cada momento
+		size_t								_body_size;		   		// se usa para almacenar la longitud del cuerpo de la solicitud aportado por el heade content-length
 		//	 size_t							  _max_body_size;
-		//	 size_t							  _body_length;		   // se usa para almacenar la longitud del cuerpo de la solicitud aportado por el heade content-length
+
 		int									_error_code;
 		// size_t							  	_chunk_length;
 		std::string							_temp;			   // se usa para almacenar los datos recibidos limpios
-		// std::string							_key_storage;		   // se usa para almacenar el nombre del header antes de pasarlo a setHeader
-		int									 _ix;		  		// se usa para avanzar sobre el nombre del metodo, el tipo HTTP y la version con el string recibido
+		std::string							_header_name_temp;		   // se usa para almacenar el nombre del header antes de pasarlo a setHeader
+		std::string							_server_name;
+
 	//	 u_int8_t							_ver_major;			 // se usa para almacenar la versión mayor del protocolo http
 	//	 u_int8_t							_ver_minor;			 // se usa para almacenar la versión menor del protocolo http
-	//	 std::string						 _server_name;
 	//	 std::string						 _body_str;
+		/* indices para el parseo*/
+		int									 _ix;		  		// se usa para avanzar sobre el nombre del metodo, el tipo HTTP y la version con el string recibido
+
 	//	 /* flags */
-	//	 bool								_fields_done_flag;	  // se usa para indicar que se han recibido todos los campos de la solicitud
-	//	 bool								_body_flag;			 // se usa para indicar que se está recibiendo el cuerpo de la solicitud ya sea con content-length o chunked
+		bool								_headers_parsed;	  // se usa para indicar que se han recibido todos los campos de la solicitud
+		bool								_get_body_flag;			 // se usa para indicar que se está recibiendo el cuerpo de la solicitud ya sea con content-length o chunked
 	//	 bool								_body_done_flag;		// se usa para indicar que se ha recibido todo el cuerpo de la solicitud
 	//	 bool								_complete_flag;		 // se usa para indicar que se ha recibido toda la solicitud
-	//	 bool								_chunked_flag;		  // se usa para indicar que se está recibiendo datos en formato chunked
-	//	 bool								_multiform_flag;
+		bool								_chunked_body_flag;		  // se usa para indicar que se está recibiendo datos en formato chunked
+		bool								_multiform_flag;
 
-	//	 void			_handle_headers();
 
 };
 
