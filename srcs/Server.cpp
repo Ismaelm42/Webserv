@@ -174,10 +174,12 @@ void Server::handleEvents()
 {
 	if (_events->added.empty())
 		return;
-	_events->log.resize(_events->added.size());
-    if (epoll_wait(_events->epfd, _events->log.data(), _events->log.size(), -1) == -1)
+	if (_events->added.size() > _events->log.size())
+		_events->log.resize(_events->log.size() * 2);
+	_numEvents = epoll_wait(_events->epfd, _events->log.data(), _events->log.size(), -1);
+    if (_numEvents == -1)
 		throw std::runtime_error("Error: epoll_wait: " + std::string(strerror(errno)));
-	for (long unsigned i = 0; i < _events->log.size(); i++)
+	for (int i = 0; i < _numEvents; i++)
 	{
 		if (_events->log[i].events & EPOLLERR || _events->log[i].events & EPOLLHUP)
 		{

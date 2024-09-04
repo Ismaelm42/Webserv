@@ -39,6 +39,7 @@ void Webserv::initializeServers()
 	_config->parsing();
 	if (_events->epfd < 0)
 		throw std::runtime_error("Error: epoll_create: " + std::string(strerror(errno)));
+	_events->log.resize(200);
 	std::vector<std::pair<std::string, int> >::iterator it;
 	for (_config->_itServer = _config->_serversConfig.begin(); _config->_itServer != _config->_serversConfig.end(); _config->_itServer++)
 	{

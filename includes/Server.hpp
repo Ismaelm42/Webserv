@@ -5,8 +5,9 @@
 class Server
 {
 	private:
-		int _socket;													// File descriptor del Server
 		int _port;														// Puerto del servidor
+		int _socket;													// File descriptor del Server
+		int _numEvents;													// Número de eventos ocurridos después de la llamada epoll_wait
 		std::string _ip;												// IP
 		Server_config *_config;											// Puntero a la estructura de configuración del server
 		struct sockaddr_in _sockaddr;									// _sockaddr del Server
