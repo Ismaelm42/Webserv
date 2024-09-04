@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>501 Not Implemented</title>
+    <title>404 Not Found</title>
     <style>
         /* Estilos Generales */
         body {
@@ -13,27 +13,23 @@
             background: #000;
             color: #fff;
             text-align: center;
-            overflow: hidden; /* Evitar barras de desplazamiento */
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            position: relative;
         }
 
         header {
             margin-bottom: 40px;
-            position: relative;
-            z-index: 1;
         }
 
         .error-code {
             font-size: 150px;
             font-weight: bold;
-            color: #FF0000; /* Rojo brillante para resaltar el error */
-            text-shadow: 7px 7px 15px rgba(255, 0, 0, 0.9); /* Sombra de texto dramática */
+            color: #FF0000; /* Rojo para resaltar el error */
+            text-shadow: 5px 5px 10px rgba(255, 0, 0, 0.7); /* Efecto de sombra */
             margin: 0;
         }
 
@@ -41,31 +37,24 @@
             font-size: 50px;
             font-weight: bold;
             color: #FFF;
-            text-shadow: 4px 4px 10px rgba(255, 255, 255, 0.7);
+            text-shadow: 3px 3px 5px rgba(255, 255, 255, 0.5);
             margin: 0;
         }
 
         main {
-            font-size: 22px;
+            font-size: 20px;
         }
 
         .description {
             margin: 20px 0;
-            color: #ddd; /* Gris más claro para la descripción */
-        }
-
-        .methods-info {
-            margin: 20px 0;
-            color: #FFCC00; /* Amarillo para destacar el mensaje */
-            font-size: 18px;
-            font-weight: bold;
+            color: #aaa; /* Gris claro para la descripción */
         }
 
         .home-link {
             display: inline-block;
             margin-top: 20px;
-            padding: 12px 24px;
-            font-size: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
             color: #000;
             background-color: #FF0000;
             border: 2px solid #FFF;
@@ -73,7 +62,6 @@
             text-transform: uppercase;
             font-weight: bold;
             border-radius: 5px;
-            transition: background-color 0.3s, color 0.3s;
         }
 
         .home-link:hover {
@@ -84,38 +72,22 @@
         footer {
             margin-top: 40px;
             font-size: 14px;
-            color: #666; /* Gris oscuro para el pie de página */
+            color: #888; /* Gris oscuro para el pie de página */
         }
 
         .footer-text {
             margin: 0;
-        }
-
-        /* Animaciones y efectos especiales */
-        @keyframes glitch {
-            0% { transform: translate(0, 0); }
-            25% { transform: translate(-5px, 5px); }
-            50% { transform: translate(5px, -5px); }
-            75% { transform: translate(-5px, -5px); }
-            100% { transform: translate(0, 0); }
-        }
-
-        .error-message {
-            position: relative;
-            display: inline-block;
-            animation: glitch 1s infinite;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1 class="error-code">501</h1>
-            <h2 class="error-message">Not Implemented</h2>
+            <h1 class="error-code">404</h1>
+            <h2 class="error-message">Not Found</h2>
         </header>
         <main>
-            <p class="description">Sorry, the server does not support the functionality required to fulfill the request.</p>
-            <p class="methods-info">GET, DELETE, and POST methods are not implemented as per request.</p>
+            <p class="description">Oops! The page you are looking for cannot be found. Perhaps it has gone to headbang somewhere else!</p>
             <a href="/" class="home-link">Go to Homepage</a>
         </main>
         <footer>

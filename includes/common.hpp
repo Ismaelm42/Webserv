@@ -25,6 +25,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
+#include <iomanip>
 
 #define	Black	"\e[0;30m"
 #define	Red		"\e[0;31m"
