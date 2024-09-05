@@ -27,22 +27,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-// MEJORAS:
+// Incluir CGI en el parsing de location
+// Línea similar a esta: cgi .py /cgi/python
 
-// El container de std::vector<struct epoll_event> log está cada vez que procesa eventos haciendo resize.
-// Quizás sea interesante establecer un tamaño fijo e incrementarlo por dos si necesita más para trackear
-// los eventos de las conexiones de los clientes.
-// Tamaño de 100 inicial. En cuanto necesita 1 conexión mas: 100x2 y así sucesivamente¿?
-
-
-
-
-
-// Echar un ojo al método de handle request y handle response ya que creo que es bastante malo
-// para seguir tal como está implementado.
-
-// Un cliente puede generar varias request al mismo tiempo? Es decir, tenemos que implementar un
-// array de request en la estructura client e ir procesándolas o por muchas solicitudes que haga
-// se procesan una a una?
-// Ejemplo varias request: (request 1, request 2, request 3, request 4) -> (response 2, response 3, response 1, etc.)
-// Ejemplo request de 1 en 1: (request 1) -> (response 1) / (request 2) -> (response 2)
+// Gestionar CGI de forma aproximada ya que dependerá de cómo reciba los datos

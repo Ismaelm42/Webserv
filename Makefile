@@ -2,6 +2,7 @@ NAME = webserv
 
 SRC =	srcs/main.cpp			\
 		srcs/Configuration.cpp	\
+		srcs/Cgi.cpp			\
 		srcs/Client.cpp			\
 		srcs/Server.cpp			\
 		srcs/Webserv.cpp		\

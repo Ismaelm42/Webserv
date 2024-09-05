@@ -18,7 +18,8 @@ class Configuration
 		void initServerBlock();
 		void setAllowedMethods();
 		void setAutoindex();
-		void setReturn();
+		void setRedir();
+		void setCgi();
 		void handleLocations();
 		void setListen();
 		void setServerName();

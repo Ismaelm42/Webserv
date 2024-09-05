@@ -50,28 +50,29 @@ extern int globalSigint;
 
 struct Location_config
 {
+	bool autoindex;
 	std::string location;
 	std::set<std::string> methods;
 	std::pair<int, std::string> redir;
-	bool autoindex;
+	std::vector<std::pair<std::string, std::string> > cgi;
 	Location_config() : autoindex(false) {};
 };
 
 struct Server_config
 {
-	std::vector<std::string> server_names;
-	std::vector<std::pair<std::string, int> > ip_port;
+	size_t body_size;
 	std::string root;
 	std::vector<std::string> index;
+	std::vector<std::string> server_names;
 	std::map<int, std::string> error_pages;
 	std::vector<Location_config> locations;
-	size_t body_size;
+	std::vector<std::pair<std::string, int> > ip_port;
 	Server_config() : body_size(1000000) {};
 };
 
 struct Epoll_events
 {
 	int epfd;										// Epoll fd
-	std::map<int, struct epoll_event> added;		// Configuración de Eventos
 	std::vector<struct epoll_event> log;			// Notificaciones de Eventos
+	std::map<int, struct epoll_event> added;		// Configuración de Eventos
 };

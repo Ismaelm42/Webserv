@@ -3,7 +3,7 @@
 
 class Client
 {
-	public:	//public en vez de private
+	public: //public en vez de private
 		int _fd;								// Fd del cliente
 		int _port;
 		int _status;							// Flag que indica si el cliente ha recibido una request

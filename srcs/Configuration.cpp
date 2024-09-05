@@ -69,7 +69,7 @@ void Configuration::checkFileOrDirectory(std::string &path, const std::string ty
 	if (type == "dir" && !S_ISDIR(stat_buffer.st_mode))
 		throw std::runtime_error(logError("Error: \"" + path + "\": is not a directory"));
 	if (type == "file" && S_ISDIR(stat_buffer.st_mode))
-		throw std::runtime_error(logError("Error: \"" + *_itToken + "\": is a directory"));
+		throw std::runtime_error(logError("Error: \"" + path + "\": is a directory"));
 	if (!(stat_buffer.st_mode & S_IRUSR))
 		throw std::runtime_error(logError("Error: \"" + path + "\": permission denied"));
 }
@@ -185,7 +185,7 @@ void Configuration::setAutoindex()
 		La configuración del redireccionamiento se actualiza en la última ubicación de la configuración. 
 		Lanza excepciones en caso de errores de sintaxis o valores inválidos.
 */
-void Configuration::setReturn()
+void Configuration::setRedir()
 {
 	if (_tokens.end() - _tokens.begin() != 2 && _tokens.end() - _tokens.begin() != 3)
 		throw std::runtime_error(logError("Error: invalid number of arguments in \"return\" directive"));
@@ -212,6 +212,21 @@ void Configuration::setReturn()
 		str.erase(str.size() - 1);
 		_itConfig->locations.back().redir.second = str;
 	}
+}
+
+void Configuration::setCgi()
+{
+	if (_tokens.end() - _tokens.begin() != 3)
+		throw std::runtime_error(logError("Error: invalid number of arguments in \"cgi\" directive"));
+	std::string first = *(_itToken + 1);
+	if (first.find(";") != std::string::npos || first.find(".") != 0)
+		throw std::runtime_error(logError("Error: syntax error in \"cgi\" directive"));
+	std::string second = *(_itToken + 2);
+	if (second.rfind(";") != second.size() - 1)
+		throw std::runtime_error(logError("Error: syntax error in \"cgi\" directive"));
+	second.erase(second.size() - 1);
+	checkFileOrDirectory(second, "file");
+	_itConfig->locations.back().cgi.push_back(std::make_pair(first, second));
 }
 
 /*
@@ -247,7 +262,9 @@ void Configuration::handleLocations()
 	else if (*_itToken == "autoindex")
 		setAutoindex();
 	else if (*_itToken == "return" && !_itConfig->locations.back().redir.first)
-		setReturn();
+		setRedir();
+	else if (*_itToken == "cgi")
+		setCgi();
 	else if (*_itToken == "}" && (_itToken + 1) == _tokens.end())
 		_inLocationBlock = false;
 	else
@@ -618,6 +635,11 @@ void Configuration::printServerConfig()
 				std::cout << "\tredir code:\t" << itl->redir.first << std::endl;
 			if (itl->redir.second != "")
 				std::cout << "\tredir URI:\t" << itl->redir.second << std::endl;
+			if (!itl->cgi.empty())
+			{
+				for (std::vector<std::pair<std::string, std::string> >::iterator it = itl->cgi.begin(); it != itl->cgi.end(); it++)
+					std::cout << "\tCgi:\t\t" << it->first << "\t" << it->second << std::endl;
+			}
 		}
 		std::cout << std::endl << std::endl;
 		i++;
