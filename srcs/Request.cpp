@@ -5,24 +5,24 @@ Request::Request(){
 		std::cout << "Request constructor" << std::endl;
 	_initMethodStr();
 	_path = "";
-	// _query = "";
-	// _fragment = "";
-	// _body_str = "";
+	_query = "";
+	_fragment = "";
+	_body_str = "";
 	_error_code = 0;
-	// _chunk_size = 0;
+	_chunk_size = 0;
 	_method = NONE;
 	_ix = 0;										//	
 	//_ix = 0;
 	_fillStatus = get_First;					  // el estado inicial es get_First 
 	_headers_parsed = false;
 	_get_body_flag = false;
-	// _body_done_flag = false;
-	// _chunked_body_flag = false;
-	// _body_size = 0;
+	_body_parsed = false;
+	_chunked_body_flag = false;
+	_body_size = 0;
 	_temp = "";
 	_header_name_temp = "";
-	// _multiform_flag = false;
-	// _boundary = "";
+	_multiform_flag = false;
+	_boundary = "";
 }
 
 Request::~Request() {
@@ -36,6 +36,68 @@ void	Request::_initMethodStr()		// incluir tanto aquí como en la enumeración l
 	_methods_str[::POST] = "POST";
 	_methods_str[::DELETE] = "DELETE";
 }
+
+
+int		Request::getErrorCode(){
+    return (this->_error_code);
+}
+
+
+Methods  &Request::getMethod(){
+    return (_method);
+}
+
+std::string &Request::getPath(){
+    return (_path);
+}
+
+std::string &Request::getQuery(){
+    return (_query);
+}
+
+std::string &Request::getFragment(){
+    return (_fragment);
+}
+
+std::string Request::getHeader(std::string const &name){
+    return (_headers[name]);
+}
+
+const std::map<std::string, std::string> &Request::getHeaders() const{
+	return (this->_headers);
+}
+
+std::string Request::getMethodStr(){
+	return (_methods_str[_method]);
+}
+
+/**
+ * @brief devolver a _body_str
+ * 
+ * @return std::string& 
+ */
+std::string &Request::getBody(){
+    return (_body_str);
+}
+
+std::string     Request::getServerName(){
+    return (this->_server_name);
+}
+
+bool    Request::getMultiformFlag(){
+    return (this->_multiform_flag);
+}
+
+std::string     &Request::getBoundary(){
+    return (this->_boundary);
+}
+
+void    Request::setClientMaxBodySize(size_t size){
+   	_client_max_body_size = size;
+}
+
+
+
 
 /**
  * @brief Almacenar los datos limpios sin espacios al final y al principio y con los 
@@ -54,7 +116,7 @@ void	Request::saveHeader(std::string &name, std::string &value){
 	_headers[name] = value;
 }
 
-void Request::returnErr(int err, std::string msg,uint8_t charRead){
+void Request::_returnErr(int err, std::string msg,uint8_t charRead = 0){
 	//_error_code = err;
 	std::cout << "Error = " << err <<": "<< msg << ": " << charRead << std::endl;
 }
@@ -144,6 +206,8 @@ void	Request::_handle_headers(){
 		_get_body_flag = true;
 		std::istringstream iss(_headers["content-length"]);
 		iss >> _body_size;
+		if (_body_size > _client_max_body_size)
+			return (_returnErr(413, "Request Entity Too Large", 0));
 	}
 	if (_headers.count("transfer-encoding"))
 	{
@@ -170,7 +234,22 @@ void	Request::_handle_headers(){
 	}
 }
 
-
+/**
+ * Checks the value of header "Connection". If keep-alive, don't close the connection.
+ * @brief comprobar si hay algun header con nombre connection y si su valor es close
+ * devuelve false, devuelve true en caso contrario 
+ * 
+ * @return true 
+ * @return false 
+ */
+bool        Request::isKeepAlive(){
+    if (_headers.count("connection"))
+    {
+        if (_headers["connection"].find("close", 0) != std::string::npos)
+            return (false);
+    }
+    return (true);
+}
 
 size_t hexStringToInt(const std::string& hexStr) {
     size_t result = 0;
@@ -193,7 +272,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 	for (size_t i = 0; i < bytesRead; ++i)									// itera sobre los datos recibidos
 	{
 		charRead = dt[i];													// caracter igual a dt[i] para usar su valor en las comparativas
-		switch (_fillStatus)												// switch para comparar el estado actual del objeto HttpRequest la priemra vez es Request_Line
+		switch (_fillStatus)												// switch para comparar el estado actual del objeto Request la priemra vez es Request_Line
 		{
 			//////	REQUEST FIRST LINE OR PETITION LINE		//////												
 			case get_First:						 							// lee el primer caracter de la petición y lo compara con los valores posibles de los métodos GET, POST, DELETE, PUT, HEAD
@@ -205,7 +284,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				else if (charRead == 'D')			 						// si es D
 					_method = DELETE;				 						// el método es DELETE
 				else														// si no es ninguno de los anteriores	
-					return (returnErr(501, "Method not Implemented, detected in char", charRead)); // lanza un error, el error es 501;
+					return (_returnErr(501, "Method not Implemented, detected in char", charRead)); // lanza un error, el error es 501;
 				_ix++;														// incrementa el indice para comparar con el siguiente caracter del método recibido
 				_fillStatus = get_Method;		  							// Si el método es get, delete o head _fillStatus lo pasa a get_Method
 				break ;	 
@@ -215,7 +294,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				if (charRead == _methods_str[_method][_ix])   				// si el caracter es igual al caracter del método, al que se referencia usando los valores de la vuelta anterior del bucle y los valores inciales
 					_ix++;
 				else
-					return (returnErr(501, "Method Error, charRead is = ", charRead)); // lanza un error, el error es 501;
+					return (_returnErr(501, "Method Error, charRead is = ", charRead)); // lanza un error, el error es 501;
 				if (size_t(_ix) == _methods_str[_method].length())			// en cada vuelta se compara el indice que el tamño para ver si hemos llegado al final  
 					_fillStatus = get_First_Space;					 		// si hemos llegado al final se pasa al siguiente estado Request_Line_First_Space
 				break ;														// y se sale del switch para analizar el siguiente caracter de la petición que debe ser un espacio
@@ -224,7 +303,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 			{																// si no es un espacio lanza un error
 				_ix = 0;													// se reinicia el indice	
 				if (charRead != ' ')																	 
-					return (returnErr(400, "Bad charRead", charRead)); 		// lanza un error, el error es 501;
+					return (_returnErr(400, "Bad charRead", charRead)); 		// lanza un error, el error es 501;
  				_fillStatus = get_First_Slash;						  		// si es un espacio se pasa al siguiente estado Request_Line_URI_Path_Slash
 				continue ;													// usa continue para saltar a la siguiente iteración del for sin pasara por el codigo después del switch
 			}   
@@ -236,7 +315,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_temp.clear();										  	// se limpia el string temp. el methos queda almacenado en _method
 				}
 				else
-					return (returnErr(400, "Bad charRead", charRead)); 		// lanza un error, el error es 400;
+					return (_returnErr(400, "Bad charRead", charRead)); 		// lanza un error, el error es 400;
 				break ;
 			}
 			case get_URI_Path:												// si _fillStatus es esperamos rellenar el _path o en su defecto la versión
@@ -248,8 +327,8 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_temp.clear();										  	// limpiamos temp
 					if (DEBUG)
 						std::cout << "_path = " << _path << std::endl;
-					if (checkPath(_path))										// checkPath comprueba que wl path no vaya por encima de la raiz					return (returnErr(400, "wrong URI location", charRead));
-						return (returnErr(400, "wrong path address", charRead));		// salimos de la función
+					if (checkPath(_path))										// checkPath comprueba que wl path no vaya por encima de la raiz					return (_returnErr(400, "wrong URI location", charRead));
+						return (_returnErr(400, "wrong path address", charRead));		// salimos de la función
 					continue ;												// saltamos a la siguiente iteración del for
 				}
 				else if (charRead == '?')									// si el caracter es un ? 
@@ -267,9 +346,9 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					continue ;												// saltamos a la siguiente iteración del for
 				}
 				else if (!allowedURIChar(charRead))							// si no es un caracter permitido según la RFC
-					return (returnErr(400, "character not allowed", charRead)); // lanza un error, el error es 400;
+					return (_returnErr(400, "character not allowed", charRead)); // lanza un error, el error es 400;
 				else if ( i > URI_MAX_LENGTH)								// si el tamaño de la URI es mayor que el máximo permitido en este caso 4096 definido en header
-					return (returnErr(414, "URI Too Long", charRead)); 		// lanza un error, el error es 400;
+					return (_returnErr(414, "URI Too Long", charRead)); 		// lanza un error, el error es 400;
 				break ;														// se sale del switch									 
 			}
 			case get_URI_Query: // (?)
@@ -289,9 +368,9 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				continue ;												 	// saltamos a la siguiente iteración del for
 				}
 				else if (!allowedURIChar(charRead))
-					return (returnErr(400, "character not allowed", charRead)); // lanza un error, el error es 400;												// salimos de la función 
+					return (_returnErr(400, "character not allowed", charRead)); // lanza un error, el error es 400;												// salimos de la función 
 				else if ( i > URI_MAX_LENGTH)
-					return (returnErr(414, "URI Too Long", charRead)); 		// lanza un error, el error es 400;
+					return (_returnErr(414, "URI Too Long", charRead)); 		// lanza un error, el error es 400;
 				break ;
 			}
 			case get_URI_Fragment: // (#)									// si es get_URI_Fragment se rellena _fragment
@@ -304,16 +383,16 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					continue ;												// saltamos a la siguiente iteración del for
 				}
 				else if (!allowedURIChar(charRead))							// si no es un caracter permitido según la RFC
-					return (returnErr(400, "character not allowed", charRead)); // lanza un error, el error es 400;												// salimos de la función 
+					return (_returnErr(400, "character not allowed", charRead)); // lanza un error, el error es 400;												// salimos de la función 
 				else if ( i > URI_MAX_LENGTH)								  // si el tamaño de la URI es mayor que el máximo permitido en este caso 4096 definido en header
-					return (returnErr(414, "URI Too Long", charRead)); 		// lanza un error, el error es 400;
+					return (_returnErr(414, "URI Too Long", charRead)); 		// lanza un error, el error es 400;
 				
 				break ;														// se sale del switch
 			}
 			case get_Protocol:												// si _fillStatus es get_Version se rellena la versión
 			{
 				if (charRead != protocol[_ix])								// usamos la versión para comparar con el protocolo HTTP/1.1
-					return (returnErr(400, "wrong protocol or protocol not admitted", charRead));		// salimos de la función
+					return (_returnErr(400, "wrong protocol or protocol not admitted", charRead));		// salimos de la función
 				_ix++;
 				if (size_t(_ix) == protocol.length())						// si el caracter es 
 					_fillStatus = get_CR;									// si hemos llegado al final se pasa al siguiente estado Request_Line_HTTP_Slash
@@ -323,14 +402,14 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 			{
 				_ix= 0;														// se reinicia el indice
 				if (charRead != '\r')										// si el caracter es distinto de \r
-					return (returnErr(400, "wrong CR", charRead));			// salimos de la función
+					return (_returnErr(400, "wrong CR", charRead));			// salimos de la función
 				_fillStatus = get_LF;										// si el caracter es \r se pasa al siguiente estado Request_Line_HTTP_Slash
 				break ;														// se sale del switch
 			}
 			case get_LF:										  			// buscamos el salto de línea
 			{
 				if (charRead != '\n')										// si el caracter no es un salto de línea
-					return (returnErr(400, "wrong CR", charRead));			// salimos de la función
+					return (_returnErr(400, "wrong CR", charRead));			// salimos de la función
 				_fillStatus = header_Name_Start;							// si el caracter es un salto de línea cambiamos el estado a Field_Name_Start		
 				_temp.clear();										  		// limpiamos temp
 				continue ;													// saltamos a la siguiente iteración del for
@@ -345,7 +424,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				else if (isValidChar(charRead))								// si el caracter es un token válido 
 					_fillStatus = header_Name;								// cambiamos el estado a Field_Name
 				else														// si no es un token
-					return (returnErr(400, "wrong char in header name", charRead));	
+					return (_returnErr(400, "wrong char in header name", charRead));	
 				break ;														// salimos del switch
 			}	
 			case headers_End:												// sive para comprobar si se han acabado los campos	
@@ -375,7 +454,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					continue ;												// saltamos a la siguiente iteración del for
 					}
 				else																			// si el caracter no es un salto de línea   
-					return (returnErr(400, "wrong char at the end of headers", charRead));		// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
+					return (_returnErr(400, "wrong char at the end of headers", charRead));		// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
 				break ;																			// salimos del switch							
 			}
 			case header_Name:												// buscamos el nombre del campo para los headers		
@@ -388,7 +467,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					continue ;										 		// saltamos a la siguiente iteración del for	
 				}
 				else if (!isValidChar(charRead))								  	
-					return (returnErr(400, "wrong char in header name", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
+					return (_returnErr(400, "wrong char in header name", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
 				break ;																
 			}
 			case header_Value:												// en este estado guardamos el contenido de los valroes de los headers
@@ -411,7 +490,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					continue ;												// saltamos a la siguiente iteración del for
 				}
 				else														// si el caracter no es un salto de línea
-					return (returnErr(400, "wrong char after header value", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
+					return (_returnErr(400, "wrong char after header value", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
 				break ;														// salimos del switch
 			}
 			//////									END OF HEADERS 								//////
@@ -431,7 +510,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 			case Chunk_Length_Begin:										// en este estado se busca el inicio de la longitud de los chunks
 			{
 				if (!isxdigit(charRead))								  	// si el caracter no es un dígito hexadecimal
-					return (returnErr(400, "wrong chunk size", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
+					return (_returnErr(400, "wrong chunk size", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
 				s.str("");													// iniciamos s como una cadena vacía 
 				s.clear();													// limpiamos las flags del stream para que no haya errores de entrada y salida ni bloquee en caso de error
 				s << charRead;												// añadimos el caracter a s
@@ -465,7 +544,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				if (charRead == '\r')										// si el caracter es un retorno de carro
 					_fillStatus = Chunk_Length_LF;							// cambiamos el estado a Chunk_Length_LF
 				else														// si no
-					return (returnErr(400, "wrong chunk size", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
+					return (_returnErr(400, "wrong chunk size", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
 				continue ;													// saltamos a la siguiente iteración del for
 			}
 			case Chunk_Length_LF:											// en caso de Chunk_Length_LF
@@ -478,7 +557,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 						_fillStatus = Chunk_body;							// cambiamos el estado a Chunk_body
 				}
 				else														// si el caracter no es un salto de línea
-					return (returnErr(400, "wrong chunk LF", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
+					return (_returnErr(400, "wrong chunk LF", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
 				continue ;													// saltamos a la siguiente iteración del for
 			}
 			case Chunk_Ignore:											 	// en caso de Chunk_Ignore				  
@@ -500,7 +579,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				if ( charRead == '\r')										// si el caracter es un retorno de carro
 					_fillStatus = Chunk_body_LF;							// cambiamos el estado a Chunk_body_LF, esperamos un salto de línea
 				else														// si no
-					return (returnErr(400, "wrong chunk CR", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
+					return (_returnErr(400, "wrong chunk CR", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
 				continue ;													// saltamos a la siguiente iteración del for
 			}
 			case Chunk_body_LF:												//  en caso de Chunk_body_LF
@@ -508,13 +587,13 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				if ( charRead == '\n')										// si el caracter es un salto de línea
 					_fillStatus = Chunk_Length_Begin;						// cambiamos el estado a Chunk_Length_Begin   esperamos un nuevo chunk
 				else														// si no
-					return (returnErr(400, "wrong chunk LF", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
+					return (_returnErr(400, "wrong chunk LF", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
 				continue ;													// saltamos a la siguiente iteración del for
 			}
 			case Chunk_End_CR:												// en caso de Chunk_End_CR
 			{
 				if (charRead != '\r')										// si el caracter no es un retorno de carro
-					return (returnErr(400, "wrong chunk CR", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
+					return (_returnErr(400, "wrong chunk CR", charRead));	// si el caracter no es válido, lanza un error, el error 400;salimos del switch 
 				_fillStatus = Chunk_End_LF;									// si el caracter es un retorno de carro cambiamos el estado a Chunk_End_LF		
 				continue ;													// saltamos a la siguiente iteración del for						 
 			}
@@ -559,7 +638,6 @@ void	Request::reset(){
 	_method = NONE;
 	_ix = 0;
 	_fillStatus = get_First;
-
 	_body_size = 0;
 	_chunk_size = 0x0;
 	_temp.clear();
@@ -568,11 +646,23 @@ void	Request::reset(){
 	_headers.clear();
 	_server_name.clear();
 	_body.clear();
-	// _boundary.clear();
+	_boundary.clear();
 	_headers_parsed = false;
 	_get_body_flag = false;
 	_body_parsed = false;
-	// _complete_flag = false;
 	_chunked_body_flag = false;
 	_multiform_flag = false;
+}
+
+
+/**
+ * @brief compara si _state == parsing_done
+ * 
+ * @return true si es igual
+ * @return false si no 
+ */
+bool    Request::isParsed(){
+	if (_fillStatus == 	Parsed)
+	    return (true);
+	return (false);
 }
