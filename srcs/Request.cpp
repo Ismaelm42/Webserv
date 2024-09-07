@@ -9,6 +9,7 @@ Request::Request(){
 	_fragment = "";
 	_body_str = "";
 	_error_code = 0;
+	_uri_size = 0;
 	_chunk_size = 0;
 	_method = NONE;
 	_ix = 0;										//	
@@ -42,6 +43,29 @@ int		Request::getErrorCode(){
     return (this->_error_code);
 }
 
+void Request::printParsed()
+{
+	std::cout << "Parsed" << std::endl;
+	std::cout << "Method: " << _methods_str[_method] << std::endl;
+	std::cout << "Path: " << _path << std::endl;
+	std::cout << "Query: " << _query << std::endl;
+	std::cout << "Fragment: " << _fragment << std::endl;
+	std::cout << "Server Name: " << _server_name << std::endl;
+	std::cout << "Body: " << _body_str << std::endl;
+	std::cout << "Headers: " << std::endl;
+	for(std::map<std::string, std::string>::iterator it = _headers.begin(); it != _headers.end(); ++it) {
+		std::cout << "Clave: " << it->first << " Valor: " << it->second << std::endl;
+	}
+	std::cout << "Boundary: " << _boundary << std::endl;
+	std::cout << "Multiform Flag: " << _multiform_flag << std::endl;
+	std::cout << "Body Size: " << _body_size << std::endl;
+	std::cout << "Chunked Body Flag: " << _chunked_body_flag << std::endl;
+	std::cout << "Get Body Flag: " << _get_body_flag << std::endl;
+	std::cout << "_headers.size(): " << _headers.size() << std::endl;
+	std::cout << "URI Size: " << _uri_size << std::endl;
+
+
+}
 
 Methods  &Request::getMethod(){
     return (_method);
@@ -96,9 +120,6 @@ void    Request::setClientMaxBodySize(size_t size){
    	_client_max_body_size = size;
 }
 
-
-
-
 /**
  * @brief Almacenar los datos limpios sin espacios al final y al principio y con los 
  * nombres en minúsculas, (RFC 7230 especifica que deben ser case-insensitive por lo que 
@@ -151,6 +172,11 @@ bool	allowedURIChar(uint8_t ch){
  */
 bool	checkPath(std::string path){
 	std::string tmp(path);							 // se copia el path en tmp
+	if (DEBUG)
+	{
+		std::cout << "checkPath_______________________________________-" << std::endl;
+		std::cout << "path = " << path << std::endl;
+	}
 	char *res = strtok((char*)tmp.c_str(), "/");		// se usa strtok para separar el path por las / y se almacena en res la primera sección
 	int pos = 0;										// se inicializa pos a 0
 	while (res != NULL)								// mientras res no sea NULL  
@@ -168,7 +194,6 @@ bool	checkPath(std::string path){
 	}
 	return (0);
 }
-
 
 bool	isValidChar(uint8_t ch){
 	if (ch == '!' || (ch >= '#' && ch <= '\'') || 
@@ -195,11 +220,10 @@ bool	isValidChar(uint8_t ch){
 void	Request::_handle_headers(){
 	
 	if (DEBUG)
-		std::cout << "_handle_headers" << std::endl;
 	if (_headers.count("host"))
 	{
 		size_t pos = _headers["host"].find_first_of(':');		// se busca el primer : para separar el nombre del servidor del puerto
-		_server_name = _headers["host"].substr(0, pos);
+		_server_name = _headers["host"].substr(0, pos);	
 	}
 	if (_headers.count("content-length"))   
 	{
@@ -222,15 +246,6 @@ void	Request::_handle_headers(){
 			//this->_boundary = _headers["content-type"].substr(pos + 9, _headers["content-type"].size());
 			this->_boundary = _headers["content-type"].substr(pos + 9);		// se puede quitar el segundo argumento pero mejor revisar en caso de problemas
 		this->_multiform_flag = true;
-	}
-	if (DEBUG){
-		std::cout << "_get_body_flag: " << _get_body_flag << std::endl;
-		std::cout << "_chunked_body_flag: " << _chunked_body_flag << std::endl;
-		std::cout << "_body_size: " << _body_size << std::endl;
-		std::cout << "_server_name: " << _server_name << std::endl;
-		std::cout << "_boundary: " << _boundary << std::endl;
-		std::cout << "_multiform_flag: " << _multiform_flag << std::endl;
-		std::cout << "_headers.size(): " << _headers.size() << std::endl;
 	}
 }
 
@@ -327,28 +342,32 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_temp.clear();										  	// limpiamos temp
 					if (DEBUG)
 						std::cout << "_path = " << _path << std::endl;
-					if (checkPath(_path))										// checkPath comprueba que wl path no vaya por encima de la raiz					return (_returnErr(400, "wrong URI location", charRead));
-						return (_returnErr(400, "wrong path address", charRead));		// salimos de la función
+					if (checkPath(_path))									// checkPath comprueba que wl path no vaya por encima de la raiz					return (_returnErr(400, "wrong URI location", charRead));
+						return (_returnErr(400, "wrong path address", charRead));	// salimos de la función
 					continue ;												// saltamos a la siguiente iteración del for
 				}
 				else if (charRead == '?')									// si el caracter es un ? 
 				{
 					_fillStatus = get_URI_Query;							// se pasa al siguiente estado get_URI_Query
-					_path.append(_temp);									// hacemos un append en _path de lo que tengamos en temp
+					_path.append(_temp);									// hacemos un append en _path de lo que tengamos en temp		
+					if (checkPath(_path))									// checkPath comprueba que wl path no vaya por encima de la raiz					return (_returnErr(400, "wrong URI location", charRead));
+						return (_returnErr(400, "wrong path address", charRead));	// salimos de la función
 					_temp.clear();										  	// limpiamos temp
 					continue ;												// saltamos a la siguiente iteración del for	
 				}
 				else if (charRead == '#')									// si el caracter es un #
 				{
 					_fillStatus = get_URI_Fragment;							// se pasa al siguiente estado get_URI_Fragment
-					_path.append(_temp);									// hacemos un append en _path de lo que tengamos en temp
+					_path.append(_temp);									// hacemos un append en _path de lo que tengamos en temp		
+					if (checkPath(_path))									// checkPath comprueba que wl path no vaya por encima de la raiz					return (_returnErr(400, "wrong URI location", charRead));
+						return (_returnErr(400, "wrong path address", charRead));	// salimos de la función
 					_temp.clear();										  	// limpiamos temp
 					continue ;												// saltamos a la siguiente iteración del for
 				}
 				else if (!allowedURIChar(charRead))							// si no es un caracter permitido según la RFC
 					return (_returnErr(400, "character not allowed", charRead)); // lanza un error, el error es 400;
 				else if ( i > URI_MAX_LENGTH)								// si el tamaño de la URI es mayor que el máximo permitido en este caso 4096 definido en header
-					return (_returnErr(414, "URI Too Long", charRead)); 		// lanza un error, el error es 400;
+					return (_returnErr(414, "URI Too Long", charRead)); 	// lanza un error, el error es 400;
 				break ;														// se sale del switch									 
 			}
 			case get_URI_Query: // (?)
@@ -386,7 +405,6 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					return (_returnErr(400, "character not allowed", charRead)); // lanza un error, el error es 400;												// salimos de la función 
 				else if ( i > URI_MAX_LENGTH)								  // si el tamaño de la URI es mayor que el máximo permitido en este caso 4096 definido en header
 					return (_returnErr(414, "URI Too Long", charRead)); 		// lanza un error, el error es 400;
-				
 				break ;														// se sale del switch
 			}
 			case get_Protocol:												// si _fillStatus es get_Version se rellena la versión
@@ -624,7 +642,9 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 	if( _fillStatus == Parsed)												// si el estado es Parsed
 	{
 		if (DEBUG)	
-			std::cout << "Parseddddddddddddddddddddd    Fuera del Switch  dddddddddddddddddddddddd" << std::endl;									// se imprime Parsed
+		{
+			printParsed();						// se imprime el path
+		}
 		_body_str.append((char*)_body.data(), _body.size());				// Se incluye el body en _body_str
 	}																		// es más eficiente que hacer append de un char a un string
 }
@@ -638,6 +658,7 @@ void	Request::reset(){
 	_method = NONE;
 	_ix = 0;
 	_fillStatus = get_First;
+	_uri_size = 0;
 	_body_size = 0;
 	_chunk_size = 0x0;
 	_temp.clear();
@@ -658,8 +679,7 @@ void	Request::reset(){
 /**
  * @brief compara si _state == parsing_done
  * 
- * @return true si es igual
- * @return false si no 
+ * @return true si es igual, false si no lo es 
  */
 bool    Request::isParsed(){
 	if (_fillStatus == 	Parsed)

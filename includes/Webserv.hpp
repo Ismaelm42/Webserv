@@ -4,7 +4,7 @@
 #include "./Server.hpp"
 // #include "./Request.hpp"
 
-#define URI_MAX_LENGTH 8192		// nginx default 8k puede cambiarse con las directivas: http { client_header_buffer_size 16k; large_client_header_buffers 4 16k;}
+//#define URI_MAX_LENGTH 8192		// nginx default 8k puede cambiarse con las directivas: http { client_header_buffer_size 16k; large_client_header_buffers 4 16k;}
 
 class Webserv
 {

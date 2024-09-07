@@ -23,10 +23,6 @@ enum Methods   // incluir tanto aquí como en _initMethodStr los métodos permit
  * 
  *    ----- Pendiente de revisar la forma de lectura de las partes que se hacen comparando con cadenas
  *    ----- Sobre todo el protocolo ya que he dejado por defecto el 1.1 como único protocolo aceptado
- *    ----- Esta forma de parseo ha reducido la fiabilidad del mismo en el caso de que la lectura no se haga
- * 	  ----- por líneas completas ya que el valor de los indices no coincidirían con el nuevo valor de la posición
- * 	  ----- Eso se podría soluconar usando la variable temporal, guardando cada caracter recibido y haciendo 
- * 	  ----- que su tamaño se le sumara a i antes de comparar con valor correspondiente del elemento a chechear 
  * 
  */
 enum fillStatusEnum				
@@ -83,6 +79,8 @@ class Request
 		bool										isParsed();										// para comprobar desde fuera si esta parseado y se puede enviar la respuesta
 		bool										isKeepAlive();									// ver si es necesario para el funcionamiento del servidor
 		void										reset();										// llamado de momento desde el response
+		void								 		printParsed();
+		
 		// ver si hacen falta los settters de los métodos, body, etc
 
 	private:
@@ -99,6 +97,7 @@ class Request
 		size_t								_body_size;		   		// se usa para almacenar la longitud del cuerpo de la solicitud aportado por el heade content-length
 		size_t								_client_max_body_size;
 		size_t							  	_chunk_size;
+		size_t							  	_uri_size;
 		int									_error_code;
 		std::string							_server_name;
 		std::string							_body_str;
@@ -116,13 +115,11 @@ class Request
 		void		_initMethodStr(); 
 		void		_returnErr(int err, std::string msg,uint8_t charRead);
 		void		_handle_headers();
-
 };
 
 #endif
 
 /*
-
 Content-Type in HTML forms
 
 En una solicitud POST , que resulta del envio de un formulario html, el Content-Type de la solicitud es especificado como un atributo enctype del elemento <form> .
@@ -150,6 +147,5 @@ Content-Type: text/plain
 
 (content of the uploaded file foo.txt)
 ---------------------------974767299852498929531610575
-
 
 */
