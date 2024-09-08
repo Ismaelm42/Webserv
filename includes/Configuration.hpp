@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef CONFIGURATION_HPP
+#define CONFIGURATION_HPP
+
 #include "./common.hpp"
 
 class Configuration
@@ -39,7 +43,6 @@ class Configuration
 		Configuration(int argc, char **argv);
 		~Configuration();
 		void parsing();
-
-
 };
 
+#endif // CONFIGURATION_HPP

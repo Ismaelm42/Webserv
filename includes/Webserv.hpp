@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef WEBSERV_HPP
+#define WEBSERV_HPP
+
 #include "./common.hpp"
 #include "./Configuration.hpp"
 #include "./Server.hpp"
@@ -19,3 +23,5 @@ class Webserv
 		void initializeServers();					// Crea e inicializa los servers y la estructura Epoll
 		void run();									// Run
 };
+
+#endif // WEBSERV_HPP

@@ -1,19 +1,21 @@
 NAME = webserv
 
 SRC =	srcs/main.cpp			\
+		srcs/Webserv.cpp		\
+		srcs/Server.cpp			\
 		srcs/Configuration.cpp	\
 		srcs/Client.cpp			\
-		srcs/Server.cpp			\
-		srcs/Webserv.cpp		\
-		srcs/Request.cpp		
+		srcs/Request.cpp		\
+		srcs/Response.cpp
 
-HEADERS = includes/Client.hpp			\
+HEADERS = includes/lib.hpp				\
 		  includes/common.hpp			\
-		  includes/Configuration.hpp	\
-		  includes/lib.hpp				\
-		  includes/Request.hpp			\
+		  includes/Webserv.hpp			\
 		  includes/Server.hpp			\
-		  includes/Webserv.hpp			
+		  includes/Configuration.hpp	\
+		  includes/Client.hpp			\
+		  includes/Request.hpp			\
+		  includes/Response.hpp
 
 OBJT_DIR = .objt/
 

@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef SERVER_HPP
+#define SERVER_HPP
+
 #include "./common.hpp"
 #include "./Client.hpp"
 #include "./Request.hpp"
@@ -23,3 +27,5 @@ class Server
 		void handleResponse(int fd);															// Gestiona la response del cliente
 		void handleEvents();																	// Procesa los eventos ocurridos y llama a las funciones de lectura o respuesta
 };
+
+#endif // SERVER_HPP

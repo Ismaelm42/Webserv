@@ -1,8 +1,11 @@
+#pragma once
+
 #ifndef REQUEST_HPP
 #define REQUEST_HPP
 
 #include "./common.hpp"
 
+class Client; // Declaración adelantada de Client válida ya que solo llama al  puntero
 // Esto se debería colocar en la cabecera de un archivo que se pueda sobreescrbir por el parseo
 #define URI_MAX_LENGTH 8192		// nginx default 8k puede cambiarse con las directivas: http { client_header_buffer_size 16k; large_client_header_buffers 4 16k;}
 
@@ -80,6 +83,8 @@ class Request
 		bool										isKeepAlive();									// ver si es necesario para el funcionamiento del servidor
 		void										reset();										// llamado de momento desde el response
 		void								 		printParsed();
+		void 										setClient(Client* client);
+		Client*										_client;							// cliente
 		
 		// ver si hacen falta los settters de los métodos, body, etc
 
@@ -115,11 +120,13 @@ class Request
 		void		_initMethodStr(); 
 		void		_returnErr(int err, std::string msg,uint8_t charRead);
 		void		_handle_headers();
+
 };
 
 #endif
 
 /*
+
 Content-Type in HTML forms
 
 En una solicitud POST , que resulta del envio de un formulario html, el Content-Type de la solicitud es especificado como un atributo enctype del elemento <form> .
@@ -147,5 +154,6 @@ Content-Type: text/plain
 
 (content of the uploaded file foo.txt)
 ---------------------------974767299852498929531610575
+
 
 */

@@ -3,6 +3,9 @@ Pendiente de reconfirmar:
 GETTERS Y SETTERS
 .- El uso de setters y getters
 
+	Los CGI no reciben todo el body en la primera petición, y esnecesario construirlo con la respuesta que desde el 
+	mismo cgi se consigan del el objeto cgi que creemos
+
 
 BODY_SIZE
 .- Si el tamaño del body delimitado por las directivas de configuración afectan solo al content_lenght 
@@ -14,7 +17,6 @@ PATH
 
 URI_MAX_LENGTH
 .- Reconfirmar como evaluar la medida Máxima de la URI 
-
 
 	DE momento se evalua con i, que es el tamaño de la requisición hasta el final del, path, de la query y/o del fragment, 
 	
@@ -38,3 +40,6 @@ URI_MAX_LENGTH
 
 HOST
 	El header host almacenta tanto el propio host como el puerto (host:puerto) y asigna el valor propio del host a la variable _serverName, ver si es correcto o es mejor separarlo.
+
+PUNTERO A CLIENTE
+	sería interesante generar el request con un puntero al cliente para poder acecder a todos los datos	

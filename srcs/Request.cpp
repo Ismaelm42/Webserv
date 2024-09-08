@@ -1,4 +1,5 @@
 #include "../includes/Request.hpp"
+#include "../includes/Client.hpp"
 
 Request::Request(){
 	if (DEBUG)
@@ -38,6 +39,9 @@ void	Request::_initMethodStr()		// incluir tanto aquí como en la enumeración l
 	_methods_str[::DELETE] = "DELETE";
 }
 
+void Request::setClient(Client* client) {
+    _client = client;  // Guarda el puntero al objeto Client
+}
 
 int		Request::getErrorCode(){
     return (this->_error_code);
@@ -138,7 +142,7 @@ void	Request::saveHeader(std::string &name, std::string &value){
 }
 
 void Request::_returnErr(int err, std::string msg,uint8_t charRead = 0){
-	//_error_code = err;
+	_error_code = err;
 	std::cout << "Error = " << err <<": "<< msg << ": " << charRead << std::endl;
 }
 
