@@ -1,10 +1,14 @@
 #include "../includes/lib.hpp"
+#include "../includes/Client.hpp"
+#include "../includes/Request.hpp"
+#include "../includes/Response.hpp"
+
 
 Client::Client(std::string ip, int port, int fd, Server_config *config, struct Epoll_events *events)
 :_fd(fd), _port(port), _status(0), _ip(ip), _config(config), _events(events)
 {
 	_request = new Request(this, _config);
-	// _response = new Response(this, _request, _client);
+	_response = new Response(this, _request, _config);
 }
 
 Client::~Client()
@@ -35,6 +39,7 @@ int Client::getRequest()
 	}
 	// std::cout << Purple << "Raw Request" << Reset << std::endl << buffer << std::endl;
 	_request->fillRequest(buffer, bytesRead);
+	_response->buildResponse();
 	// _request.printParsed();
 	std::cout << Cyan << "Message received from fd " << _fd << "\tadress " << _ip << ":" << _port << Reset << std::endl;
 	_status = 1;
@@ -57,20 +62,23 @@ int Client::sendResponse()
 	// else
 	// {
 		int bytesSent;
-		std::stringstream responseStream;
+		// std::stringstream responseStream;
 
 
 
-		responseStream << "HTTP/1.1 200 OK\r\n";
-		responseStream << "Content-Type: text/plain\r\n";
-		responseStream << "Content-Length: " << 29 << "\r\n";
-		responseStream << "\r\n";
-		responseStream << "Hello, world! from socket " << _fd << "\r\n";
+		// responseStream << "HTTP/1.1 200 OK\r\n";
+		// responseStream << "Content-Type: text/plain\r\n";
+		// responseStream << "Content-Length: " << 29 << "\r\n";
+		// responseStream << "\r\n";
+		// responseStream << "Hello, world! from socket " << _fd << "\r\n";
 
-		std::string response = responseStream.str();
-		bytesSent = send(_fd, response.c_str(), response.size(), 0);
+		// std::string response = responseStream.str();
+		
+		std::string res=_response->getResString(); 
+		bytesSent = send(_fd, res.c_str(), res.size(), 0);
 		if (bytesSent < 0)
 			throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
+		_response->reset();
 		_status = 0;
 	// }
 	return 0;

@@ -7,7 +7,7 @@ SRC =	srcs/main.cpp			\
 		srcs/Request.cpp		\
 		srcs/Server.cpp			\
 		srcs/Webserv.cpp		\
-		#srcs/Response.hpp		\#
+		srcs/Response.cpp		
 
 HEADERS =	includes/lib.hpp			\
 			includes/common.hpp			\
@@ -17,7 +17,7 @@ HEADERS =	includes/lib.hpp			\
 			includes/Request.hpp		\
 			includes/Server.hpp			\
 			includes/Webserv.hpp		\
-			#includes/Response.hpp		\#
+			includes/Response.hpp		
 
 OBJT_DIR = .objt/
 

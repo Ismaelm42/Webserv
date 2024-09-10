@@ -14,9 +14,10 @@ class Client
 		int _status;							// Flag que indica si el cliente ha recibido una request
 		std::string _ip;						// Host
 		Request *_request;						// Puntero a estructura request
-		// Response *_response;					// Puntero a estructura response
+		Response *_response;					// Puntero a estructura response
 		Server_config *_config;					// Puntero a la estructura de configuración
 		struct Epoll_events *_events;			// Puntero a estructura epoll
+		
 	public:
 		Client(std::string _ip, int port, int fd, Server_config *config, struct Epoll_events *events);
 		~Client();

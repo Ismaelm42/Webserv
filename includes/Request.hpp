@@ -36,7 +36,7 @@ class Request
 
 	private: 
 
-		Client 								* _client;				// Puntero al Client de este request
+		Client 								*_client;				// Puntero al Client de este request
 		Server_config 						*_config;				// Puntero a la estructura Config
 		Methods								_method;				// se usa para almacenar el método a comparar con el metodo recibido basado en la primera letra
 		std::map<u_int8_t, std::string>		_methods_str;			// se usa para comparar el metodo recibido alacendo strings  de los métodos recibidos 

@@ -1,17 +1,28 @@
 
 #include "../includes/Response.hpp"
+#include "../includes/Request.hpp"
 #include "../includes/Client.hpp"
 
-Response::Response()													// constructor
+Response::Response(Client *client, Request *request, Server_config * config)
+:_client(client), _request(request),_config(config)												// constructor
 {
 	if (DEBUG)
 		std::cout << "Response constructor" << std::endl;
 	_responseString = "";
 	_code = 200;
-	_client = NULL;
+	//_client = NULL;
 	if (DEBUG)
 		std::cout << "Response constructor _code= " << _code << std::endl;
 }
+
+void Response::reset() { 
+	_responseString = ""; 
+	_code = 200; 
+	_client = NULL;
+	//_request = NULL;
+	//_config = NULL;
+}	// resetea la respuesta
+
 
 Response::Response(const Response& other) {
     if (DEBUG)
@@ -111,7 +122,7 @@ std::string statusString(short statusCode)
         case 406:
             return "Not Acceptable";
         case 407:
-            return "Proxy Authentication Required";
+            return"Proxy Authentication Required";
         case 408:
             return "Request Timeout";
         case 409:
@@ -200,7 +211,7 @@ bool Response::isErrorCode()
 {
 	if (DEBUG)
 		std::cout << "isErrorCode is called" << std::endl;
-	Request req = _client->_request;
+	Request req = *_request;
 	std::cout << "isErrorCode: " << _code << std::endl;
     if(req.getErrorCode())
     {
@@ -233,7 +244,8 @@ std::string concatenatePaths(std::string str1, std::string str2, std::string str
 int Response::getFile()
 {
     std::ifstream file( _target.c_str());
-
+	std::cout << "en getFile: "<< _target.c_str();
+	std::cout <<std::endl;
     if (file.fail())
     {
         _code = 404;
@@ -260,27 +272,28 @@ void    Response::setHeaders()								// setea los headers de la respuesta
     _response_str.append("\r\n");
 }
 
-
 void Response::buildResponse()
 {	
 	if (isErrorCode())
-		std::cout << "codigo de error" << _code << std::endl;                                               // si hay error construye el error body	
+		std::cout << "en build response codigo de error" << _code << std::endl;                                               // si hay error construye el error body	
 	if (DEBUG)
 		std::cout << "Building response is called" << std::endl;
 
     // Dentro de construir el body se gestiona el target (de momento lo dejo simple para un archivo)
-	_target= concatenatePaths(_client->_config->root, _client->_request.getPath(), "");		// combina el root del server con el path del request
+	_target= concatenatePaths(_config->root, _request->getPath(), "");		// combina el root del server con el path del request
 	std::cout << Blue <<"target: " << _target << std::endl;
 	
-	if (_client->_request.getMethod() == GET )			// si el método del request es GET o HEAD
+	if (_request->getMethod() == GET )			// si el método del request es GET o HEAD
     {
+		std::cout << "GET" << std::endl;
+		std::cout << _request->getMethod() << std::endl;
         if (getFile())														// lee el archivo					
             return ;
     }
 
 	setStatusline();											// construye la linea de estado de la respuesta	
 	setHeaders();														// setea los headers de la respuesta
-    if(_client->_request.getMethod() == GET || _code != 200) 	// si el método del request no es HEAD y el método del request es GET o el código no es 200
+    if(_request->getMethod() == GET || _code != 200) 	// si el método del request no es HEAD y el método del request es GET o el código no es 200
     {
 		_response_str.append(_response_body_str);										// agrega el body a la respuesta	
 	}
@@ -300,10 +313,10 @@ void Response::buildResponse()
 
 	if (DEBUG)
 	{
-		std::cout << "Response: " << _response_str << std::endl;
+		//std::cout << "Response: " << _response_str << std::endl;
 		std::cout << "Response size: " << _response_str.size() << std::endl;
 		//std::cout << "_client: " << _client << std::endl;
-		std::cout << "en buildResponse Client_fd: " << _client->_fd << std::endl;
+		//std::cout << "en buildResponse Client_fd: " << _client->_fd << std::endl;
 		//_client->request.printParsed();	// Imprime la request a través del puntero del cliente y su objeto request
 		std::cout << "Response built" << std::endl;
 	}

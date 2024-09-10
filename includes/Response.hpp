@@ -6,6 +6,8 @@
 // #include "./Client.hpp" // no reconoce el tipo Client
 
 class Client;  // Declaración adelantada de Client
+class Request;
+
 //class Client; // forward declaration si lo inlcuyo lo reconoce pero no funciona error clase incompleta
 
 /*
@@ -15,7 +17,8 @@ class Client;  // Declaración adelantada de Client
 class Response
 {
     public:
-        Response();														// constructor		
+		Response(Client *client, Request *_request, Server_config *config);
+        //Response();														// constructor		
 	//	Response(Client *c);												// constructor con cliente
 		//Response(Request&);												// constructor con request	
       	Response(const Response& other);
@@ -31,9 +34,11 @@ class Response
 		int 			getFile();
 		std::string 	getResString();
 		void    		setHeaders();											// setea los headers de la respuesta
-		
+		void 			reset();												// resetea la respuesta
 		std::string 	_response_str;											// contenido de la respuesta en string
 		Client*			_client;												// cliente
+		Request*		_request;
+		Server_config* 	_config;												// request
 
 	private:
 		std::string 	_responseString;										// respuesta
