@@ -1,7 +1,9 @@
 #include "../includes/Request.hpp"
 #include "../includes/Client.hpp"
 
-Request::Request(){
+Request::Request(Client *client, Server_config * config)
+:_client(client), _config(config)
+{
 	if (DEBUG)
 		std::cout << "Request constructor" << std::endl;
 	_initMethodStr();
@@ -27,7 +29,8 @@ Request::Request(){
 	_boundary = "";
 }
 
-Request::~Request() {
+Request::~Request()
+{
 	if (DEBUG)
 			std::cout << "Request destructor" << std::endl;
 }
@@ -685,7 +688,8 @@ void	Request::reset(){
  * 
  * @return true si es igual, false si no lo es 
  */
-bool    Request::isParsed(){
+bool    Request::isParsed()
+{
 	if (_fillStatus == 	Parsed)
 	    return (true);
 	return (false);

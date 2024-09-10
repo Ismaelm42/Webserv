@@ -2,6 +2,8 @@
 #include "./common.hpp"
 #include "./Request.hpp"
 
+class Request;
+
 class Cgi
 {
 	private:

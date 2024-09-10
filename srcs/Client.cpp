@@ -1,14 +1,16 @@
 #include "../includes/lib.hpp"
 
-Client::Client(std::string ip, int port, int fd, Server_config *config)
-:_fd(fd), _port(port), _status(0), _ip(ip), _config(config)
+Client::Client(std::string ip, int port, int fd, Server_config *config, struct Epoll_events *events)
+:_fd(fd), _port(port), _status(0), _ip(ip), _config(config), _events(events)
 {
-	
+	_request = new Request(this, _config);
+	// _response = new Response(this, _request, _client);
 }
 
 Client::~Client()
 {
-
+		delete _request;
+	// 	delete _response;
 }
 
 int Client::getStatus()
@@ -32,7 +34,7 @@ int Client::getRequest()
 		return -1;
 	}
 	// std::cout << Purple << "Raw Request" << Reset << std::endl << buffer << std::endl;
-	_request.fillRequest(buffer, bytesRead);
+	_request->fillRequest(buffer, bytesRead);
 	// _request.printParsed();
 	std::cout << Cyan << "Message received from fd " << _fd << "\tadress " << _ip << ":" << _port << Reset << std::endl;
 	_status = 1;
@@ -45,17 +47,19 @@ int Client::getRequest()
 */
 int Client::sendResponse()
 {
-	if (_request.getPath() == "/cgi/sum.sh")
-	{
-		Cgi cgi(&_request);
-		cgi.executeCgi();
-		_request.reset();
-		_status = 0;
-	}
-	else
-	{
+	// if (_request->getPath() == "/cgi/sum.sh")
+	// {
+	// 	Cgi cgi(_request);
+	// 	cgi.executeCgi();
+	// 	_request->reset();
+	// 	_status = 0;
+	// }
+	// else
+	// {
 		int bytesSent;
 		std::stringstream responseStream;
+
+
 
 		responseStream << "HTTP/1.1 200 OK\r\n";
 		responseStream << "Content-Type: text/plain\r\n";
@@ -68,6 +72,6 @@ int Client::sendResponse()
 		if (bytesSent < 0)
 			throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
 		_status = 0;
-	}
+	// }
 	return 0;
 }

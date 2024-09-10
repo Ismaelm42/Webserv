@@ -94,7 +94,7 @@ void Server::addEventandClient(int fd)
 		if (_clients.find(fd) == _clients.end())
 		{
 			std::cout << High_Cyan << "Socket with fd " << fd << " has been created" << Reset << std::endl;
-    		Client *client = new Client(_ip, _port, fd, _config);
+    		Client *client = new Client(_ip, _port, fd, _config, _events);
     		_clients[fd] = client;
 		}
 		struct epoll_event event;

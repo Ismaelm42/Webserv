@@ -76,3 +76,53 @@ struct Epoll_events
 	std::vector<struct epoll_event> log;			// Notificaciones de Eventos
 	std::map<int, struct epoll_event> added;		// Configuración de Eventos
 };
+
+enum Methods   // incluir tanto aquí como en _initMethodStr los métodos permitidos
+{
+	GET,
+	POST,
+	DELETE,
+	NONE
+};
+
+/**
+ * @brief definir estado del parseo.
+ * 
+ * Pendiente de revisar para ver si es posible dividir en más estado y 
+ * pendiente de corregir la función de error para ver si es necesario incluir los mensajes
+ * o si lo dejamos como un debugger.
+ * 
+ *    ----- Pendiente de revisar la forma de lectura de las partes que se hacen comparando con cadenas
+ *    ----- Sobre todo el protocolo ya que he dejado por defecto el 1.1 como único protocolo aceptado
+ * 
+ */
+enum fillStatusEnum				
+{
+	get_First,
+	get_Method,
+	get_First_Space,
+	get_First_Slash,
+	get_URI_Path,
+	get_URI_Query,
+	get_URI_Fragment,
+	get_Protocol,
+	get_CR,
+	get_LF,
+	header_Name_Start,
+	headers_End,
+	header_Name,
+	header_Value,
+	header_Value_End,
+	Chunk_Length_Begin,
+	Chunk_Length,
+	Chunk_Ignore,
+	Chunk_Length_CR,
+	Chunk_Length_LF,
+	Chunk_body,
+	Chunk_body_CR,
+	Chunk_body_LF,
+	Chunk_End_CR,
+	Chunk_End_LF,
+	get_Body,
+	Parsed
+};
