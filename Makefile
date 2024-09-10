@@ -7,7 +7,8 @@ SRC =	srcs/main.cpp			\
 		srcs/Request.cpp		\
 		srcs/Server.cpp			\
 		srcs/Webserv.cpp		\
-		srcs/Response.cpp		
+		srcs/Response.cpp		\
+		srcs/MimeType.cpp		
 
 HEADERS =	includes/lib.hpp			\
 			includes/common.hpp			\
@@ -17,7 +18,9 @@ HEADERS =	includes/lib.hpp			\
 			includes/Request.hpp		\
 			includes/Server.hpp			\
 			includes/Webserv.hpp		\
-			includes/Response.hpp		
+			includes/Response.hpp		\
+			includes/MimeType.hpp		
+
 
 OBJT_DIR = .objt/
 

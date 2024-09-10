@@ -3,11 +3,12 @@
 # define RESPONSE_HPP
 
 #include "./common.hpp"
+// #include "../includes/lib.hpp"
+#include "../includes/MimeType.hpp"
 // #include "./Client.hpp" // no reconoce el tipo Client
 
 class Client;  // Declaración adelantada de Client
 class Request;
-
 //class Client; // forward declaration si lo inlcuyo lo reconoce pero no funciona error clase incompleta
 
 /*
@@ -45,6 +46,9 @@ class Response
 		int 			_code;													// codigo de respuesta
 		std::string 	_target;												// target a devolver en la respuesta
 		std::string 	_response_body_str;
+        std::string 	mime;												// objeto de la clase Mime para determinar el tipo de resoponse a enviar
+		
+		void   			contentType();									// setea el content type de la respuesta
 };
 
 #endif // RESPONSE_HPP

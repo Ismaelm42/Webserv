@@ -1,6 +1,6 @@
-#include "../inc/MimeTypes.hpp"
+#include "../includes/MimeType.hpp"
 
-MimeTypes::Mime()
+MimeType::MimeType()
 {
 _mime_types["avi"] = "video/x-msvideo";
 _mime_types["bmp"] = "image/bmp";
@@ -25,7 +25,7 @@ _mime_types["xml"] = "application/xml";
 }
 
 /**
- * @brief checuea si en el mapa Mime hay algun valor cuya key 
+ * @brief chequeuea si en el mapa Mime hay algun valor cuya key 
  * sea igual a la extension pasada como parametro, si la encuentra
  * retorna el valor de la key, si no encuentra la key retorna el valor
  * por defecto que es el .html = "text/html"
@@ -33,7 +33,7 @@ _mime_types["xml"] = "application/xml";
  * @param ext
  * @return std::string 
  */
-std::string MimeTypes::getMimeType(std::string ext)
+std::string MimeType::getMimeType(std::string ext)
 {
     if (_mime_types.count(ext))
         return (_mime_types[ext]);

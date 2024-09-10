@@ -1,7 +1,7 @@
 #ifndef MIMETYPE_HPP
 #define MIMETYPE_HPP
 
-#include "Webserv.hpp"
+#include "common.hpp"
 
 class MimeType
 {

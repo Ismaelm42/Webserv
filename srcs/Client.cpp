@@ -37,7 +37,7 @@ int Client::getRequest()
 		std::cout << Red << "Connection closed on fd " << _fd << Reset << std::endl;
 		return -1;
 	}
-	// std::cout << Purple << "Raw Request" << Reset << std::endl << buffer << std::endl;
+	// std::cout << Purple <																																															< "Raw Request" << Reset << std::endl << buffer << std::endl;
 	_request->fillRequest(buffer, bytesRead);
 	_response->buildResponse();
 	// _request.printParsed();

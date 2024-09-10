@@ -2,6 +2,7 @@
 #include "../includes/Response.hpp"
 #include "../includes/Request.hpp"
 #include "../includes/Client.hpp"
+// #include "../includes/MimeType.hpp"
 
 Response::Response(Client *client, Request *request, Server_config * config)
 :_client(client), _request(request),_config(config)												// constructor
@@ -10,7 +11,7 @@ Response::Response(Client *client, Request *request, Server_config * config)
 		std::cout << "Response constructor" << std::endl;
 	_responseString = "";
 	_code = 200;
-	//_client = NULL;
+	//_client = NULL;
 	if (DEBUG)
 		std::cout << "Response constructor _code= " << _code << std::endl;
 }
@@ -19,8 +20,12 @@ void Response::reset() {
 	_responseString = ""; 
 	_code = 200; 
 	_client = NULL;
-	//_request = NULL;
-	//_config = NULL;
+	_response_str = "";
+	_target = "";
+	_response_body_str = "";
+	mime =  "";
+	// _request = NULL;
+	// _config = NULL;
 }	// resetea la respuesta
 
 
@@ -241,21 +246,82 @@ std::string concatenatePaths(std::string str1, std::string str2, std::string str
     return (res);														// retorna el resultado	
 }
 
+// int Response::getFile()
+// {
+//     std::ifstream file( _target.c_str());
+// 	std::cout << "en getFile: "<< _target.c_str();
+// 	std::cout <<std::endl;
+//     if (file.fail())
+//     {
+//         _code = 404;
+//         return (1);
+//     }
+//     std::ostringstream ss;
+// 	ss << file.rdbuf();
+//     _response_body_str = ss.str();
+//     return (0);
+// }
+
 int Response::getFile()
 {
-    std::ifstream file( _target.c_str());
-	std::cout << "en getFile: "<< _target.c_str();
-	std::cout <<std::endl;
-    if (file.fail())
-    {
-        _code = 404;
-        return (1);
+    std::ifstream file;
+    
+    // Determina si el archivo es binario o no usando el MIME type
+    bool isBinary = (mime == "image/png" || mime == "image/jpeg" || mime == "image/jpg");
+    
+    // Abrir el archivo en modo texto o binario dependiendo del tipo
+    if (isBinary) {
+        file.open(_target.c_str(), std::ios::binary); // Abrir en modo binario
+    } else {
+        file.open(_target.c_str()); // Abrir en modo texto por defecto
     }
-    std::ostringstream ss;
-	ss << file.rdbuf();
-    _response_body_str = ss.str();
-    return (0);
+    
+    // Verificar si la apertura del archivo ha fallado
+    if (file.fail()) {
+        _code = 404;
+        return (1); // Error 404 si el archivo no existe
+    }
+
+    // Si es binario, leerlo en un std::vector<char>
+    if (isBinary) {
+        file.seekg(0, std::ios::end); // Moverse al final para obtener el tamaño del archivo
+        std::streamsize size = file.tellg();
+        file.seekg(0, std::ios::beg); // Volver al inicio
+
+        // Redimensionar el vector para contener todo el archivo
+        std::vector<char> buffer(size);
+        if (!file.read(buffer.data(), size)) {
+            _code = 500; // Error 500 si la lectura falla
+            return (1);
+        }
+
+        // Convertir el vector a string para almacenarlo en _response_body_str
+        _response_body_str.assign(buffer.begin(), buffer.end());
+    } 
+    // Si es un archivo de texto, leerlo directamente en un string
+    else {
+        std::ostringstream ss;
+        ss << file.rdbuf();
+        _response_body_str = ss.str();
+    }
+
+    return (0); // Éxito
 }
+
+
+
+void   Response::contentType()									// setea el content type de la respuesta
+{
+	MimeType _mime;
+    _response_str.append("Content-Type: ");					// agrega el string: "Content-type: "a la respuesta
+    mime = "text/html";
+	if(_target.rfind(".", std::string::npos) != std::string::npos && _code == 200)	// si el target file tiene un punto, empezando por el final lo identifica como extension 
+        mime = _mime.getMimeType(_target.substr(_target.rfind(".", std::string::npos) + 1)); // obtiene el mime type de la extension del archivo
+    _response_str.append(mime);   // Corregido: remover el paréntesis extra
+    _response_str.append("\r\n");
+	std::cout << "en contentType: " << _response_str << std::endl;
+}
+
 
 void    Response::setHeaders()								// setea los headers de la respuesta
 {
@@ -267,6 +333,7 @@ void    Response::setHeaders()								// setea los headers de la respuesta
 	std::stringstream ss;
     ss << _response_body_str.length();
 	responseStream << "Content-Type: text/html\r\n";
+	contentType();
 	responseStream << "Content-Length: " << ss.str() << "\r\n";
 	_response_str.append(responseStream.str());
     _response_str.append("\r\n");
