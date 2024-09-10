@@ -1,0 +1,11 @@
+Después de leer el resuest, desde el cliente se debe llamar a algun método del response en orden pendiente de confirmar
+
+Objetivos
+
+Determinar si el response debe ser un CGI, una ruta o un archivo
+
+A diferencia del repo de referencia nuesro sendresponse se llama desde el mismo cliente por lo que no es necesario volcer a asignarle un cliente a la respuesta.
+
+
+PUNTERO A CLIENTE
+	sería interesante generar el request con un puntero al cliente para poder acecder a todos los datos	

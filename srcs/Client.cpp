@@ -31,8 +31,10 @@ int Client::getRequest()
 		std::cout << Red << "Connection closed on fd " << _fd << Reset << std::endl;
 		return -1;
 	}
-	_request = buffer;
-	std::cout << Cyan << "Message received from fd " << _fd << "\taddress " << _ip << ":" << _port << Reset << std::endl;
+	// std::cout << Purple << "Raw Request" << Reset << std::endl << buffer << std::endl;
+	_request.fillRequest(buffer, bytesRead);
+	// _request.printParsed();
+	std::cout << Cyan << "Message received from fd " << _fd << "\tadress " << _ip << ":" << _port << Reset << std::endl;
 	_status = 1;
 	return 0;
 }
@@ -43,19 +45,29 @@ int Client::getRequest()
 */
 int Client::sendResponse()
 {
-	int bytesSent;
-	std::stringstream responseStream;
+	if (_request.getPath() == "/cgi/sum.sh")
+	{
+		Cgi cgi(&_request);
+		cgi.executeCgi();
+		_request.reset();
+		_status = 0;
+	}
+	else
+	{
+		int bytesSent;
+		std::stringstream responseStream;
 
-	responseStream << "HTTP/1.1 200 OK\r\n";
-	responseStream << "Content-Type: text/plain\r\n";
-	responseStream << "Content-Length: " << 29 << "\r\n";
-	responseStream << "\r\n";
-	responseStream << "Hello, world! from socket " << _fd << "\r\n";
+		responseStream << "HTTP/1.1 200 OK\r\n";
+		responseStream << "Content-Type: text/plain\r\n";
+		responseStream << "Content-Length: " << 29 << "\r\n";
+		responseStream << "\r\n";
+		responseStream << "Hello, world! from socket " << _fd << "\r\n";
 
-	std::string response = responseStream.str();
-	bytesSent = send(_fd, response.c_str(), response.size(), 0);
-	if (bytesSent < 0)
-		throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
-	_status = 0;
+		std::string response = responseStream.str();
+		bytesSent = send(_fd, response.c_str(), response.size(), 0);
+		if (bytesSent < 0)
+			throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
+		_status = 0;
+	}
 	return 0;
 }

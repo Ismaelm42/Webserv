@@ -576,8 +576,8 @@ void Configuration::parsing()
 		handleConfigLine();
 		_tokens.clear();
 	}
-	printServerConfig();
-	std::cout << std::endl << std::endl;
+	// printServerConfig();
+	// std::cout << std::endl << std::endl;
 }
 
 /*

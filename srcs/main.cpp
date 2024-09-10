@@ -27,7 +27,17 @@ int main(int argc, char **argv)
     return 0;
 }
 
-// Incluir CGI en el parsing de location
-// Línea similar a esta: cgi .py /cgi/python
-
 // Gestionar CGI de forma aproximada ya que dependerá de cómo reciba los datos
+
+
+// Es necesario gestionar primero un evento read PERO CREO que es importante
+// que una vez read realizado el request se vuelva de nuevo al bucle para ver si
+// es posible escribir sobre el fd
+
+// Sólo está permitido leer o escribir del fd si éste ha pasado antes por epoll.
+// Aunque si tiene los dos eventos listos no debería haber problema.
+
+
+//Construír request con reserva de memoria
+
+// URI MAXIMA
