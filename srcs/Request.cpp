@@ -179,11 +179,11 @@ bool	allowedURIChar(uint8_t ch){
  */
 bool	checkPath(std::string path){
 	std::string tmp(path);							 // se copia el path en tmp
-	if (DEBUG)
-	{
-		std::cout << "checkPath_______________________________________-" << std::endl;
-		std::cout << "path = " << path << std::endl;
-	}
+	// if (DEBUG)
+	// {
+	// 	std::cout << "checkPath_______________________________________-" << std::endl;
+	// 	std::cout << "path = " << path << std::endl;
+	// }
 	char *res = strtok((char*)tmp.c_str(), "/");		// se usa strtok para separar el path por las / y se almacena en res la primera sección
 	int pos = 0;										// se inicializa pos a 0
 	while (res != NULL)								// mientras res no sea NULL  
@@ -347,8 +347,8 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_fillStatus = get_Protocol;							  	// se pasa al siguiente estado get_Version
 					_path.append(_temp);									// hacemos un append en _path de lo que tengamos en temp		
 					_temp.clear();										  	// limpiamos temp
-					if (DEBUG)
-						std::cout << "_path = " << _path << std::endl;
+					// if (DEBUG)
+					// 	std::cout << "_path = " << _path << std::endl;
 					if (checkPath(_path))									// checkPath comprueba que wl path no vaya por encima de la raiz					return (_returnErr(400, "wrong URI location", charRead));
 						return (_returnErr(400, "wrong path address", charRead));	// salimos de la función
 					continue ;												// saltamos a la siguiente iteración del for
@@ -458,13 +458,13 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				{
 					_temp.clear();										  	// limpiamos temp
 					_headers_parsed = true;									// el flag de campos se pone a true ya que se han encontrado juntos \r\n
-					if (DEBUG){
-						std::cout << "Headers parsed" << std::endl;
-						// Imprimir el mapa
-						for(std::map<std::string, std::string>::iterator it = _headers.begin(); it != _headers.end(); ++it) {
-							std::cout << "Clave: " << it->first << " Valor: " << it->second << std::endl;
-						}
-					}
+					// if (DEBUG){
+					// 	std::cout << "Headers parsed" << std::endl;
+					// 	// Imprimir el mapa
+					// 	for(std::map<std::string, std::string>::iterator it = _headers.begin(); it != _headers.end(); ++it) {
+					// 		std::cout << "Clave: " << it->first << " Valor: " << it->second << std::endl;
+					// 	}
+					// }
 					_handle_headers();										// se llama a la función _handle_headers Pendiente de realizar 			
 					if (_get_body_flag == 1)								// si el flag de body es 1, damos el estado como parseado
 					{
@@ -640,7 +640,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 			case Parsed:												 	// en caso de Parsed
 			{	
 				if (DEBUG)	
-					std::cout << "Parsed dentro del switchhhhhhhhhhhhhhhhhhhhhhhhhhhhhh" << std::endl;	// Ver si es realmente necesario				std::cout << "Method = " << _method << std::endl;
+					std::cout << "Request parsed_________________________________________________" << std::endl;	// Ver si es realmente necesario				std::cout << "Method = " << _method << std::endl;
 				return ;													// salimos de la función
 			}
 		}
@@ -648,10 +648,10 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 	}
 	if( _fillStatus == Parsed)												// si el estado es Parsed
 	{
-		if (DEBUG)	
-		{
-			printParsed();						// se imprime el path
-		}
+		// if (DEBUG)	
+		// {
+		// 	printParsed();						// se imprime el path
+		// }
 		_body_str.append((char*)_body.data(), _body.size());				// Se incluye el body en _body_str
 	}																		// es más eficiente que hacer append de un char a un string
 }

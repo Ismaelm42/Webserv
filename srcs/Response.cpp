@@ -12,8 +12,6 @@ Response::Response(Client *client, Request *request, Server_config * config)
 	_responseString = "";
 	_code = 200;
 	//_client = NULL;
-	if (DEBUG)
-		std::cout << "Response constructor _code= " << _code << std::endl;
 }
 
 void Response::reset() { 
@@ -319,7 +317,8 @@ void   Response::contentType()									// setea el content type de la respuesta
         mime = _mime.getMimeType(_target.substr(_target.rfind(".", std::string::npos) + 1)); // obtiene el mime type de la extension del archivo
     _response_str.append(mime);   // Corregido: remover el paréntesis extra
     _response_str.append("\r\n");
-	std::cout << "en contentType: " << _response_str << std::endl;
+	std::cout << "en contentType inicio de response_str: " << std::endl;
+	std::cout << _response_str << "Find de response_str" << Red << std::endl;
 }
 
 
