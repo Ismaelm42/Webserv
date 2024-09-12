@@ -7,7 +7,7 @@ class Request;
 class Cgi
 {
 	private:
-		int _fd;
+		// int _fd;
 		pid_t _pid;
 		char **_argv;
 		char **_envp;

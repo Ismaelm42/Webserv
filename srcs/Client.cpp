@@ -73,7 +73,7 @@ int Client::sendResponse()
 		// responseStream << "Hello, world! from socket " << _fd << "\r\n";
 
 		// std::string response = responseStream.str();
-		
+		_request->reset();
 		std::string res=_response->getResString(); 
 		bytesSent = send(_fd, res.c_str(), res.size(), 0);
 		if (bytesSent < 0)

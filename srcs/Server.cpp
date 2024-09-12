@@ -188,7 +188,7 @@ void Server::handleEvents()
 		}
 		else
 		{
-			if (_events->log[i].events & EPOLLIN)
+			if (_events->log[i].events & EPOLLIN )
 				handleRequest(_events->log[i].data.fd);
 			if (_events->log[i].events & EPOLLOUT)
 				handleResponse(_events->log[i].data.fd);

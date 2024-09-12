@@ -52,6 +52,7 @@ int		Request::getErrorCode(){
 
 void Request::printParsed()
 {
+	std::cout << _config << std::endl;
 	std::cout << "Parsed" << std::endl;
 	std::cout << "Method: " << _methods_str[_method] << std::endl;
 	std::cout << "Path: " << _path << std::endl;
@@ -381,7 +382,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 			{
 				if (charRead == ' ')										  	// si es un espacio hemos llegado al fin de la URI Query
 				{
-				_fillStatus = get_Protocol;;								 		// se pasa al siguiente estado get_Version
+				_fillStatus = get_Protocol;								 		// se pasa al siguiente estado get_Version
 				_query.append(_temp);											// se añade el contenido de temp a _query
 				_temp.clear();										  			// se limpia temp
 				continue ;												 		// saltamos a la siguiente iteración del for  
@@ -414,6 +415,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					return (_returnErr(414, "URI Too Long", charRead)); 		// lanza un error, el error es 400;
 				break ;														// se sale del switch
 			}
+
 			case get_Protocol:												// si _fillStatus es get_Version se rellena la versión
 			{
 				if (charRead != protocol[_ix])								// usamos la versión para comparar con el protocolo HTTP/1.1

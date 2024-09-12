@@ -52,8 +52,9 @@ struct Location_config
 {
 	bool autoindex;
 	std::string location;
+	std::vector<std::string> index; 		// chequear este antes que el general
 	std::set<std::string> methods;
-	std::pair<int, std::string> redir;
+	std::pair<int, std::string> redir;		// código de error nuevadirección
 	std::vector<std::pair<std::string, std::string> > cgi;
 	Location_config() : autoindex(false) {};
 };
@@ -62,9 +63,9 @@ struct Server_config
 {
 	size_t body_size;
 	std::string root;
-	std::vector<std::string> index;
+	std::vector<std::string> index;      	// sino hay en location se mira en general y si no 404
 	std::vector<std::string> server_names;
-	std::map<int, std::string> error_pages;
+	std::map<int, std::string> error_pages; // mapa con código de error y ruta al target marcado por confirguración
 	std::vector<Location_config> locations;
 	std::vector<std::pair<std::string, int> > ip_port;
 	Server_config() : body_size(1000000) {};
