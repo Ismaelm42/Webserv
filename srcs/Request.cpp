@@ -281,6 +281,20 @@ size_t hexStringToInt(const std::string& hexStr) {
     return result;
 }
 
+bool Request::isValidUri()
+{	
+
+	std::stringstream ss;
+	ss << _client->_port;
+	std::string portStr = ss.str();
+	std::string scheme = "http://";
+	std::string uriTotal = scheme + _client->_ip  + ":" + portStr + _path + _query + _fragment;
+	if (DEBUG)
+		std::cout << Red << "URI Total: " << uriTotal << White << std::endl;
+	if (uriTotal.length() > URI_MAX_LENGTH)
+		return false;
+	return true;
+}
 
 void	Request::fillRequest(char *dt, size_t bytesRead)
 {
@@ -350,6 +364,8 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_temp.clear();										  	// limpiamos temp
 					// if (DEBUG)
 					// 	std::cout << "_path = " << _path << std::endl;
+					if ( !isValidUri())								// si el tamaño de la URI es mayor que el máximo permitido en este caso 4096 definido en header
+						return (_returnErr(414, "URI Too Long", charRead)); 	// lanza un error, el error es 400;
 					if (checkPath(_path))									// checkPath comprueba que wl path no vaya por encima de la raiz					return (_returnErr(400, "wrong URI location", charRead));
 						return (_returnErr(400, "wrong path address", charRead));	// salimos de la función
 					continue ;												// saltamos a la siguiente iteración del for
@@ -373,7 +389,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					continue ;												// saltamos a la siguiente iteración del for
 				}
 				else if (!allowedURIChar(charRead))							// si no es un caracter permitido según la RFC
-					return (_returnErr(400, "character not allowed", charRead)); // lanza un error, el error es 400;
+					return (_returnErr(400, "character not allowed", charRead)); // lanza un error, el error es 400;				
 				else if ( i > URI_MAX_LENGTH)								// si el tamaño de la URI es mayor que el máximo permitido en este caso 4096 definido en header
 					return (_returnErr(414, "URI Too Long", charRead)); 	// lanza un error, el error es 400;
 				break ;														// se sale del switch									 
@@ -384,7 +400,9 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				{
 				_fillStatus = get_Protocol;								 		// se pasa al siguiente estado get_Version
 				_query.append(_temp);											// se añade el contenido de temp a _query
-				_temp.clear();										  			// se limpia temp
+				_temp.clear();
+				if ( !isValidUri())								// si el tamaño de la URI es mayor que el máximo permitido en este caso 4096 definido en header
+					return (_returnErr(414, "URI Too Long", charRead)); 	// lanza un error, el error es 400;
 				continue ;												 		// saltamos a la siguiente iteración del for  
 				}
 				else if (charRead == '#')								 	// si es un #
@@ -407,6 +425,8 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_fragment.append(_temp);								// se añade el contenido de temp a _fragment
 					_temp.clear();											// se limpia temp
 					_fillStatus = get_Protocol;								// se pasa al siguiente estado get_Version
+					if ( !isValidUri())								// si el tamaño de la URI es mayor que el máximo permitido en este caso 4096 definido en header
+						return (_returnErr(414, "URI Too Long", charRead)); 	// lanza un error, el error es 400;
 					continue ;												// saltamos a la siguiente iteración del for
 				}
 				else if (!allowedURIChar(charRead))							// si no es un caracter permitido según la RFC

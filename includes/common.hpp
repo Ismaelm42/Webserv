@@ -66,7 +66,7 @@ struct Server_config
 	std::vector<std::string> index;      	// sino hay en location se mira en general y si no 404
 	std::vector<std::string> server_names;
 	std::map<int, std::string> error_pages; // mapa con código de error y ruta al target marcado por confirguración
-	std::vector<Location_config> locations;
+	std::vector<Location_config> locations;	// chequear este antes que el general y si no 404
 	std::vector<std::pair<std::string, int> > ip_port;
 	Server_config() : body_size(1000000) {};
 };

@@ -28,8 +28,11 @@ class Response
 	    ~Response();   		// destructor								
 		bool 			isErrorCode();
 		void 			buildResponse();
+		int 			buildBody();
+		int 			getTarget();
 		int 			getCode() const;
 		void 			setCode(int code);
+		int 			setReturnCode(int code);
 		void 			setClient(Client* client);
 		void 			setStatusline();
 		int 			getFile();
@@ -49,6 +52,9 @@ class Response
         std::string 	mime;												// objeto de la clase Mime para determinar el tipo de resoponse a enviar
 		
 		void   			contentType();									// setea el content type de la respuesta
+		std::string		getMatch(std::string path, std::vector<Location_config> locations);
+
+
 };
 
 #endif // RESPONSE_HPP

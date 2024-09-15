@@ -1,4 +1,3 @@
-
 #include "../includes/Response.hpp"
 #include "../includes/Request.hpp"
 #include "../includes/Client.hpp"
@@ -10,13 +9,13 @@ Response::Response(Client *client, Request *request, Server_config * config)
 	if (DEBUG)
 		std::cout << "Response constructor" << std::endl;
 	_responseString = "";
-	_code = 200;
+		_code = 0; 				// usado como condición no iniciar a 200
 	//_client = NULL;
 }
 
 void Response::reset() { 
 	_responseString = ""; 
-	_code = 200; 
+	_code = 0; 				// usado como condición no iniciar a 200
 	_client = NULL;
 	_response_str = "";
 	_target = "";
@@ -65,6 +64,14 @@ int Response::getCode() const
 		std::cout << "getCode is called" << std::endl;
 	return _code;
 }
+int Response::setReturnCode(int code)
+{
+	if (DEBUG)
+		std::cout << "setReturnCode is called" << std::endl;
+	_code = code;
+	return (_code);
+}
+
 void Response::setCode(int code)
 {
 	if (DEBUG)
@@ -338,10 +345,143 @@ void    Response::setHeaders()								// setea los headers de la respuesta
     _response_str.append("\r\n");
 }
 
+std::string Response::getMatch(std::string path, std::vector<Location_config> locations)
+{
+	std::cout << "en getMatch____________________" << std::endl;
+
+	std::string locationMatch = "";                           	// variable que almacena la key de la location
+	std::string longestMatch = "";                            	// variable que almacena la key de la location más larga
+	size_t longestMatchLength = 0;
+	
+	// La location tiene ya incluida la raiz
+	std::string combinedPath = concatenatePaths(_config->root, path, "");;                                 // variable que almacena la longitud de la location más larga
+
+	// Ver como afectan las directivas para la incorporación de la raiz y ver 
+	// como variaría la dirección del target cuando la directiva esté 
+	// incluida en ambos sitios - pendiente de ver con Ismael
+
+	for (std::vector<Location_config>::iterator it = locations.begin(); it != locations.end(); it++) // itera sobre las locations
+	{
+		std::cout << "location: " << it->location << std::endl;
+		std::string locationToFind = it->location;                                                    // obtiene la key de la location
+		if (combinedPath.find(locationToFind) == 0 && locationToFind.length() > longestMatchLength)              // si el path del request contiene la location y la longitud de la location es mayor que la longitud de la location más larga
+		{
+			longestMatch = locationToFind;                                                         // asigna la location a la variable de la location más larga
+			longestMatchLength = locationToFind.length();                                          // asigna la longitud de la location a la variable de la longitud de la location más larga
+		}
+	}
+	if (longestMatchLength > 0)                                                              // si la longitud de la location más larga es mayor que 0
+		locationMatch = longestMatch;                                                        // asigna la location más larga a la variable de la location
+	std::cout << "locationMatch: " << locationMatch << std::endl;
+	return locationMatch;                                                                    // retorna la location
+}
+
+// Función para obtener Location_config usando el valor de location
+static Location_config* find_location(Server_config &server, const std::string &location_value) {
+    for (size_t i = 0; i < server.locations.size(); ++i) {
+        if (server.locations[i].location == location_value) {
+            return &server.locations[i];  // Devuelve un puntero al Location_config encontrado
+        }
+    }
+    return NULL;  // Si no se encuentra, devuelve NULL
+}
+// Función para imprimir los valores de un Location_config
+static void printLocationConfig(const Location_config* locConf) {
+    if (locConf == NULL) {
+        std::cout << "El puntero a Location_config es nulo." << std::endl;
+        return;
+    }
+
+    // Imprimir autoindex
+    std::cout << "Autoindex: " << (locConf->autoindex ? "true" : "false") << std::endl;
+
+    // Imprimir location
+    std::cout << "Location: " << locConf->location << std::endl;
+
+    // Imprimir index (vector de strings)
+    std::cout << "Index files: ";
+    if (locConf->index.empty()) {
+        std::cout << "No hay archivos index definidos." << std::endl;
+    } else {
+        for (size_t i = 0; i < locConf->index.size(); ++i) {
+            std::cout << locConf->index[i];
+            if (i < locConf->index.size() - 1) {
+                std::cout << ", ";
+            }
+        }
+        std::cout << std::endl;
+    }
+
+    // Imprimir methods (set de strings)
+    std::cout << "Allowed methods: ";
+    if (locConf->methods.empty()) {
+        std::cout << "No hay métodos permitidos." << std::endl;
+    } else {
+        for (std::set<std::string>::const_iterator it = locConf->methods.begin(); it != locConf->methods.end(); ++it) {
+            std::cout << *it;
+            if (it != --locConf->methods.end()) {
+                std::cout << ", ";
+            }
+        }
+        std::cout << std::endl;
+    }
+
+    // Imprimir redir (pair de int y string)
+    std::cout << "Redirection: Código " << locConf->redir.first << ", Nueva dirección: " << locConf->redir.second << std::endl;
+
+    // Imprimir cgi (vector de pares de strings)
+    std::cout << "CGI mappings: ";
+    if (locConf->cgi.empty()) {
+        std::cout << "No hay CGI mappings." << std::endl;
+    } else {
+        for (size_t i = 0; i < locConf->cgi.size(); ++i) {
+            std::cout << "(" << locConf->cgi[i].first << " -> " << locConf->cgi[i].second << ")";
+            if (i < locConf->cgi.size() - 1) {
+                std::cout << ", ";
+            }
+        }
+        std::cout << std::endl;
+    }
+}
+
+int Response::getTarget()
+{
+	Location_config *LocConf = NULL;
+	std::cout << "en getTarget____________________" << std::endl;
+    std::string locationMatch = "";                                                           // variable que almacena la key de la location
+    locationMatch = getMatch(_request->getPath(), _config->locations);                                                        // variable que almacena la key de la location
+	LocConf = find_location(*_config,locationMatch);
+	std::cout << "LocConf:__________________________________________________- "  << std::endl;
+    printLocationConfig(LocConf);
+	/*
+	Hay que confirmar qué directivas queremos evaluar y que puedan estar presentes
+	tanto en las locations como en el server. Si no hay nada definido en la location
+	se aplican las normas del erver.
+	
+	Por ahora, no incluyo nada pendiente de ver con Ismael
+	*/
+
+
+	return 0;
+}
+
+
+int Response::buildBody()
+{
+	std::cout << "en buildBody____________________" << std::endl;
+	if (_request->getBody().length() > _config->body_size)       			// obtiene el tamaño del body del request y si el tamaño del body es mayor que el tamaño maximo permitido
+		return (setReturnCode(413));                                                         // retorna 1  para indicar que hay un error        
+	if (getTarget())
+		return (1);
+	return (0);
+}
+
 void Response::buildResponse()
 {	
-	if (isErrorCode())
+	if (isErrorCode() || buildBody())                                     		 // forma de comprobar si hay error en el request y si no lo hay error construye el body
+	{
 		std::cout << "en build response codigo de error" << _code << std::endl;                                               // si hay error construye el error body	
+	}
 	if (DEBUG)
 		std::cout << "Building response is called" << std::endl;
 

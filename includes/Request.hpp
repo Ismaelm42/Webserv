@@ -68,6 +68,7 @@ class Request
 		void		_initMethodStr(); 
 		void		_returnErr(int err, std::string msg,uint8_t charRead);
 		void		_handle_headers();
+		bool 		isValidUri();
 
 };
 
