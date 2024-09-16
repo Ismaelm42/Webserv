@@ -30,6 +30,8 @@ class Response
 		void 			buildResponse();
 		int 			buildBody();
 		int 			getTarget();
+		int 			isValidTarget();
+		int 			isValidMethod();
 		int 			getCode() const;
 		void 			setCode(int code);
 		int 			setReturnCode(int code);
@@ -50,8 +52,8 @@ class Response
 		std::string 	_target;												// target a devolver en la respuesta
 		std::string 	_response_body_str;
         std::string 	mime;												// objeto de la clase Mime para determinar el tipo de resoponse a enviar
-		
-		void   			contentType();									// setea el content type de la respuesta
+		Location_config *_location_config;
+		void   			contentType();											// setea el content type de la respuesta
 		std::string		getMatch(std::string path, std::vector<Location_config> locations);
 
 

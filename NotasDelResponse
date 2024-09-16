@@ -9,3 +9,10 @@ A diferencia del repo de referencia nuesro sendresponse se llama desde el mismo 
 
 PUNTERO A CLIENTE
 	sería interesante generar el request con un puntero al cliente para poder acecder a todos los datos	
+
+
+
+
+
+ ------------------ Ver las peticiones vacías para ver qué debemos devolver  ---------
+ ------------------ Ver códigos de errores para devolver los mismos          ---------

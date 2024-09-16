@@ -9,13 +9,13 @@ Response::Response(Client *client, Request *request, Server_config * config)
 	if (DEBUG)
 		std::cout << "Response constructor" << std::endl;
 	_responseString = "";
-		_code = 0; 				// usado como condición no iniciar a 200
+		_code = _request->getErrorCode(); 				// usado como condición no iniciar a 200
 	//_client = NULL;
 }
 
 void Response::reset() { 
 	_responseString = ""; 
-	_code = 0; 				// usado como condición no iniciar a 200
+	_code = _request->getErrorCode(); 				// usado como condición no iniciar a 200
 	_client = NULL;
 	_response_str = "";
 	_target = "";
@@ -221,11 +221,11 @@ bool Response::isErrorCode()
 {
 	if (DEBUG)
 		std::cout << "isErrorCode is called" << std::endl;
-	Request req = *_request;
 	std::cout << "isErrorCode: " << _code << std::endl;
-    if(req.getErrorCode())
+    if(_request->getErrorCode())
     {
-        _code = req.getErrorCode();
+        _code = _request->getErrorCode();
+		std::cout << "isErrorCode: " << _code << std::endl;
         return (1);
     }
     return (0);
@@ -267,52 +267,52 @@ int Response::getFile()
     return (0);
 }
 
-// int Response::getFile()
-// {
-//     std::ifstream file;
+/*int Response::getFile()
+{
+    std::ifstream file;
     
-//     // Determina si el archivo es binario o no usando el MIME type
-//     bool isBinary = (mime == "image/png" || mime == "image/jpeg" || mime == "image/jpg");
+    // Determina si el archivo es binario o no usando el MIME type
+    bool isBinary = (mime == "image/png" || mime == "image/jpeg" || mime == "image/jpg");
     
-//     // Abrir el archivo en modo texto o binario dependiendo del tipo
-//     if (isBinary) {
-//         file.open(_target.c_str(), std::ios::binary); // Abrir en modo binario
-//     } else {
-//         file.open(_target.c_str()); // Abrir en modo texto por defecto
-//     }
+    // Abrir el archivo en modo texto o binario dependiendo del tipo
+    if (isBinary) {
+        file.open(_target.c_str(), std::ios::binary); // Abrir en modo binario
+    } else {
+        file.open(_target.c_str()); // Abrir en modo texto por defecto
+    }
     
-//     // Verificar si la apertura del archivo ha fallado
-//     if (file.fail()) {
-//         _code = 404;
-//         return (1); // Error 404 si el archivo no existe
-//     }
+    // Verificar si la apertura del archivo ha fallado
+    if (file.fail()) {
+        _code = 404;
+        return (1); // Error 404 si el archivo no existe
+    }
 
-//     // Si es binario, leerlo en un std::vector<char>
-//     if (isBinary) {
-//         file.seekg(0, std::ios::end); // Moverse al final para obtener el tamaño del archivo
-//         std::streamsize size = file.tellg();
-//         file.seekg(0, std::ios::beg); // Volver al inicio
+    // Si es binario, leerlo en un std::vector<char>
+    if (isBinary) {
+        file.seekg(0, std::ios::end); // Moverse al final para obtener el tamaño del archivo
+        std::streamsize size = file.tellg();
+        file.seekg(0, std::ios::beg); // Volver al inicio
 
-//         // Redimensionar el vector para contener todo el archivo
-//         std::vector<char> buffer(size);
-//         if (!file.read(buffer.data(), size)) {
-//             _code = 500; // Error 500 si la lectura falla
-//             return (1);
-//         }
+        // Redimensionar el vector para contener todo el archivo
+        std::vector<char> buffer(size);
+        if (!file.read(buffer.data(), size)) {
+            _code = 500; // Error 500 si la lectura falla
+            return (1);
+        }
 
-//         // Convertir el vector a string para almacenarlo en _response_body_str
-//         _response_body_str.assign(buffer.begin(), buffer.end());
-//     } 
-//     // Si es un archivo de texto, leerlo directamente en un string
-//     else {
-//         std::ostringstream ss;
-//         ss << file.rdbuf();
-//         _response_body_str = ss.str();
-//     }
+        // Convertir el vector a string para almacenarlo en _response_body_str
+        _response_body_str.assign(buffer.begin(), buffer.end());
+    } 
+    // Si es un archivo de texto, leerlo directamente en un string
+    else {
+        std::ostringstream ss;
+        ss << file.rdbuf();
+        _response_body_str = ss.str();
+    }
 
-//     return (0); // Éxito
-// }
-
+    return (0); // Éxito
+}
+*/
 
 
 void   Response::contentType()									// setea el content type de la respuesta
@@ -332,13 +332,9 @@ void   Response::contentType()									// setea el content type de la respuesta
 void    Response::setHeaders()								// setea los headers de la respuesta
 {
 	std::stringstream responseStream;
-
-	//responseStream << "HTTP/1.1 ";
-	//responseStream << "200";
-	//responseStream << " OK\r\n";
 	std::stringstream ss;
     ss << _response_body_str.length();
-	responseStream << "Content-Type: text/html\r\n";
+	//responseStream << "Content-Type: text/html\r\n";		//	
 	contentType();
 	responseStream << "Content-Length: " << ss.str() << "\r\n";
 	_response_str.append(responseStream.str());
@@ -444,15 +440,36 @@ static void printLocationConfig(const Location_config* locConf) {
     }
 }
 
+int Response::isValidTarget()
+{
+
+	std::ifstream file(_target.c_str());
+    return (file.good());
+}
+
+int Response::isValidMethod()
+{
+	std::cout << "isValidMethods: ";
+    if (_location_config->methods.empty()) {
+        return (setReturnCode(501));
+    } else {
+        for (std::set<std::string>::const_iterator it = _location_config->methods.begin(); it != _location_config->methods.end(); ++it) {
+            if (*it == _request->getMethodStr())
+				return (0);
+        }
+	}
+	return (setReturnCode(501));
+}
+
 int Response::getTarget()
 {
-	Location_config *LocConf = NULL;
+	_location_config = NULL;
 	std::cout << "en getTarget____________________" << std::endl;
     std::string locationMatch = "";                                                           // variable que almacena la key de la location
     locationMatch = getMatch(_request->getPath(), _config->locations);                                                        // variable que almacena la key de la location
-	LocConf = find_location(*_config,locationMatch);
-	std::cout << "LocConf:__________________________________________________- "  << std::endl;
-    printLocationConfig(LocConf);
+	_location_config = find_location(*_config,locationMatch);
+	std::cout << "_location_config:__________________________________________________- "  << std::endl;
+    printLocationConfig(_location_config);
 	/*
 	Hay que confirmar qué directivas queremos evaluar y que puedan estar presentes
 	tanto en las locations como en el server. Si no hay nada definido en la location
@@ -460,17 +477,52 @@ int Response::getTarget()
 	
 	Por ahora, no incluyo nada pendiente de ver con Ismael
 	*/
+    // Dentro de construir el body se gestiona el target (de momento lo dejo simple para un archivo)
+	
+	// 					Confirmacion con parámetros del server
+
+
+
+
+	//
+	//					Confirmación con parámetros de las locations
+	if (isValidMethod())
+		return (1);
+	if (_config->index.size() > 1 && (_request->getPath() == "/" || _request->getPath() == ""))
+	{
+		for (size_t i = 0; i <_config->index.size(); i++){
+			std::cout << "En getTarget: _______________________" << std::endl;
+			
+			std::cout << "locationMatch: " << locationMatch << std::endl;
+			std::cout << "_request->getPath(): "  << _request->getPath() << std::endl; 
+			std::cout << "_config->index[" << i <<"]: " << _config->index[i] << std::endl;
+			_target = _config->index[i];
+	
+			if(!isValidTarget())
+				return (setReturnCode(413));
+			return (0);
+		}
+	}
+	else
+	{
+			std::cout << "locationMatch: " << locationMatch << std::endl;
+			std::cout << "_request->getPath(): "  << _request->getPath() << std::endl; 
+			_target= concatenatePaths(_config->root, _request->getPath(), "");		// combina el root del server con el path del request
+	
+	}
+	std::cout << Blue <<"target: " << _target << std::endl;
+	
 
 
 	return 0;
 }
 
-
 int Response::buildBody()
 {
 	std::cout << "en buildBody____________________" << std::endl;
-	if (_request->getBody().length() > _config->body_size)       			// obtiene el tamaño del body del request y si el tamaño del body es mayor que el tamaño maximo permitido
-		return (setReturnCode(413));                                                         // retorna 1  para indicar que hay un error        
+	// 					Confirmacion con parámetros del server
+	if (_request->getBody().length() > _config->body_size)       						// obtiene el tamaño del body del request y si el tamaño del body es mayor que el tamaño maximo permitido
+		return (setReturnCode(413));                                                         // retorna 413 y lo setea como error para la gestión de errores       
 	if (getTarget())
 		return (1);
 	return (0);
@@ -485,10 +537,6 @@ void Response::buildResponse()
 	if (DEBUG)
 		std::cout << "Building response is called" << std::endl;
 
-    // Dentro de construir el body se gestiona el target (de momento lo dejo simple para un archivo)
-	_target= concatenatePaths(_config->root, _request->getPath(), "");		// combina el root del server con el path del request
-	std::cout << Blue <<"target: " << _target << std::endl;
-	
 	if (_request->getMethod() == GET )			// si el método del request es GET o HEAD
     {
 		std::cout << "GET" << std::endl;
@@ -496,7 +544,6 @@ void Response::buildResponse()
         if (getFile())														// lee el archivo					
             return ;
     }
-
 	setStatusline();											// construye la linea de estado de la respuesta	
 	setHeaders();														// setea los headers de la respuesta
     if(_request->getMethod() == GET || _code != 200) 	// si el método del request no es HEAD y el método del request es GET o el código no es 200

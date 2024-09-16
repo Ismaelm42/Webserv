@@ -56,7 +56,7 @@ struct Location_config
 	std::set<std::string> methods;
 	std::pair<int, std::string> redir;		// código de error nuevadirección
 	std::vector<std::pair<std::string, std::string> > cgi;
-	Location_config() : autoindex(false) {};
+	Location_config() : autoindex(false){};
 };
 
 struct Server_config
