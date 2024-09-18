@@ -1,7 +1,7 @@
 #include "../includes/lib.hpp"
 
-Response::Response(Client *client, Request *request, Server_config * config)
-:_client(client), _request(request),_config(config)												// constructor
+Response::Response(Client *client, Server_config *config, Request *request, struct Epoll_events *events)
+:_client(client), _config(config), _request(request), _events(events)												// constructor
 {
 	if (DEBUG)
 		std::cout << "Response constructor" << std::endl;

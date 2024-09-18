@@ -13,8 +13,9 @@ class Cgi
 		char **_envp;
 		int _pipeFd[2];
 		Request *_request;
+		struct Epoll_events *_events;
 	public:
-		Cgi(Request *request);
+		Cgi(Request *request, struct Epoll_events *events);
 		~Cgi();
 		void setEnvironment();
 		void setArguments();

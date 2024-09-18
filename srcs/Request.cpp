@@ -1,7 +1,7 @@
 #include "../includes/lib.hpp"
 
-Request::Request(Client *client, Server_config * config)
-:_client(client), _config(config)
+Request::Request(Client *client, Server_config *config, struct Epoll_events *events)
+:_client(client), _config(config), _events(events)
 {
 	if (DEBUG)
 		std::cout << "Request constructor" << std::endl;

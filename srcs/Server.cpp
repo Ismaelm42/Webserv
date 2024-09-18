@@ -87,22 +87,13 @@ int Server::acceptConnections()
 		Asocia este objeto al descriptor de archivo en el contenedor _clients (un std::map de descriptores de archivo a punteros de Client).
 		La función asegura que cada descriptor de archivo tenga un objeto Client asociado.
 */
-void Server::addEventandClient(int fd)
+void Server::addClient(int fd)
 {
-	if (fd > 0)
+	if (fd > 0 && _clients.find(fd) == _clients.end())
 	{
-		if (_clients.find(fd) == _clients.end())
-		{
 			std::cout << High_Cyan << "Socket with fd " << fd << " has been created" << Reset << std::endl;
     		Client *client = new Client(_ip, _port, fd, _config, _events);
     		_clients[fd] = client;
-		}
-		struct epoll_event event;
-		event.events = EPOLLIN | EPOLLOUT;
-		event.data.fd = fd;
-		_events->added[fd] = event;
-		if (epoll_ctl(_events->epfd, EPOLL_CTL_ADD, fd, &_events->added[fd]) == -1)
-			throw std::runtime_error("Error: epoll_ctl_add: " + std::string(strerror(errno)));
 	}
 }
 
@@ -116,19 +107,8 @@ void Server::addEventandClient(int fd)
 		La memoria del objeto Client se libera utilizando delete.
 		El descriptor de archivo se elimina del contenedor _clients.
 */
-void Server::deleteEventandClient(int fd)
+void Server::deleteClient(int fd)
 {
-	if (epoll_ctl(_events->epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
-		throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
-    _events->added.erase(fd);
-	for (std::vector<struct epoll_event>::iterator it = _events->log.begin(); it != _events->log.end(); it++)
-    {
-        if (it->data.fd == fd)
-        {
-            it = _events->log.erase(it);
-            break ;
-        }
-    }
 	delete _clients[fd];
 	_clients.erase(fd);
 	close(fd);
@@ -145,7 +125,10 @@ void Server::handleRequest(int fd)
 {
 	if (_clients.find(fd) != _clients.end())
 		if (_clients[fd]->getRequest() < 0)
-			deleteEventandClient(fd);
+		{
+			deleteEvent(fd, _events);
+			deleteClient(fd);
+		}
 }
 
 /*
@@ -184,11 +167,12 @@ void Server::handleEvents()
 		if (_events->log[i].events & EPOLLERR || _events->log[i].events & EPOLLHUP)
 		{
 			std::cout << Red << "Connection unexpectedly reset by peer" << Reset << std::endl;
-			deleteEventandClient(_events->log[i].data.fd);
+			deleteEvent(_events->log[i].data.fd, _events);
+			deleteClient(_events->log[i].data.fd);
 		}
 		else
 		{
-			if (_events->log[i].events & EPOLLIN )
+			if (_events->log[i].events & EPOLLIN)
 				handleRequest(_events->log[i].data.fd);
 			if (_events->log[i].events & EPOLLOUT)
 				handleResponse(_events->log[i].data.fd);
