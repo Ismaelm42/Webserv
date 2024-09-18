@@ -1,8 +1,4 @@
 #include "../includes/lib.hpp"
-#include "../includes/Client.hpp"
-#include "../includes/Request.hpp"
-#include "../includes/Response.hpp"
-
 
 Client::Client(std::string ip, int port, int fd, Server_config *config, struct Epoll_events *events)
 :_fd(fd), _port(port), _status(0), _ip(ip), _config(config), _events(events)

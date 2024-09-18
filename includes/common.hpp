@@ -51,12 +51,13 @@ extern int globalSigint;
 struct Location_config
 {
 	bool autoindex;
+	size_t body_size;
 	std::string location;
-	std::vector<std::string> index; 		// chequear este antes que el general
 	std::set<std::string> methods;
+	std::vector<std::string> index; 		// chequear este antes que el general
 	std::pair<int, std::string> redir;		// código de error nuevadirección
 	std::vector<std::pair<std::string, std::string> > cgi;
-	Location_config() : autoindex(false){};
+	Location_config() : autoindex(false) , body_size(0) {};
 };
 
 struct Server_config

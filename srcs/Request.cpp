@@ -1,5 +1,4 @@
-#include "../includes/Request.hpp"
-#include "../includes/Client.hpp"
+#include "../includes/lib.hpp"
 
 Request::Request(Client *client, Server_config * config)
 :_client(client), _config(config)

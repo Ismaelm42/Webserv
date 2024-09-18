@@ -1,6 +1,4 @@
-#ifndef MIMETYPE_HPP
-#define MIMETYPE_HPP
-
+#pragma once
 #include "common.hpp"
 
 class MimeType
@@ -12,5 +10,3 @@ class MimeType
         std::map<std::string, std::string> _mime_types;
         
 };
-
-#endif// MIMETYPE_HPP

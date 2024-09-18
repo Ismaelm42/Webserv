@@ -1,7 +1,4 @@
-#include "../includes/Response.hpp"
-#include "../includes/Request.hpp"
-#include "../includes/Client.hpp"
-// #include "../includes/MimeType.hpp"
+#include "../includes/lib.hpp"
 
 Response::Response(Client *client, Request *request, Server_config * config)
 :_client(client), _request(request),_config(config)												// constructor

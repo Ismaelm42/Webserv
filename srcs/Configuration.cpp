@@ -65,7 +65,7 @@ void Configuration::checkFileOrDirectory(std::string &path, const std::string ty
 	struct stat stat_buffer;
 
 	if (stat(path.c_str(), &stat_buffer) < 0)
-	       throw std::runtime_error(logError("Error: \"" + path + "\": " + std::string(strerror(errno))));
+	    throw std::runtime_error(logError("Error: \"" + path + "\": " + std::string(strerror(errno))));
 	if (type == "dir" && !S_ISDIR(stat_buffer.st_mode))
 		throw std::runtime_error(logError("Error: \"" + path + "\": is not a directory"));
 	if (type == "file" && S_ISDIR(stat_buffer.st_mode))
@@ -137,7 +137,6 @@ void Configuration::initServerBlock()
 */
 void Configuration::setAllowedMethods()
 {
-	_itToken++;
 	for (; _itToken != _tokens.end(); _itToken++)
 	{
 		std::string str = *_itToken;
@@ -165,7 +164,7 @@ void Configuration::setAutoindex()
 {
 	if (_tokens.end() - _tokens.begin() != 2)
 		throw std::runtime_error(logError("Error: invalid number of arguments in \"autoindex\" directive"));
-	std::string str = *(_tokens.begin() + 1);
+	std::string str = *_itToken;
 	if (str.find(";") != str.size() - 1)
 		throw std::runtime_error(logError("Error: syntax error in \"autoindex\" directive"));
 	str.erase(str.size() - 1);
@@ -189,7 +188,7 @@ void Configuration::setRedir()
 {
 	if (_tokens.end() - _tokens.begin() != 2 && _tokens.end() - _tokens.begin() != 3)
 		throw std::runtime_error(logError("Error: invalid number of arguments in \"return\" directive"));
-	std::string str = *(_itToken + 1);
+	std::string str = *_itToken;
 	if (_tokens.end() - _tokens.begin() == 2)
 	{
 		if (str.find(";") != str.size() - 1)
@@ -206,7 +205,7 @@ void Configuration::setRedir()
 	_itConfig->locations.back().redir.first = nbr;
 	if (_tokens.end() - _tokens.begin() == 3)
 	{
-		str = *(_itToken + 2);
+		str = *(_itToken + 1);
 		if (str.rfind(";") != str.size() - 1)
 			throw std::runtime_error(logError("Error: syntax error in \"return\" directive"));
 		str.erase(str.size() - 1);
@@ -218,10 +217,10 @@ void Configuration::setCgi()
 {
 	if (_tokens.end() - _tokens.begin() != 3)
 		throw std::runtime_error(logError("Error: invalid number of arguments in \"cgi\" directive"));
-	std::string first = *(_itToken + 1);
+	std::string first = *_itToken;
 	if (first.find(";") != std::string::npos || first.find(".") != 0)
 		throw std::runtime_error(logError("Error: syntax error in \"cgi\" directive"));
-	std::string second = *(_itToken + 2);
+	std::string second = *(_itToken + 1);
 	if (second.rfind(";") != second.size() - 1)
 		throw std::runtime_error(logError("Error: syntax error in \"cgi\" directive"));
 	second.erase(second.size() - 1);
@@ -243,32 +242,36 @@ void Configuration::handleLocations()
 {
 	if (_itConfig->root == "")
 		throw std::runtime_error(logError("Error: \"root\" directive is required to set \"location\" directive"));
-	_itToken = _tokens.begin();
+	_itToken = _tokens.begin() + 1;
 	if (_inLocationBlock == false)
 	{
 		if (_tokens.end() - _tokens.begin() != 3)
 			throw std::runtime_error(logError("Error: invalid number of arguments in \"location\" directive"));
-		*(_itToken + 1) = _itConfig->root + *(_itToken + 1);
-		checkFileOrDirectory(*(_itToken + 1), "dir");
-		if (*(_itToken + 2) != "{")
-			throw std::runtime_error(logError("Error: unexpected \"" + *(_itToken + 2) + "\". open curly brace missing in \"location\" directive"));
+		*(_itToken) = _itConfig->root + *(_itToken);
+		checkFileOrDirectory(*(_itToken), "dir");
+		if (*(_itToken + 1) != "{")
+			throw std::runtime_error(logError("Error: unexpected \"" + *(_itToken + 1) + "\". open curly brace missing in \"location\" directive"));
 		Location_config config;
 		_itConfig->locations.push_back(config);
-		_itConfig->locations.back().location = *(_itToken + 1);
+		_itConfig->locations.back().location = *(_itToken);
 		_inLocationBlock = true;
 	}
-	else if (*_itToken == "allow_methods")
+	else if (_tokens[0] == "allow_methods")
 		setAllowedMethods();
-	else if (*_itToken == "autoindex")
+	else if (_tokens[0] == "autoindex")
 		setAutoindex();
-	else if (*_itToken == "return" && !_itConfig->locations.back().redir.first)
+	else if (_tokens[0] == "client_max_body_size")
+		setMaxBodySize(_itConfig->locations.back().body_size);
+	else if (_tokens[0] == "return" && !_itConfig->locations.back().redir.first)
 		setRedir();
-	else if (*_itToken == "cgi")
+	else if (_tokens[0] == "index")
+		setIndexFiles(_itConfig->locations.back().location, _itConfig->locations.back().index);
+	else if (_tokens[0] == "cgi")
 		setCgi();
-	else if (*_itToken == "}" && (_itToken + 1) == _tokens.end())
+	else if (_tokens[0] == "}" && (_itToken) == _tokens.end())
 		_inLocationBlock = false;
 	else
-		throw std::runtime_error(logError("Error: unexpected \"" + *(_itToken) + "\" in \"location\" directive"));
+		throw std::runtime_error(logError("Error: unexpected \"" + _tokens[0] + "\" in \"location\" directive"));
 }
 
 /*
@@ -357,7 +360,7 @@ void Configuration::setRootDirectory()
 		Procesa cada token como un archivo de índice, ajusta su ruta en función del directorio raíz y
 		verifica si el archivo existe.
 */
-void Configuration::setIndexFiles()
+void Configuration::setIndexFiles(std::string path, std::vector<std::string> &container)
 {
 	if (_itConfig->root == "")
 		throw std::runtime_error(logError("Error: \"root\" directive is required to set \"index\" directive"));
@@ -372,11 +375,11 @@ void Configuration::setIndexFiles()
 			throw std::runtime_error(logError("Error: syntax error in \"index\" directive"));
 		if (cPos != std::string::npos)
 			_itToken->erase(_itToken->size() - 1);
-		if (_itToken->find('/') != 0)
+		if (_itToken->find('/') != 0 && path[path.size() - 1] != '/')
 			*_itToken = "/" + *_itToken;
-		*_itToken = _itConfig->root + *_itToken;
+		*_itToken = path + *_itToken;
 		checkFileOrDirectory(*_itToken, "file");
-		_itConfig->index.push_back(*_itToken);
+		container.push_back(*_itToken);
 	}
 }
 
@@ -437,7 +440,7 @@ void Configuration::setErrorPages()
 		el tamaño máximo permitido en la configuración. Verifica que el tamaño máximo no exceda el límite de 5 GB.
 		Si el tamaño excede este límite, lanza un error.
 */
-void Configuration::setMaxBodySize()
+void Configuration::setMaxBodySize(size_t &bodySize)
 {
 	size_t cPos = _itToken->find(";");
 	if (_itToken == _tokens.end() || cPos == 0)
@@ -454,14 +457,14 @@ void Configuration::setMaxBodySize()
 			break ;
 	if ((i != body.size() && i != body.size() - 1) || (i == body.size() - 1 && (body[i] != 'K' && body[i] != 'M' && body[i] != 'G')))
 		throw std::runtime_error(logError("Error: unexpected \"" + body + "\" in \"client_max_body_size\" directive"));
-	_itConfig->body_size = std::atoi(body.c_str());
+	bodySize = std::atoi(body.c_str());
 	if (body[i] == 'K')
-		_itConfig->body_size *= 1024;
+		bodySize *= 1024;
 	if (body[i] == 'M')
-		_itConfig->body_size *= 1024 * 1024;
+		bodySize *= 1024 * 1024;
 	if (body[i] == 'G')
-		_itConfig->body_size *= 1024 * 1024 * 1024;
-	if (_itConfig->body_size > 5368709120)
+		bodySize *= 1024 * 1024 * 1024;
+	if (bodySize > 5368709120)
 		throw std::runtime_error(logError("Error: size limited to 5GB in \"client_max_body_size\" directive"));
 }
 
@@ -545,11 +548,11 @@ void Configuration::handleConfigLine()
 		else if (_tokens[0] == "root")
 			setRootDirectory();
 		else if (_tokens[0] == "index")
-			setIndexFiles();
+			setIndexFiles(_itConfig->root, _itConfig->index);
 		else if (_tokens[0] == "error_page")
 			setErrorPages();
 		else if (_tokens[0] == "client_max_body_size")
-			setMaxBodySize();
+			setMaxBodySize(_itConfig->body_size);
 		else if (_tokens[0] == "}")
 			endServerBlock();
 		else
@@ -596,10 +599,10 @@ void Configuration::printServerConfig()
 		std::cout << Yellow << "[SERVER CONFIG " << i + 1 << "]" << Reset << std::endl << std::endl;
 		for (std::vector<std::pair<std::string, int> >::iterator itip = it->ip_port.begin(); itip != it->ip_port.end(); itip++)
 		{
-			std::cout << "Listen IP:\t\t" << itip->first << std::endl;
-			std::cout << "Listen PORT:\t\t" << itip->second << std::endl;
+			std::cout << "Listen IP:\t\t\t" << itip->first << std::endl;
+			std::cout << "Listen PORT:\t\t\t" << itip->second << std::endl;
 		}
-		std::cout << "Server names:\t\t";
+		std::cout << "Server names:\t\t\t";
 		for (std::vector<std::string>::iterator its = it->server_names.begin(); its != it->server_names.end(); its++)
 		{
 			std::cout << *its;
@@ -607,8 +610,8 @@ void Configuration::printServerConfig()
 				std::cout << "\t";
 		}
 		std::cout << std::endl;
-		std::cout << "Root:\t\t\t" << it->root << std::endl;
-		std::cout << "Index:\t\t\t";
+		std::cout << "Root:\t\t\t\t" << it->root << std::endl;
+		std::cout << "Index:\t\t\t\t";
 		for (std::vector<std::string>::iterator its = it->index.begin(); its != it->index.end(); its++)
 		{
 			std::cout << *its;
@@ -618,30 +621,41 @@ void Configuration::printServerConfig()
 		std::cout << std::endl;
 		for (std::map<int, std::string>::iterator itm = it->error_pages.begin(); itm != it->error_pages.end(); itm++)
 		{
-			std::cout << "Error page:\t\t" << itm->first << "->" << itm->second << std::endl;
+			std::cout << "Error page:\t\t\t" << itm->first << "->" << itm->second << std::endl;
 		}
-		std::cout << "Client max body size:\t" << it->body_size << " bytes" << std::endl;
+		std::cout << "Client max body size:\t\t" << it->body_size << " bytes" << std::endl;
 		for (std::vector<Location_config>::iterator itl = it->locations.begin(); itl != it->locations.end(); itl++)
 		{
-			std::cout << "\nLocation:\t\t" << itl->location << std::endl;
-			std::cout << "\tmethods\t\t";
+			std::cout << "\nLocation:\t\t\t" << itl->location << std::endl;
+			std::cout << "\tmethods:\t\t\t";
 			for (std::set<std::string>::iterator it = itl->methods.begin(); it != itl->methods.end(); it++)
 			{
 				std::cout << *it << " ";
 			}
 			std::cout << std::endl;
+			std::cout << "\tclient max body size:\t" << itl->body_size << std::endl;
+			if (!itl->index.empty())
+				std::cout << "\tindex:\t\t\t";
+			for (std::vector<std::string>::iterator it = itl->index.begin(); it != itl->index.end(); it++)
+			{
+				std::cout << *it;
+				if (it != itl->index.end() - 1)
+					std::cout << "  ";
+			}
+			if (!itl->index.empty())
+				std::cout << std::endl;
 			if (itl->autoindex)
-				std::cout << "\tautoindex:\ton" << std::endl;
+				std::cout << "\tautoindex:\t\ton" << std::endl;
 			else
-				std::cout << "\tautoindex:\toff" << std::endl;
+				std::cout << "\tautoindex:\t\toff" << std::endl;
 			if (itl->redir.first != 0)
-				std::cout << "\tredir code:\t" << itl->redir.first << std::endl;
+				std::cout << "\tredir code:\t\t" << itl->redir.first << std::endl;
 			if (itl->redir.second != "")
-				std::cout << "\tredir URI:\t" << itl->redir.second << std::endl;
+				std::cout << "\tredir URI:\t\t" << itl->redir.second << std::endl;
 			if (!itl->cgi.empty())
 			{
 				for (std::vector<std::pair<std::string, std::string> >::iterator it = itl->cgi.begin(); it != itl->cgi.end(); it++)
-					std::cout << "\tCgi:\t\t" << it->first << "\t" << it->second << std::endl;
+					std::cout << "\tCgi:\t\t\t" << it->first << "\t" << it->second << std::endl;
 			}
 		}
 		std::cout << std::endl << std::endl;

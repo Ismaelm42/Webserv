@@ -24,9 +24,9 @@ class Configuration
 		void setListen();
 		void setServerName();
 		void setRootDirectory();
-		void setIndexFiles();
+		void setIndexFiles(std::string path, std::vector<std::string> &container);
 		void setErrorPages();
-		void setMaxBodySize();
+		void setMaxBodySize(size_t &body_size);
 		void endServerBlock();
 		void checkServerBlockErrors();
 		void handleConfigLine();
