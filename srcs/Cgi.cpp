@@ -1,7 +1,7 @@
 #include "../includes/lib.hpp"
 
-Cgi::Cgi(Request *request)
-:_request(request)
+Cgi::Cgi(Request *request, struct Epoll_events *events)
+:_request(request), _events(events)
 {
 	_envp = NULL;
 	_argv = NULL;
@@ -26,7 +26,7 @@ Cgi::~Cgi()
 
 void Cgi::setEnvironment()
 {
-	std::string envp[12];
+	std::string envp[13];
 
 	envp[0] = "REQUEST_METHOD=" + _request->getMethodStr(); 
 	envp[1] = "SCRIPT_NAME" + _request->getPath();
@@ -41,9 +41,10 @@ void Cgi::setEnvironment()
 	envp[10] = "SERVER_PORT=";
 	envp[11] = "SERVER_PROTOCOL=HTTP/1.1";
 
-	_envp = (char **)calloc(sizeof(char *), 12);
+	_envp = (char **)calloc(sizeof(char *), 13);
 	for (int i = 0; i < 12; i++)
 		_envp[i] = strdup(envp[i].c_str());
+	_envp[12] = NULL; 
 }
 
 //Para set Arguments estaría bien tener un puntero a la clase Config. Se puede enviar perfectamente a Request.
@@ -85,17 +86,16 @@ void Cgi::executeCgi()
 	{
 		//Quizás aquí enviar los datos a response para que se encargue de realizar la respuesta
 		int status;
-		close(_pipeFd[1]);
 		waitpid(_pid, &status, 0);
         if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-            throw std::runtime_error("Error: Identificar fallo child process");
-
-		char buffer[10000];
-
-		std::memset(buffer, 0, 10000);
-		read(_pipeFd[0], buffer, 10000);
-		close(_pipeFd[0]);
-		std::cerr << buffer << std::endl;
+            throw std::runtime_error("Error: Fallo child process");
+		std::cout << "FDIN = " << _pipeFd[0] << std::endl;
+		std::cout << "FDOUT = " << _pipeFd[1] << std::endl << std::endl;
+		addEvent(_pipeFd[0], _events);
+		addEvent(_pipeFd[1], _events);
+		// Crear un mapa en _events con estos dos fds.
+		// El primero sería fdin y el segundo fdout
+		// En cuanto lo procese
 	}
 }
 

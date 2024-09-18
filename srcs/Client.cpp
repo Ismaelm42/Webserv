@@ -36,7 +36,7 @@ int Client::getRequest()
 	// std::cout << Purple <																																															< "Raw Request" << Reset << std::endl << buffer << std::endl;
 	_request->fillRequest(buffer, bytesRead);
 	_response->buildResponse();
-	// _request.printParsed();
+	_request->printParsed();
 	std::cout << Cyan << "Message received from fd " << _fd << "\tadress " << _ip << ":" << _port << Reset << std::endl;
 	_status = 1;
 	return 0;
@@ -48,9 +48,10 @@ int Client::getRequest()
 */
 int Client::sendResponse()
 {
-	if (_request->getPath() == "/cgi/sum.sh")
+	// Necesario conocer la location y saber si tiene cgi o no para poder lanzar los scripts
+	if (_request->getPath() == "/cgi/sum.sh") // Realizar las pruebas con /cgi/sum.sh?num1=5&num2=5
 	{
-		Cgi cgi(_request);
+		Cgi cgi(_request, _events);
 		cgi.executeCgi();
 		_request->reset();
 		_status = 0;

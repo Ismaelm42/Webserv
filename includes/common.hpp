@@ -79,6 +79,35 @@ struct Epoll_events
 	std::map<int, struct epoll_event> added;		// Configuración de Eventos
 };
 
+inline void addEvent(int fd, struct Epoll_events *events)
+{
+	if (fd > 0)
+	{
+		struct epoll_event newEvent;
+		newEvent.events = EPOLLIN | EPOLLOUT;
+		newEvent.data.fd = fd;
+		events->added[fd] = newEvent;
+		if (epoll_ctl(events->epfd, EPOLL_CTL_ADD, fd, &events->added[fd]) == -1)
+			throw std::runtime_error("Error: epoll_ctl_add: " + std::string(strerror(errno)));
+	}
+}
+
+inline void deleteEvent(int fd, struct Epoll_events *events)
+{
+	if (epoll_ctl(events->epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
+		throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
+    events->added.erase(fd);
+	for (std::vector<struct epoll_event>::iterator it = events->log.begin(); it != events->log.end(); it++)
+    {
+        if (it->data.fd == fd)
+        {
+            it = events->log.erase(it);
+            break ;
+        }
+    }
+
+}
+
 enum Methods   // incluir tanto aquí como en _initMethodStr los métodos permitidos
 {
 	GET,

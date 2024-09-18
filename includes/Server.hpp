@@ -17,8 +17,8 @@ class Server
 		Server(std::string ip, int port, struct Epoll_events *events, Server_config *config);	// Se crea y configura el socket del server
 		~Server();
 		int acceptConnections();																// Acepta las conexiones
-		void addEventandClient(int fd);															// Añade un nuevo evento a la estructura Epoll (_events->added) y el clliente asociado a ese fd
-		void deleteEventandClient(int fd);														// Elimina un evento de la estructura Epoll (_events->added / _events_log) y el cliente asociado a ese fd
+		void addClient(int fd);															// Añade un nuevo evento a la estructura Epoll (_events->added) y el clliente asociado a ese fd
+		void deleteClient(int fd);														// Elimina un evento de la estructura Epoll (_events->added / _events_log) y el cliente asociado a ese fd
 		void handleRequest(int fd);																// Gestiona la request del cliente				
 		void handleResponse(int fd);															// Gestiona la response del cliente
 		void handleEvents();																	// Procesa los eventos ocurridos y llama a las funciones de lectura o respuesta
