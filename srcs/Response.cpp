@@ -437,80 +437,118 @@ static void printLocationConfig(const Location_config* locConf) {
     }
 }
 
-int Response::isValidTarget()
+int Response::isValidTargetFile()
 {
 
 	std::ifstream file(_target.c_str());
     return (file.good());
 }
 
-int Response::isValidMethod()
+/**
+ * @brief comparar si el método está entre los allowed methods del location
+ * 
+ * @return int 
+ */
+int Response::isNotValidMethod()
 {
-	std::cout << "isValidMethods: ";
-    if (_location_config->methods.empty()) {
-        return (setReturnCode(501));
-    } else {
+	// comentado para permitir los allowed method vacíos
+	// std::cout << "isNotValidMethod: ";
+    // if (_location_config->methods.empty()) {
+    //     return (setReturnCode(501));
+    // } else {
         for (std::set<std::string>::const_iterator it = _location_config->methods.begin(); it != _location_config->methods.end(); ++it) {
             if (*it == _request->getMethodStr())
 				return (0);
         }
+	// }
+	return (setReturnCode(405));
+}
+
+int Response:: setIndex()			// el index puede se un directorio?
+{
+	std::vector<std::string> index;
+	std::cout << "en setIndex_______________________" << std::endl;
+	std::cout << "_location_config->index.size(): " << _location_config->index.size() << std::endl;
+	std::cout << "_config->index.size(): " << _config->index.size() << std::endl;
+	if(_location_config->index.size() > 0)
+		index = _location_config->index;
+	else if (_config->index.size() > 0)
+		index = _config->index;
+	if (index.size() > 0 && (_request->getPath() == "/" ||_request->getPath() == ""))
+	{
+		std::cout << "Entra en el bucle"<< std::endl;
+		for (size_t i = 0; i < index.size(); i++){
+			_target = index[i];
+			std::cout << "target dentro del bucle: " << _target << std::endl;
+			if(isValidTargetFile())
+				return (0);			
+		}
+		return (setReturnCode(404));
 	}
-	return (setReturnCode(501));
+	return (0);
 }
 
 int Response::getTarget()
 {
+	//--------------------------------------------------------------------------//
+	//						 ** obtener la location ** 							//
+	//--------------------------------------------------------------------------//
 	_location_config = NULL;
 	std::cout << "en getTarget____________________" << std::endl;
-    std::string locationMatch = "";                                                           // variable que almacena la key de la location
+    std::string locationMatch = "";                     	//clave de la location
     locationMatch = getMatch(_request->getPath(), _config->locations);                                                        // variable que almacena la key de la location
 	_location_config = find_location(*_config,locationMatch);
-	std::cout << "_location_config:__________________________________________________- "  << std::endl;
+	std::cout << "_location_config:_______________	____________- "  << std::endl;
     printLocationConfig(_location_config);
-	/*
-	Hay que confirmar qué directivas queremos evaluar y que puedan estar presentes
-	tanto en las locations como en el server. Si no hay nada definido en la location
-	se aplican las normas del erver.
+
+	//--------------------------------------------------------------------------//
+	//    cofigurar target con las directivas de la location y el server      	//
+	//--------------------------------------------------------------------------//
 	
-	Por ahora, no incluyo nada pendiente de ver con Ismael
-	*/
-    // Dentro de construir el body se gestiona el target (de momento lo dejo simple para un archivo)
+	//--------------------------------------------------------------------------//
+	//						 **	client_max_body_size **							//
+	//--------------------------------------------------------------------------//
+	//    Pendiente de ver si es necesario hacerlo aqui o en el buildbody	    //
+	//--------------------------------------------------------------------------//
 	
-	// 					Confirmacion con parámetros del server
-
-
-
-
-	//
-	//					Confirmación con parámetros de las locations
-	if (isValidMethod())
-		return (1);
-	if (_config->index.size() > 1 && (_request->getPath() == "/" || _request->getPath() == ""))
-	{
-		for (size_t i = 0; i <_config->index.size(); i++){
-			std::cout << "En getTarget: _______________________" << std::endl;
-			
-			std::cout << "locationMatch: " << locationMatch << std::endl;
-			std::cout << "_request->getPath(): "  << _request->getPath() << std::endl; 
-			std::cout << "_config->index[" << i <<"]: " << _config->index[i] << std::endl;
-			_target = _config->index[i];
+	if (_request->getBody().length() > _location_config->body_size)       						// obtiene el tamaño del body del request y si el tamaño del body es mayor que el tamaño maximo permitido
+		return (setReturnCode(413));        		// retorna 413 y lo setea como error para la gestión de errores
+		
+	//--------------------------------------------------------------------------//
+	//							 ** allowed methods	**							//
+	//--------------------------------------------------------------------------//
+	// 					Si hay allowed methods en location mira si 				//
+	//						el método del request es válido 					//
+	//--------------------------------------------------------------------------//
 	
-			if(!isValidTarget())
-				return (setReturnCode(413));
-			return (0);
-		}
+	if (!_location_config->methods.empty())
+	{	
+		if (isNotValidMethod())
+			return (501);
 	}
-	else
+	//--------------------------------------------------------------------------//
+	//								** index **									//
+	//--------------------------------------------------------------------------//
+	// 		SetIdex devuelve 0 si el index es válido o si no debe haber index   //
+	//		uso el size del target para saber si debemos seguir buscandolo		//							//
+	//--------------------------------------------------------------------------//
+	if (setIndex())							
+		return (413);				
+	else if(_target.size() == 0 )	// si el target es vacío lo asgina asginación temporal 
 	{
 			std::cout << "locationMatch: " << locationMatch << std::endl;
 			std::cout << "_request->getPath(): "  << _request->getPath() << std::endl; 
 			_target= concatenatePaths(_config->root, _request->getPath(), "");		// combina el root del server con el path del request
 	
 	}
-	std::cout << Blue <<"target: " << _target << std::endl;
+	//--------------------------------------------------------------------------//
+	//								** autoindex **								//
+	//--------------------------------------------------------------------------//
+	//		Comprueba si el target es un directorio y si no tiene autoindex		//
+	//--------------------------------------------------------------------------//
+	//        	Pendiente de configurar y ver como hay que devolverlo 			//	
+	//--------------------------------------------------------------------------//
 	
-
-
 	return 0;
 }
 
@@ -518,6 +556,8 @@ int Response::buildBody()
 {
 	std::cout << "en buildBody____________________" << std::endl;
 	// 					Confirmacion con parámetros del server
+	// ***********   client_max_body_size			***********
+	
 	if (_request->getBody().length() > _config->body_size)       						// obtiene el tamaño del body del request y si el tamaño del body es mayor que el tamaño maximo permitido
 		return (setReturnCode(413));                                                         // retorna 413 y lo setea como error para la gestión de errores       
 	if (getTarget())

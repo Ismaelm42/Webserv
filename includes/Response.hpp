@@ -24,8 +24,8 @@ class Response
 		void 					buildResponse();
 		int 					buildBody();
 		int 					getTarget();
-		int 					isValidTarget();
-		int 					isValidMethod();
+		int 					isValidTargetFile();
+		int 					isNotValidMethod();
 		int 					getCode() const;
 		void 					setCode(int code);
 		int 					setReturnCode(int code);
@@ -50,6 +50,7 @@ class Response
 		Location_config 	*_location_config;
 		void   				contentType();											// setea el content type de la respuesta
 		std::string			getMatch(std::string path, std::vector<Location_config> locations);
+		int 				setIndex();
 
 
 };

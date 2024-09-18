@@ -16,3 +16,29 @@ PUNTERO A CLIENTE
 
  ------------------ Ver las peticiones vacías para ver qué debemos devolver  ---------
  ------------------ Ver códigos de errores para devolver los mismos          ---------
+
+
+Orden de evaluación de directivas clave:
+
+    Matching del bloque server y location:
+        Nginx primero determina el bloque server adecuado, basándose en el nombre del servidor o la IP.
+        Luego busca el bloque location más adecuado según la URI solicitada.
+
+    Chequeo del método HTTP permitido:
+        Nginx revisa si el método HTTP utilizado (GET, POST, PUT, DELETE, etc.) está permitido en el contexto del bloque location o server.
+        Si se especifica la directiva limit_except en un bloque location, y el método no está permitido, Nginx responde inmediatamente con un código de estado 405 (Method Not Allowed).
+        Este chequeo ocurre antes de buscar archivos o cualquier otra acción, ya que si el método no está permitido, no tiene sentido continuar.
+
+    Búsqueda del archivo index:
+        Si el método HTTP es permitido, Nginx continúa procesando la URI.
+        Si la URI apunta a un directorio o no especifica un archivo explícito, Nginx busca el archivo definido en la directiva index dentro del bloque location.
+        Si se encuentra el archivo, se sirve como respuesta. Si no, Nginx buscará otros métodos definidos en las configuraciones o devolverá un error.
+
+Resumen del flujo:
+
+    Bloque server → se selecciona el bloque server adecuado.
+    Bloque location → se selecciona el bloque location adecuado.
+    Chequeo del método HTTP permitido → si el método no está permitido, Nginx responde con un 405.
+    Búsqueda del archivo en la directiva index → si es válido, se sirve el archivo; si no, se maneja según la configuración (404, redirecciones, etc.).
+
+Por lo tanto, Nginx primero verifica si el método HTTP está permitido antes de siquiera intentar buscar el archivo especificado en la directiva index.
