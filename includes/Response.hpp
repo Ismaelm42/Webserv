@@ -1,15 +1,9 @@
 #pragma once
-#ifndef RESPONSE_HPP
-# define RESPONSE_HPP
-
 #include "./common.hpp"
-// #include "../includes/lib.hpp"
-#include "../includes/MimeType.hpp"
-// #include "./Client.hpp" // no reconoce el tipo Client
+#include "./MimeType.hpp"
 
 class Client;  // Declaración adelantada de Client
 class Request;
-//class Client; // forward declaration si lo inlcuyo lo reconoce pero no funciona error clase incompleta
 
 /*
     Crear y alamacenar la respuesta. almacena el valor para ser enviado al cliente.
@@ -18,7 +12,7 @@ class Request;
 class Response
 {
     public:
-		Response(Client *client, Request *_request, Server_config *config);
+		Response(Client *client, Server_config *config, Request *_request, struct Epoll_events *_events);
         //Response();														// constructor		
 	//	Response(Client *c);												// constructor con cliente
 		//Response(Request&);												// constructor con request	
@@ -26,37 +20,36 @@ class Response
 		Response &operator=(const Response& other);
 	  
 	    ~Response();   		// destructor								
-		bool 			isErrorCode();
-		void 			buildResponse();
-		int 			buildBody();
-		int 			getTarget();
-		int 			isValidTarget();
-		int 			isValidMethod();
-		int 			getCode() const;
-		void 			setCode(int code);
-		int 			setReturnCode(int code);
-		void 			setClient(Client* client);
-		void 			setStatusline();
-		int 			getFile();
-		std::string 	getResString();
-		void    		setHeaders();											// setea los headers de la respuesta
-		void 			reset();												// resetea la respuesta
-		std::string 	_response_str;											// contenido de la respuesta en string
-		Client*			_client;												// cliente
-		Request*		_request;
-		Server_config* 	_config;												// request
+		bool 					isErrorCode();
+		void 					buildResponse();
+		int 					buildBody();
+		int 					getTarget();
+		int 					isValidTarget();
+		int 					isValidMethod();
+		int 					getCode() const;
+		void 					setCode(int code);
+		int 					setReturnCode(int code);
+		void 					setClient(Client* client);
+		void 					setStatusline();
+		int 					getFile();
+		std::string 			getResString();
+		void    				setHeaders();											// setea los headers de la respuesta
+		void 					reset();												// resetea la respuesta
+		std::string 			_response_str;											// contenido de la respuesta en string
+		Client*					_client;												// cliente
+		Server_config* 			_config;												// request
+		Request*				_request;
+		struct Epoll_events 	*_events;
 
 	private:
-		std::string 	_responseString;										// respuesta
-		int 			_code;													// codigo de respuesta
-		std::string 	_target;												// target a devolver en la respuesta
-		std::string 	_response_body_str;
-        std::string 	mime;												// objeto de la clase Mime para determinar el tipo de resoponse a enviar
-		Location_config *_location_config;
-		void   			contentType();											// setea el content type de la respuesta
-		std::string		getMatch(std::string path, std::vector<Location_config> locations);
+		std::string 		_responseString;										// respuesta
+		int 				_code;													// codigo de respuesta
+		std::string 		_target;												// target a devolver en la respuesta
+		std::string 		_response_body_str;
+        std::string 		mime;												// objeto de la clase Mime para determinar el tipo de resoponse a enviar
+		Location_config 	*_location_config;
+		void   				contentType();											// setea el content type de la respuesta
+		std::string			getMatch(std::string path, std::vector<Location_config> locations);
 
 
 };
-
-#endif // RESPONSE_HPP

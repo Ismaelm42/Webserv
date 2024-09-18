@@ -3,14 +3,14 @@
 Client::Client(std::string ip, int port, int fd, Server_config *config, struct Epoll_events *events)
 :_fd(fd), _port(port), _status(0), _ip(ip), _config(config), _events(events)
 {
-	_request = new Request(this, _config);
-	_response = new Response(this, _request, _config);
+	_request = new Request(this, _config, _events);
+	_response = new Response(this, _config, _request, _events);
 }
 
 Client::~Client()
 {
 		delete _request;
-	// 	delete _response;
+		delete _response;
 }
 
 int Client::getStatus()
@@ -48,15 +48,15 @@ int Client::getRequest()
 */
 int Client::sendResponse()
 {
-	// if (_request->getPath() == "/cgi/sum.sh")
-	// {
-	// 	Cgi cgi(_request);
-	// 	cgi.executeCgi();
-	// 	_request->reset();
-	// 	_status = 0;
-	// }
-	// else
-	// {
+	if (_request->getPath() == "/cgi/sum.sh")
+	{
+		Cgi cgi(_request);
+		cgi.executeCgi();
+		_request->reset();
+		_status = 0;
+	}
+	else
+	{
 		int bytesSent;
 		// std::stringstream responseStream;
 
@@ -76,6 +76,6 @@ int Client::sendResponse()
 			throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
 		_response->reset();
 		_status = 0;
-	// }
+	}
 	return 0;
 }
