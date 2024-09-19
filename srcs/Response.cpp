@@ -1,7 +1,7 @@
 #include "../includes/lib.hpp"
 
 Response::Response(Client *client, Server_config *config, Request *request, struct Epoll_events *events)
-:_client(client), _config(config), _request(request), _events(events)												// constructor
+:_client(client), _config(config), _request(request), _events(events), cgiFlag(0),_auto_index_flag(0)												// constructor
 {
 	if (DEBUG)
 		std::cout << "Response constructor" << std::endl;
@@ -18,10 +18,11 @@ void Response::reset() {
 	_target = "";
 	_response_body_str = "";
 	mime =  "";
+	cgiFlag = 0;
+	_auto_index_flag = 0;
 	// _request = NULL;
 	// _config = NULL;
 }	// resetea la respuesta
-
 
 Response::Response(const Response& other) {
     if (DEBUG)
@@ -44,7 +45,6 @@ Response& Response::operator=(const Response& other) {
     return *this;
 }
 
-
 /*Response::Response(Request& req)										// constructor con request
 {
 }*/
@@ -61,6 +61,7 @@ int Response::getCode() const
 		std::cout << "getCode is called" << std::endl;
 	return _code;
 }
+
 int Response::setReturnCode(int code)
 {
 	if (DEBUG)
@@ -192,16 +193,15 @@ std::string statusString(short statusCode)
 }
 
 /* Constructs Status line based on status code. */
+
 void        Response::setStatusline()
 {
 	std::ostringstream temp; // usamos un osstream para convertir e int a str
+	if (_code == 0)
+		_code = 200;
 	temp << _code;	// Pasar el entero al stream
     std::string codeStr = temp.str();     // Convertir el stream a std::string
 
-	/*_response_str.append("HTTP/1.1 ");
-	_response_str.append("200");
-	_response_str.append(" OK\r\n");*/
-	
     _response_str.append("HTTP/1.1 " + codeStr + " ");
     _response_str.append(statusString(_code));
     _response_str.append("\r\n");
@@ -218,11 +218,9 @@ bool Response::isErrorCode()
 {
 	if (DEBUG)
 		std::cout << "isErrorCode is called" << std::endl;
-	std::cout << "isErrorCode: " << _code << std::endl;
     if(_request->getErrorCode())
     {
         _code = _request->getErrorCode();
-		std::cout << "isErrorCode: " << _code << std::endl;
         return (1);
     }
     return (0);
@@ -264,83 +262,37 @@ int Response::getFile()
     return (0);
 }
 
-/*int Response::getFile()
-{
-    std::ifstream file;
-    
-    // Determina si el archivo es binario o no usando el MIME type
-    bool isBinary = (mime == "image/png" || mime == "image/jpeg" || mime == "image/jpg");
-    
-    // Abrir el archivo en modo texto o binario dependiendo del tipo
-    if (isBinary) {
-        file.open(_target.c_str(), std::ios::binary); // Abrir en modo binario
-    } else {
-        file.open(_target.c_str()); // Abrir en modo texto por defecto
-    }
-    
-    // Verificar si la apertura del archivo ha fallado
-    if (file.fail()) {
-        _code = 404;
-        return (1); // Error 404 si el archivo no existe
-    }
-
-    // Si es binario, leerlo en un std::vector<char>
-    if (isBinary) {
-        file.seekg(0, std::ios::end); // Moverse al final para obtener el tamaño del archivo
-        std::streamsize size = file.tellg();
-        file.seekg(0, std::ios::beg); // Volver al inicio
-
-        // Redimensionar el vector para contener todo el archivo
-        std::vector<char> buffer(size);
-        if (!file.read(buffer.data(), size)) {
-            _code = 500; // Error 500 si la lectura falla
-            return (1);
-        }
-
-        // Convertir el vector a string para almacenarlo en _response_body_str
-        _response_body_str.assign(buffer.begin(), buffer.end());
-    } 
-    // Si es un archivo de texto, leerlo directamente en un string
-    else {
-        std::ostringstream ss;
-        ss << file.rdbuf();
-        _response_body_str = ss.str();
-    }
-
-    return (0); // Éxito
-}
-*/
-
-
-void   Response::contentType()									// setea el content type de la respuesta
+void   Response::contentType()									
 {
 	MimeType _mime;
-    _response_str.append("Content-Type: ");					// agrega el string: "Content-type: "a la respuesta
+    _response_str.append("Content-Type: ");		
     mime = "text/html";
 	if(_target.rfind(".", std::string::npos) != std::string::npos && _code == 200)	// si el target file tiene un punto, empezando por el final lo identifica como extension 
         mime = _mime.getMimeType(_target.substr(_target.rfind(".", std::string::npos) + 1)); // obtiene el mime type de la extension del archivo
     _response_str.append(mime);   // Corregido: remover el paréntesis extra
     _response_str.append("\r\n");
-	std::cout << "en contentType inicio de response_str: " << std::endl;
-	std::cout << _response_str << "Find de response_str" << Red << std::endl;
+	std::cout << Red << "contentType: " <<_response_str << White;
 }
-
 
 void    Response::setHeaders()								// setea los headers de la respuesta
 {
 	std::stringstream responseStream;
 	std::stringstream ss;
     ss << _response_body_str.length();
-	//responseStream << "Content-Type: text/html\r\n";		//	
+	//responseStream << "Content-Type: text/html\r\n";		//
+
 	contentType();
 	responseStream << "Content-Length: " << ss.str() << "\r\n";
 	_response_str.append(responseStream.str());
     _response_str.append("\r\n");
 }
 
+
+
 std::string Response::getMatch(std::string path, std::vector<Location_config> locations)
 {
-	std::cout << "en getMatch____________________" << std::endl;
+	if (DEBUG)
+		std::cout << "en getMatch____________________" << std::endl;
 
 	std::string locationMatch = "";                           	// variable que almacena la key de la location
 	std::string longestMatch = "";                            	// variable que almacena la key de la location más larga
@@ -349,13 +301,8 @@ std::string Response::getMatch(std::string path, std::vector<Location_config> lo
 	// La location tiene ya incluida la raiz
 	std::string combinedPath = concatenatePaths(_config->root, path, "");;                                 // variable que almacena la longitud de la location más larga
 
-	// Ver como afectan las directivas para la incorporación de la raiz y ver 
-	// como variaría la dirección del target cuando la directiva esté 
-	// incluida en ambos sitios - pendiente de ver con Ismael
-
 	for (std::vector<Location_config>::iterator it = locations.begin(); it != locations.end(); it++) // itera sobre las locations
 	{
-		std::cout << "location: " << it->location << std::endl;
 		std::string locationToFind = it->location;                                                    // obtiene la key de la location
 		if (combinedPath.find(locationToFind) == 0 && locationToFind.length() > longestMatchLength)              // si el path del request contiene la location y la longitud de la location es mayor que la longitud de la location más larga
 		{
@@ -378,6 +325,7 @@ static Location_config* find_location(Server_config &server, const std::string &
     }
     return NULL;  // Si no se encuentra, devuelve NULL
 }
+
 // Función para imprimir los valores de un Location_config
 static void printLocationConfig(const Location_config* locConf) {
     if (locConf == NULL) {
@@ -404,7 +352,6 @@ static void printLocationConfig(const Location_config* locConf) {
         }
         std::cout << std::endl;
     }
-
     // Imprimir methods (set de strings)
     std::cout << "Allowed methods: ";
     if (locConf->methods.empty()) {
@@ -418,10 +365,8 @@ static void printLocationConfig(const Location_config* locConf) {
         }
         std::cout << std::endl;
     }
-
     // Imprimir redir (pair de int y string)
     std::cout << "Redirection: Código " << locConf->redir.first << ", Nueva dirección: " << locConf->redir.second << std::endl;
-
     // Imprimir cgi (vector de pares de strings)
     std::cout << "CGI mappings: ";
     if (locConf->cgi.empty()) {
@@ -488,19 +433,82 @@ int Response:: setIndex()			// el index puede se un directorio?
 	return (0);
 }
 
+static bool hasValidExtension(const std::string& path, const std::vector<std::pair<std::string, std::string> >& config) {
+    // Encontrar la última posición del punto en el path manualmente
+    std::string::size_type dotPos = path.rfind('.');
+    if (dotPos == std::string::npos) {
+        return false; // No se encontró una extensión
+    }
+
+    // Obtener la extensión del path
+    std::string extension = path.substr(dotPos);
+
+    // Verificar si la extensión está en _location_config
+    for (std::vector<std::pair<std::string, std::string> >::const_iterator it = config.begin(); it != config.end(); ++it) {
+        if (it->first == extension) {
+            return true; // Extensión válida encontrada
+        }
+    }
+    return false; // No se encontró una extensión válida
+}
+
+/**
+ * @brief Función para lanzar el CGI con las comporbaciones que estimemos oportunas
+ * 
+ * @return int 
+ */
+int Response::launchCgi()
+{
+	/* 
+		Ismael en esta función podemos lanzar el CGI
+		creo que necesito gestionar algo más dentro de la función
+		buildBody() para que se ejecute el CGI pero estoy reventao.
+
+		El flag del cgi lo necesito para que no continue la función en el caso 
+		de estar eecutandose un CGI
+		*/
+	
+	
+	
+	std::cout << "en launchCgi____________________" << std::endl;
+
+
+	std::string cgi_path = _config->root + _request->getPath();
+	std::cout << "cgi_path: " << cgi_path << std::endl;
+	
+	// Podemos chequear si es un archivo ejecutable y si tiene permisos de ejecución
+	//	si no es así setReturnCode(403);
+
+	//llamar una instancia del objeto cgi y a su llamada para resetear los valores																		// retorna 1		
+    // asignarle el path 
+	cgiFlag = 1;								
+
+	// Desde esta función podríamos realizar el pipe y guardar el fd[2] en la response y setReturnCode(500) si falla																			// flag para saber si se esta ejecutando un cgi y su estado	
+
+	// Llamar a la función de obtener las variables de entorno
+	// llamara a la función execute del objeto cgi
+
+	cgiFlag = 0;	
+	return (1);
+}
+
 int Response::getTarget()
 {
+	if(DEBUG)
+		std::cout << "en getTarget____________________" << std::endl;
 	//--------------------------------------------------------------------------//
 	//						 ** obtener la location ** 							//
 	//--------------------------------------------------------------------------//
 	_location_config = NULL;
-	std::cout << "en getTarget____________________" << std::endl;
     std::string locationMatch = "";                     	//clave de la location
     locationMatch = getMatch(_request->getPath(), _config->locations);                                                        // variable que almacena la key de la location
+	if (!locationMatch.empty())
+	{ 
 	_location_config = find_location(*_config,locationMatch);
 	std::cout << "_location_config:_______________	____________- "  << std::endl;
     printLocationConfig(_location_config);
 
+	
 	//--------------------------------------------------------------------------//
 	//    cofigurar target con las directivas de la location y el server      	//
 	//--------------------------------------------------------------------------//
@@ -542,46 +550,69 @@ int Response::getTarget()
 	
 	}
 	//--------------------------------------------------------------------------//
+	//								** return **								//
+	//--------------------------------------------------------------------------//
+	//		Comprueba si hay un return en la location y si lo hay lo setea		//
+	//           Pendiente de configurar y ver como hay que devolverlo 			//
+	//--------------------------------------------------------------------------//
+	
+	//--------------------------------------------------------------------------//
+	//								** cgi **									//
+	//--------------------------------------------------------------------------//
+	if (!_location_config->cgi.empty() && 
+		hasValidExtension(_request->getPath(), _location_config->cgi)) {
+        return(launchCgi());
+        }
+	//--------------------------------------------------------------------------//
 	//								** autoindex **								//
 	//--------------------------------------------------------------------------//
 	//		Comprueba si el target es un directorio y si no tiene autoindex		//
 	//--------------------------------------------------------------------------//
 	//        	Pendiente de configurar y ver como hay que devolverlo 			//	
 	//--------------------------------------------------------------------------//
-	
+	}
+	else
+	{
+		_target= concatenatePaths(_config->root, _request->getPath(), "");		// combina el root del server con el path del request
+	}
 	return 0;
 }
 
 int Response::buildBody()
 {
-	std::cout << "en buildBody____________________" << std::endl;
+	if (DEBUG)
+		std::cout << "en buildBody____________________" << std::endl;
 	// 					Confirmacion con parámetros del server
 	// ***********   client_max_body_size			***********
 	
 	if (_request->getBody().length() > _config->body_size)       						// obtiene el tamaño del body del request y si el tamaño del body es mayor que el tamaño maximo permitido
-		return (setReturnCode(413));                                                         // retorna 413 y lo setea como error para la gestión de errores       
+		return (setReturnCode(413));                             	// retorna 413 y lo setea como error para la gestión de errores       
 	if (getTarget())
 		return (1);
+	if (cgiFlag || _auto_index_flag || _code)	//	Condiciones para que no se ejecute el getFile pendientes de diseñar o terminar d epulir	
+	    return (0);
+	if (_request->getMethod() == GET )			// si el método del request es GET o HEAD
+    {
+		std::cout << "GET" << std::endl;
+		std::cout << _request->getMethod() << std::endl;
+		
+        if (getFile())													// lee el archivo					
+            return (1);
+    }
 	return (0);
 }
 
 void Response::buildResponse()
 {	
+	if (DEBUG)
+		std::cout << "Building response is called" << std::endl;
 	if (isErrorCode() || buildBody())                                     		 // forma de comprobar si hay error en el request y si no lo hay error construye el body
 	{
 		std::cout << "en build response codigo de error" << _code << std::endl;                                               // si hay error construye el error body	
+// -->		aquí debo incluir la construcción de las páginas de error con el código de error
 	}
-	if (DEBUG)
-		std::cout << "Building response is called" << std::endl;
 
-	if (_request->getMethod() == GET )			// si el método del request es GET o HEAD
-    {
-		std::cout << "GET" << std::endl;
-		std::cout << _request->getMethod() << std::endl;
-        if (getFile())														// lee el archivo					
-            return ;
-    }
-	setStatusline();											// construye la linea de estado de la respuesta	
+	setStatusline();													// construye la linea de estado de la respuesta	
 	setHeaders();														// setea los headers de la respuesta
     if(_request->getMethod() == GET || _code != 200) 	// si el método del request no es HEAD y el método del request es GET o el código no es 200
     {
@@ -618,3 +649,51 @@ std::string Response::getResString()
 		std::cout << "getResString is called" << std::endl;
 	return _responseString;
 }
+
+
+/*int Response::getFile()
+{
+    std::ifstream file;
+    
+    // Determina si el archivo es binario o no usando el MIME type
+    bool isBinary = (mime == "image/png" || mime == "image/jpeg" || mime == "image/jpg");
+    
+    // Abrir el archivo en modo texto o binario dependiendo del tipo
+    if (isBinary) {
+        file.open(_target.c_str(), std::ios::binary); // Abrir en modo binario
+    } else {
+        file.open(_target.c_str()); // Abrir en modo texto por defecto
+    }
+    
+    // Verificar si la apertura del archivo ha fallado
+    if (file.fail()) {
+        _code = 404;
+        return (1); // Error 404 si el archivo no existe
+    }
+
+    // Si es binario, leerlo en un std::vector<char>
+    if (isBinary) {
+        file.seekg(0, std::ios::end); // Moverse al final para obtener el tamaño del archivo
+        std::streamsize size = file.tellg();
+        file.seekg(0, std::ios::beg); // Volver al inicio
+
+        // Redimensionar el vector para contener todo el archivo
+        std::vector<char> buffer(size);
+        if (!file.read(buffer.data(), size)) {
+            _code = 500; // Error 500 si la lectura falla
+            return (1);
+        }
+
+        // Convertir el vector a string para almacenarlo en _response_body_str
+        _response_body_str.assign(buffer.begin(), buffer.end());
+    } 
+    // Si es un archivo de texto, leerlo directamente en un string
+    else {
+        std::ostringstream ss;
+        ss << file.rdbuf();
+        _response_body_str = ss.str();
+    }
+
+    return (0); // Éxito
+}
+*/
