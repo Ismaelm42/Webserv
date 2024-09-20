@@ -68,7 +68,7 @@ struct Server_config
 	std::vector<std::string> server_names;
 	std::map<int, std::string> error_pages; // mapa con código de error y ruta al target marcado por confirguración
 	std::vector<Location_config> locations;	// chequear este antes que el general y si no 404
-	std::vector<std::pair<std::string, int> > ip_port;
+	std::vector<std::pair<std::string, int> > host_port;
 	Server_config() : body_size(1000000) {};
 };
 
@@ -77,6 +77,8 @@ struct Epoll_events
 	int epfd;										// Epoll fd
 	std::vector<struct epoll_event> log;			// Notificaciones de Eventos
 	std::map<int, struct epoll_event> added;		// Configuración de Eventos
+	std::map<int, int> track_fdin;					// Track del fd de lectura cgi con fd cliente
+	std::map<int, int> track_fdout;					// Track del fd de escritura cgi con fd cliente
 };
 
 inline void addEvent(int fd, struct Epoll_events *events)

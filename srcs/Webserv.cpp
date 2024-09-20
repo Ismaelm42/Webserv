@@ -44,7 +44,7 @@ void Webserv::initializeServers()
 	for (_config->_itServer = _config->_serversConfig.begin(); _config->_itServer != _config->_serversConfig.end(); _config->_itServer++)
 	{
 		_config->_itConfig = *_config->_itServer;
-		for (it = _config->_itConfig->ip_port.begin(); it != _config->_itConfig->ip_port.end(); it++)
+		for (it = _config->_itConfig->host_port.begin(); it != _config->_itConfig->host_port.end(); it++)
 		{
 			Server *server = new Server(it->first, it->second, _events, _config->_itConfig);
 			_servers.push_back(server);

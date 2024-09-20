@@ -15,10 +15,10 @@ class Cgi
 		Request *_request;
 		struct Epoll_events *_events;
 	public:
-		Cgi(Request *request, struct Epoll_events *events);
+		Cgi(Request *request, Epoll_events *events);
 		~Cgi();
 		void setEnvironment();
 		void setArguments();
 		void childProcess();
-		void executeCgi();
+		void executeCgi(std::pair<int, int> &cgiFd)
 };

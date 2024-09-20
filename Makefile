@@ -4,22 +4,22 @@ SRC =	srcs/main.cpp			\
 		srcs/Cgi.cpp			\
 		srcs/Client.cpp			\
 		srcs/Configuration.cpp	\
+		srcs/MimeType.cpp		\
 		srcs/Request.cpp		\
+		srcs/Response.cpp		\
 		srcs/Server.cpp			\
 		srcs/Webserv.cpp		\
-		srcs/Response.cpp		\
-		srcs/MimeType.cpp		
 
 HEADERS =	includes/lib.hpp			\
 			includes/common.hpp			\
 			includes/Cgi.hpp			\
 			includes/Client.hpp			\
 			includes/Configuration.hpp	\
+			includes/MimeType.hpp		\
 			includes/Request.hpp		\
+			includes/Response.hpp		\
 			includes/Server.hpp			\
 			includes/Webserv.hpp		\
-			includes/Response.hpp		\
-			includes/MimeType.hpp		
 
 
 OBJT_DIR = .objt/

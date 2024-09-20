@@ -303,7 +303,7 @@ void Configuration::setListen()
 	if (port_check < 0 || port_check > 65536)
 		throw std::runtime_error(logError("Error: port number is out of range: \"" + port + "\" in \"listen\" directive"));
 	std::pair<std::string, int> pair = std::make_pair(host, std::atoi(port.c_str()));
-	_itConfig->ip_port.push_back(pair);
+	_itConfig->host_port.push_back(pair);
 }
 
 /*
@@ -378,7 +378,7 @@ void Configuration::setIndexFiles(std::string path, std::vector<std::string> &co
 		if (_itToken->find('/') != 0 && path[path.size() - 1] != '/')
 			*_itToken = "/" + *_itToken;
 		*_itToken = path + *_itToken;
-		checkFileOrDirectory(*_itToken, "file");
+		// checkFileOrDirectory(*_itToken, "file");
 		container.push_back(*_itToken);
 	}
 }
@@ -480,7 +480,7 @@ void Configuration::setMaxBodySize(size_t &bodySize)
 */
 void Configuration::checkServerBlockErrors()
 {
-	if (_itConfig->ip_port.empty())
+	if (_itConfig->host_port.empty())
 		throw std::runtime_error("Error: no \"listen\" directive found in server block");
 	if (_itConfig->server_names.empty())
 		throw std::runtime_error("Error: no \"server_name\" directive found in server block");
@@ -495,7 +495,7 @@ void Configuration::checkServerBlockErrors()
 	for (_itServer = _serversConfig.begin(); _itServer != _serversConfig.end(); _itServer++)
 	{
 		_itConfig = *_itServer;
-		for (std::vector<std::pair<std::string, int> >::iterator it = _itConfig->ip_port.begin(); it != _itConfig->ip_port.end(); it++)
+		for (std::vector<std::pair<std::string, int> >::iterator it = _itConfig->host_port.begin(); it != _itConfig->host_port.end(); it++)
 		{
 			dup_check = dup_cont.insert(*it);
 			if (dup_check.second == false)
@@ -597,7 +597,7 @@ void Configuration::printServerConfig()
 	{
 		Server_config *it = *_itServer;
 		std::cout << Yellow << "[SERVER CONFIG " << i + 1 << "]" << Reset << std::endl << std::endl;
-		for (std::vector<std::pair<std::string, int> >::iterator itip = it->ip_port.begin(); itip != it->ip_port.end(); itip++)
+		for (std::vector<std::pair<std::string, int> >::iterator itip = it->host_port.begin(); itip != it->host_port.end(); itip++)
 		{
 			std::cout << "Listen IP:\t\t\t" << itip->first << std::endl;
 			std::cout << "Listen PORT:\t\t\t" << itip->second << std::endl;

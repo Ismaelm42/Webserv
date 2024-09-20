@@ -70,8 +70,6 @@ void Request::printParsed()
 	std::cout << "Get Body Flag: " << _get_body_flag << std::endl;
 	std::cout << "_headers.size(): " << _headers.size() << std::endl;
 	std::cout << "URI Size: " << _uri_size << std::endl;
-
-
 }
 
 Methods  &Request::getMethod(){
@@ -113,6 +111,10 @@ std::string &Request::getBody(){
 
 std::string     Request::getServerName(){
     return (this->_server_name);
+}
+
+int	Request::getPort(){
+	return _client->_port;
 }
 
 bool    Request::getMultiformFlag(){
@@ -287,7 +289,7 @@ bool Request::isValidUri()
 	ss << _client->_port;
 	std::string portStr = ss.str();
 	std::string scheme = "http://";
-	std::string uriTotal = scheme + _client->_ip  + ":" + portStr + _path + _query + _fragment;
+	std::string uriTotal = scheme + _client->_host  + ":" + portStr + _path + _query + _fragment;
 	if (DEBUG)
 		std::cout << Red << "URI Total: " << uriTotal << White << std::endl;
 	if (uriTotal.length() > URI_MAX_LENGTH)

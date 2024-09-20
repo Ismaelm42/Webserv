@@ -18,6 +18,7 @@ class Request
 		std::string									getHeader(std::string const &);					// se usa para obtener un header en concreto
 		const std::map<std::string, std::string>	&getHeaders() const;							// se usa para obtener todos los headers de la solicitud
 		std::string									getServerName();								// se usa para obtener el nombre del servidor
+		int											getPort();										// se usa para obtener el puerto
 		std::string									&getFragment();									// se usa para obtener el fragmento de la solicitud(suelen corresponder con parted del mismo documento pero depende del mime/type del documento)					
 		std::string									&getBody();										// se usa para obtener el cuerpo de la solicitud en formato string	
 		std::string									&getBoundary();									// se usa para obtener el boundary en caso de que se esté recibiendo un formulario multiform
@@ -54,6 +55,7 @@ class Request
 		size_t							  	_uri_size;
 		int									_error_code;
 		std::string							_server_name;
+		std::string							_port;
 		std::string							_body_str;
 		/*				temporales				*/
 		std::string							_temp;			   // se usa para almacenar los datos recibidos limpios

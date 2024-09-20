@@ -13,8 +13,8 @@
 		Configura el socket para que escuche conexiones entrantes con una cola de 50 conexiones pendientes usando listen.
 		Imprime un mensaje de confirmación indicando que el servidor está escuchando en el puerto especificado.
 */
-Server::Server(std::string ip, int port, struct Epoll_events *events, Server_config *config)
-:_port(port), _ip(ip), _config(config), _events(events)
+Server::Server(std::string host, int port, struct Epoll_events *events, Server_config *config)
+:_port(port), _host(host), _config(config), _events(events)
 {
 	int optval = 1;
 
@@ -29,7 +29,7 @@ Server::Server(std::string ip, int port, struct Epoll_events *events, Server_con
     if (fcntl(_socket, F_SETFL, O_NONBLOCK) < 0)
         throw std::runtime_error("Error: fcntl: " + std::string(strerror(errno)));
 	
-    _sockaddr.sin_addr.s_addr = inet_addr(_ip.c_str());
+    _sockaddr.sin_addr.s_addr = inet_addr(_host.c_str());
 	_sockaddr.sin_family = AF_INET;
 	_sockaddr.sin_port = htons(_port);
 
@@ -38,7 +38,7 @@ Server::Server(std::string ip, int port, struct Epoll_events *events, Server_con
 
     if (listen(_socket, 50) < 0)
         throw std::runtime_error("Error: listen: " + std::string(strerror(errno)));
-    std::cout << High_Green << "Server listenning on " << _ip << ":" << _port << Reset << std::endl;
+    std::cout << High_Green << "Server listenning on " << _host << ":" << _port << Reset << std::endl;
 }
 /*
 	Destructor de la clase Server.
@@ -91,9 +91,9 @@ void Server::addClient(int fd)
 {
 	if (fd > 0 && _clients.find(fd) == _clients.end())
 	{
-			std::cout << High_Cyan << "Socket with fd " << fd << " has been created" << Reset << std::endl;
-    		Client *client = new Client(_ip, _port, fd, _config, _events);
-    		_clients[fd] = client;
+		std::cout << High_Cyan << "Socket with fd " << fd << " has been created" << Reset << std::endl;
+    	Client *client = new Client(_config, _events, fd, _port, _host);
+    	_clients[fd] = client;
 	}
 }
 
@@ -129,6 +129,14 @@ void Server::handleRequest(int fd)
 			deleteEvent(fd, _events);
 			deleteClient(fd);
 		}
+	else if (_events->track_fdin.find(fd) != _events->track_fdin.end())
+	{
+		fd = 
+		if (_clients[_events->track_fdin[fd]]->getRequest() < 0)
+		{
+			deleteEvent()
+		}
+	}
 }
 
 /*
@@ -138,7 +146,7 @@ void Server::handleRequest(int fd)
 */
 void Server::handleResponse(int fd)
 {
-	if (_clients.find(fd) != _clients.end() && _clients[fd]->getStatus())
+	if (_clients.find(fd) != _clients.end() && _clients[fd]->_status)
 		_clients[fd]->sendResponse();
 }
 

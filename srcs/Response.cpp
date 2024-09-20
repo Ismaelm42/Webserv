@@ -474,7 +474,7 @@ int Response:: setIndex()			// el index puede se un directorio?
 		index = _location_config->index;
 	else if (_config->index.size() > 0)
 		index = _config->index;
-	if (index.size() > 0 && (_request->getPath() == "/" ||_request->getPath() == ""))
+	if (index.size() > 0 && (_request->getPath() == "/" || _request->getPath() == ""))
 	{
 		std::cout << "Entra en el bucle"<< std::endl;
 		for (size_t i = 0; i < index.size(); i++){

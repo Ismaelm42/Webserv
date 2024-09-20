@@ -1,6 +1,6 @@
 #include "../includes/lib.hpp"
 
-Cgi::Cgi(Request *request, struct Epoll_events *events)
+Cgi::Cgi(Request *request, Epoll_events *events)
 :_request(request), _events(events)
 {
 	_envp = NULL;
@@ -17,7 +17,6 @@ Cgi::~Cgi()
 	}
 	if (_argv != NULL)
 	{
-
 		for (int i = 0; _argv[i] != NULL; i++)
 			free(_argv[i]);
 		free(_argv);
@@ -37,8 +36,8 @@ void Cgi::setEnvironment()
 	envp[6] = "CONTENT_TYPE=";
 	envp[7] = "HTTP_USER_AGENT=";
 	envp[8] = "HTTP_COOKIE=";
-	envp[9] = "SERVER_NAME=";
-	envp[10] = "SERVER_PORT=";
+	envp[9] = "SERVER_NAME=" + _request->getServerName();
+	envp[10] = "SERVER_PORT=" + _request->getPort();
 	envp[11] = "SERVER_PROTOCOL=HTTP/1.1";
 
 	_envp = (char **)calloc(sizeof(char *), 13);
@@ -63,17 +62,15 @@ void Cgi::setArguments()
 
 void Cgi::childProcess()
 {
-	if (dup2(_pipeFd[0], STDIN_FILENO) < 0)
-		exit(-2);
+	if (dup2(_pipeFd[0], STDIN_FILENO) < 0 || dup2(_pipeFd[1], STDOUT_FILENO) < 0)
+		exit(-1);
 	close(_pipeFd[0]);
-	if (dup2(this->_pipeFd[1], STDOUT_FILENO) < 0)
-		exit(-3);
 	close(_pipeFd[1]);
 	if (execve("./root/cgi/sum.sh", _argv, _envp) < 0)
 		exit(EXIT_FAILURE);
 }
 
-void Cgi::executeCgi()
+void Cgi::executeCgi(std::pair<int, int> &cgiFd)
 {
 	setEnvironment();
 	setArguments();
@@ -84,20 +81,20 @@ void Cgi::executeCgi()
 		childProcess();
 	else
 	{
-		//Quizás aquí enviar los datos a response para que se encargue de realizar la respuesta
 		int status;
 		waitpid(_pid, &status, 0);
         if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-            throw std::runtime_error("Error: Fallo child process");
-		std::cout << "FDIN = " << _pipeFd[0] << std::endl;
-		std::cout << "FDOUT = " << _pipeFd[1] << std::endl << std::endl;
+		{
+			if (WEXITSTATUS(status) == 255)
+            	throw std::runtime_error("Error: dup2 failed in child process");
+			if (WEXITSTATUS(status) == 1)
+				throw std::runtime_error("Error: execve script failed");
+		}
+		if (fcntl(_pipeFd[0], F_SETFL, O_NONBLOCK) < 0 || fcntl(_pipeFd[1], F_SETFL, O_NONBLOCK) < 0)
+        	throw std::runtime_error("Error: fcntl: " + std::string(strerror(errno)));
 		addEvent(_pipeFd[0], _events);
 		addEvent(_pipeFd[1], _events);
-		// Crear un mapa en _events con estos dos fds.
-		// El primero sería fdin y el segundo fdout
-		// En cuanto lo procese
+		cgiFd.first = _pipeFd[0];
+		cgiFd.second = _pipeFd[1];
 	}
 }
-
-
-// En response, procesar la lectura y una vez la lectura realizada procesar la respuesta?
