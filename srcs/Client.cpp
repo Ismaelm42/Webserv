@@ -25,6 +25,20 @@ int Client::getRequest()
 	char buffer[10000];
 	std::memset(buffer, 0, 10000);
 	int bytesRead = read(_fd, buffer, 10000);
+		/*	
+		ismael Esto no va muy fino con números bajos pero ya no da invalid read. 
+		Si lo bajamos empieza a no cargar las imágenes y a no responder a todas las peticiones
+		tenienso que pulsar uncluso varias veces como si se cerrase la conexión al no tener suficiente espacio 
+		para generar la petición o cerrarse la conexión antes de recibir los carcacteres de fin de la petición
+		Si no es algo que se pueda modificar en la corrección podemos dejarlo así, o en su defecto 
+		limitarlo con un mínimo de 1000 bytes. 
+		No he podido ver donde esta el leak ¿Esto es algo que nos puedan cambiar en la corrección?
+		
+		*/
+	char buffer[1000]; 
+	int bytesRead;		
+	std::memset(buffer, 0, 1000);
+	bytesRead = read(_fd, buffer, 1000);
 	if (bytesRead == 0 || bytesRead < 0)
 	{
 		std::cout << Red << "Connection closed on fd " << _fd << Reset << std::endl;
