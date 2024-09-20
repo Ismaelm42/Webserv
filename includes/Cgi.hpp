@@ -7,7 +7,7 @@ class Request;
 class Cgi
 {
 	private:
-		// int _fd;
+		int _fd;
 		pid_t _pid;
 		char **_argv;
 		char **_envp;
@@ -15,10 +15,10 @@ class Cgi
 		Request *_request;
 		struct Epoll_events *_events;
 	public:
-		Cgi(Request *request, Epoll_events *events);
+		Cgi(int fd, Request *request, Epoll_events *events);
 		~Cgi();
 		void setEnvironment();
 		void setArguments();
 		void childProcess();
-		void executeCgi(std::pair<int, int> &cgiFd)
+		void executeCgi(int (&cgiFd)[2]);
 };

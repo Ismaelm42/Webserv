@@ -679,6 +679,10 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 	}																		// es más eficiente que hacer append de un char a un string
 }
 
+void Request::fillCgi(char *buffer)
+{
+	_cgiString.append(buffer);
+}
 
 void	Request::reset(){
 	_path.clear();
@@ -693,6 +697,7 @@ void	Request::reset(){
 	_chunk_size = 0x0;
 	_temp.clear();
 	_body_str = "";
+	_cgiString = "";
 	_header_name_temp.clear();
 	_headers.clear();
 	_server_name.clear();

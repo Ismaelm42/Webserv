@@ -119,22 +119,19 @@ void Server::deleteClient(int fd)
 	Maneja la solicitud de un cliente.
 		Verifica si el descriptor de archivo fd está en el contenedor _clients.
 		Si el cliente está presente, llama a getRequest() para procesar la solicitud.
+		Verifica si es un fd de un proceso cgi, y le atribuye el fd del cliente.
 		Si getRequest() devuelve un valor negativo, elimina el evento y el cliente, indicando que la conexión ha fallado o se ha cerrado.
 */
 void Server::handleRequest(int fd)
 {
-	if (_clients.find(fd) != _clients.end())
+	if (_clients.find(fd) != _clients.end() || _events->cgi_in.find(fd) != _events->cgi_in.end())
+	{
+		if (_clients.find(fd) == _clients.end())
+			fd = _events->cgi_in[fd];
 		if (_clients[fd]->getRequest() < 0)
 		{
 			deleteEvent(fd, _events);
 			deleteClient(fd);
-		}
-	else if (_events->track_fdin.find(fd) != _events->track_fdin.end())
-	{
-		fd = 
-		if (_clients[_events->track_fdin[fd]]->getRequest() < 0)
-		{
-			deleteEvent()
 		}
 	}
 }
@@ -142,12 +139,18 @@ void Server::handleRequest(int fd)
 /*
 	Maneja la respuesta para un cliente.
 		Verifica si el descriptor de archivo fd está en el contenedor _clients y si el cliente tiene un estado que requiere una respuesta.
+		También verifica si es un fd de un proceso cgi, y le atribuye el fd del cliente.
 		Si es así, llama a sendResponse() del cliente para enviar la respuesta.
 */
 void Server::handleResponse(int fd)
 {
-	if (_clients.find(fd) != _clients.end() && _clients[fd]->_status)
-		_clients[fd]->sendResponse();
+	if (_clients.find(fd) != _clients.end() || _events->cgi_out.find(fd) != _events->cgi_out.end())
+	{
+		if (_clients.find(fd) == _clients.end())
+			fd = _events->cgi_out[fd];
+		if (_clients[fd]->_isReady)
+			_clients[fd]->sendResponse();
+	}
 }
 
 /*

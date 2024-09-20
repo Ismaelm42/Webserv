@@ -1,7 +1,7 @@
 #include "../includes/lib.hpp"
 
-Cgi::Cgi(Request *request, Epoll_events *events)
-:_request(request), _events(events)
+Cgi::Cgi(int fd, Request *request, Epoll_events *events)
+:_fd(fd), _request(request), _events(events)
 {
 	_envp = NULL;
 	_argv = NULL;
@@ -70,7 +70,7 @@ void Cgi::childProcess()
 		exit(EXIT_FAILURE);
 }
 
-void Cgi::executeCgi(std::pair<int, int> &cgiFd)
+void Cgi::executeCgi(int (&cgiFd)[2])
 {
 	setEnvironment();
 	setArguments();
@@ -94,7 +94,9 @@ void Cgi::executeCgi(std::pair<int, int> &cgiFd)
         	throw std::runtime_error("Error: fcntl: " + std::string(strerror(errno)));
 		addEvent(_pipeFd[0], _events);
 		addEvent(_pipeFd[1], _events);
-		cgiFd.first = _pipeFd[0];
-		cgiFd.second = _pipeFd[1];
+		_events->cgi_in[_pipeFd[0]] = _fd;
+		_events->cgi_out[_pipeFd[1]] = _fd;
+		cgiFd[0] = _pipeFd[0];
+		cgiFd[1] = _pipeFd[1];
 	}
 }

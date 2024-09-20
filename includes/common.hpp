@@ -54,8 +54,8 @@ struct Location_config
 	size_t body_size;
 	std::string location;
 	std::set<std::string> methods;
-	std::vector<std::string> index; 		// chequear este antes que el general
-	std::pair<int, std::string> redir;		// código de error nuevadirección
+	std::vector<std::string> index; 								// chequear este antes que el general
+	std::pair<int, std::string> redir;								// código de error nuevadirección
 	std::vector<std::pair<std::string, std::string> > cgi;
 	Location_config() : autoindex(false) , body_size(0) {};
 };
@@ -64,21 +64,21 @@ struct Server_config
 {
 	size_t body_size;
 	std::string root;
-	std::vector<std::string> index;      	// sino hay en location se mira en general y si no 404
+	std::vector<std::string> index;      							// sino hay en location se mira en general y si no 404
 	std::vector<std::string> server_names;
-	std::map<int, std::string> error_pages; // mapa con código de error y ruta al target marcado por confirguración
-	std::vector<Location_config> locations;	// chequear este antes que el general y si no 404
+	std::map<int, std::string> error_pages; 						// mapa con código de error y ruta al target marcado por confirguración
+	std::vector<Location_config> locations;							// chequear este antes que el general y si no 404
 	std::vector<std::pair<std::string, int> > host_port;
 	Server_config() : body_size(1000000) {};
 };
 
 struct Epoll_events
 {
-	int epfd;										// Epoll fd
-	std::vector<struct epoll_event> log;			// Notificaciones de Eventos
-	std::map<int, struct epoll_event> added;		// Configuración de Eventos
-	std::map<int, int> track_fdin;					// Track del fd de lectura cgi con fd cliente
-	std::map<int, int> track_fdout;					// Track del fd de escritura cgi con fd cliente
+	int epfd;														// Epoll fd
+	std::vector<struct epoll_event> log;							// Notificaciones de Eventos
+	std::map<int, struct epoll_event> added;						// Configuración de Eventos
+	std::map<int, int> cgi_in;										// Track del fd de lectura cgi con el fd del cliente
+	std::map<int, int> cgi_out;										// Track del fd de escritura cgi con el fd del cliente
 };
 
 inline void addEvent(int fd, struct Epoll_events *events)
@@ -99,18 +99,9 @@ inline void deleteEvent(int fd, struct Epoll_events *events)
 	if (epoll_ctl(events->epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
 		throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
     events->added.erase(fd);
-	for (std::vector<struct epoll_event>::iterator it = events->log.begin(); it != events->log.end(); it++)
-    {
-        if (it->data.fd == fd)
-        {
-            it = events->log.erase(it);
-            break ;
-        }
-    }
-
 }
 
-enum Methods   // incluir tanto aquí como en _initMethodStr los métodos permitidos
+enum Methods
 {
 	GET,
 	POST,

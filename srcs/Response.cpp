@@ -481,14 +481,19 @@ int Response::launchCgi()
 
 	//llamar una instancia del objeto cgi y a su llamada para resetear los valores																		// retorna 1		
     // asignarle el path 
-	cgiFlag = 1;								
+	cgiFlag = true;								
 
+    // Alfonsete:
+    // Como tengo un puntero al cliente, he creado una función en Cliente que lo que hace es crear la clase CGI y lanzar el execute CGI.
+    // De esta manera lo hace con el CGI del cliente y se lanza desde aquí. Matamos dos tiros de un pájaro ;)
+    // El flag debe quedarse en true aunque igual ni hace falta. Creo que no hace falta pero por ahora lo vamos a dejar.
+
+    _client->initCgi();
 	// Desde esta función podríamos realizar el pipe y guardar el fd[2] en la response y setReturnCode(500) si falla																			// flag para saber si se esta ejecutando un cgi y su estado	
 
 	// Llamar a la función de obtener las variables de entorno
 	// llamara a la función execute del objeto cgi
 
-	cgiFlag = 0;	
 	return (1);
 }
 
