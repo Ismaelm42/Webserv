@@ -13,7 +13,6 @@ class Configuration
 		std::vector<std::string>::iterator _itToken;					// Iterador del container de _itToken
 
 		std::string logError(std::string message);
-		void checkFileOrDirectory(std::string &path, const std::string type);
 		void createTokens(std::string &line);
 		void initServerBlock();
 		void setAllowedMethods();
@@ -37,6 +36,7 @@ class Configuration
 		std::vector<Server_config*> _serversConfig;						// Container de estructuras Server_config (common.hpp)
 		std::vector<Server_config*>::iterator _itServer;				// Iterador del container de Server_config
 
+		void checkFileOrDirectory(std::string &path, const std::string type);
 		Configuration(int argc, char **argv);
 		~Configuration();
 		void parsing();

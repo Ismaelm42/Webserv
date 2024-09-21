@@ -70,11 +70,18 @@ int Response::setReturnCode(int code)
 	return (_code);
 }
 
-void Response::setCode(int code)
+/**
+ * @brief set code and return 0
+ * 
+ * @param code 
+ * @return int 
+ */
+int Response::setCode(int code)
 {
 	if (DEBUG)
 		std::cout << "setCode is called" << std::endl;
 	_code = code;
+	return(0);
 }
 
 void Response::setClient(Client* client) {
@@ -262,8 +269,11 @@ int Response::getFile()
     return (0);
 }
 
-void   Response::contentType()									
-{
+void    Response::setHeaders()								// setea los headers de la respuesta
+{	
+	////////////////////////////////////
+	//     **   Content-Type    **    //
+	////////////////////////////////////
 	MimeType _mime;
     _response_str.append("Content-Type: ");		
     mime = "text/html";
@@ -272,21 +282,29 @@ void   Response::contentType()
     _response_str.append(mime);   // Corregido: remover el paréntesis extra
     _response_str.append("\r\n");
 	std::cout << Red << "contentType: " <<_response_str << White;
-}
 
-void    Response::setHeaders()								// setea los headers de la respuesta
-{
-	std::stringstream responseStream;
+	////////////////////////////////////
+	//  ** Location - redirection **  //
+	////////////////////////////////////
+	if (_location.length())
+        _response_str.append("Location: "+ _location +"\r\n");
+
+	////////////////////////////////////
+	//   **   Content-Length    **    //
+	////////////////////////////////////
 	std::stringstream ss;
-    ss << _response_body_str.length();
-	//responseStream << "Content-Type: text/html\r\n";		//
+	ss << _response_body_str.length();
+	_response_str.append("Content-Length: " + ss.str() + "\r\n");
 
-	contentType();
-	responseStream << "Content-Length: " << ss.str() << "\r\n";
-	_response_str.append(responseStream.str());
-    _response_str.append("\r\n");
+	////////////////////////////////////
+	//    **   End of headers    **   //
+	////////////////////////////////////
+	_response_str.append("\r\n");
+
+	if (DEBUG)
+		std::cout << Red << "setHeaders: " <<_response_str << White <<std::endl;
+	
 }
-
 
 
 std::string Response::getMatch(std::string path, std::vector<Location_config> locations)
@@ -384,7 +402,6 @@ static void printLocationConfig(const Location_config* locConf) {
 
 int Response::isValidTargetFile()
 {
-
 	std::ifstream file(_target.c_str());
     return (file.good());
 }
@@ -524,9 +541,9 @@ int Response::getTarget()
 	//    Pendiente de ver si es necesario hacerlo aqui o en el buildbody	    //
 	//--------------------------------------------------------------------------//
 	
-	if (_request->getBody().length() > _location_config->body_size)       						// obtiene el tamaño del body del request y si el tamaño del body es mayor que el tamaño maximo permitido
-		return (setReturnCode(413));        		// retorna 413 y lo setea como error para la gestión de errores
-		
+	if (_request->getBody().length() > _location_config->body_size)     // obtiene el tamaño del body del request y si el tamaño del body es mayor que el tamaño maximo permitido
+		return (setReturnCode(413));        							// retorna 413 y lo setea como error para la gestión de errores		
+	
 	//--------------------------------------------------------------------------//
 	//							 ** allowed methods	**							//
 	//--------------------------------------------------------------------------//
@@ -560,7 +577,16 @@ int Response::getTarget()
 	//		Comprueba si hay un return en la location y si lo hay lo setea		//
 	//           Pendiente de configurar y ver como hay que devolverlo 			//
 	//--------------------------------------------------------------------------//
-	
+     if(_location_config->redir.first)
+ 	{
+		std::cout << "en return____________________" << std::endl;
+		_location = _location_config->redir.second;
+		_response_body_str = ""; // prueba para ver si funcionar la redirección con el header Location
+		return (setReturnCode(_location_config->redir.first));
+	}
+    // Imprimir cgi (vector de pares de strings)
+
+
 	//--------------------------------------------------------------------------//
 	//								** cgi **									//
 	//--------------------------------------------------------------------------//
@@ -600,10 +626,44 @@ int Response::buildBody()
     {
 		std::cout << "GET" << std::endl;
 		std::cout << _request->getMethod() << std::endl;
-		
         if (getFile())													// lee el archivo					
             return (1);
     }
+	//////////////////////////////////////////	
+    else if (_request->getMethod() == POST)
+    {
+		std::cout <<" El método es post----------------------->>" << std::endl;
+        std::cout << "_target: " << _target << std::endl;
+		// if (isValidTargetFile()){								// Comentado para permitir la creación de archivos
+		// 	std::cout << "isValidTargetFile" << std::endl;			// si el archivo es válido me detecta lacarpeta /upload como archivo
+		// 	return (setCode(204));									// y retorna 204 Ismael, habría que cambiar la llamada en el htl y enlazarlo von un archivo cgi...
+		// }
+        // std::ofstream file(_target.c_str(), std::ios::binary);
+        // if (file.fail())
+        //     return (setReturnCode(404));
+        if (_request->getMultiformFlag()){
+			
+            std::string body = _request->getBody();
+			std::cout << "_target: " << _target << std::endl;
+			std::cout << "body en if: " << body << std::endl;
+            //body = removeBoundary(body, _request->getBoundary());
+            //file.write(body.c_str(), body.length());
+			return (setCode(204));
+        }
+        else{
+			std::cout << "body en else: " << _request->getBody() << std::endl;
+            //file.write(_request->getBody().c_str(), _request->getBody().length());
+        }
+    }
+    else if (_request->getMethod() == DELETE)
+    {
+        if (!isValidTargetFile())
+            return (setReturnCode(404));
+        if (remove( _target.c_str() ) != 0 )
+            return (setReturnCode(500));
+    }
+    _code = 200;
+	/////////////////////////////////////////
 	return (0);
 }
 
@@ -613,7 +673,7 @@ void Response::buildResponse()
 		std::cout << "Building response is called" << std::endl;
 	if (isErrorCode() || buildBody())                                     		 // forma de comprobar si hay error en el request y si no lo hay error construye el body
 	{
-		std::cout << "en build response codigo de error" << _code << std::endl;                                               // si hay error construye el error body	
+		std::cout << "en build response codigo de error es: " << _code << std::endl;                                               // si hay error construye el error body	
 // -->		aquí debo incluir la construcción de las páginas de error con el código de error
 	}
 
@@ -625,18 +685,6 @@ void Response::buildResponse()
 	}
 	_responseString = _response_str;
 	
-	//std::stringstream responseStream;
-
-	//responseStream << "HTTP/1.1 ";
-	//responseStream << "200";
-	//responseStream << " OK\r\n";
-	//responseStream << "Content-Type: text/plain\r\n";
-	//responseStream << "Content-Length: " << 29 << "\r\n";
-	//responseStream << "\r\n";
-	//responseStream << "Hello, world! from socket " << "\r\n\r\n";
-	//_responseString = _response_str.append(responseStream.str());
-//	_responseString = responseStream.str();
-
 	if (DEBUG)
 	{
 		//std::cout << "Response: " << _response_str << std::endl;

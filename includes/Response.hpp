@@ -27,7 +27,7 @@ class Response
 		int 					isValidTargetFile();
 		int 					isNotValidMethod();
 		int 					getCode() const;
-		void 					setCode(int code);
+		int 					setCode(int code);
 		int 					setReturnCode(int code);
 		void 					setClient(Client* client);
 		void 					setStatusline();
@@ -50,11 +50,10 @@ class Response
 		std::string 		_response_body_str;
         std::string 		mime;												// objeto de la clase Mime para determinar el tipo de resoponse a enviar
 		Location_config 	*_location_config;
-		void   				contentType();											// setea el content type de la respuesta
 		std::string			getMatch(std::string path, std::vector<Location_config> locations);
 		int 				setIndex();
 		int 				launchCgi();
-		
+		std::string 		_location;											// location	to store the redirections
 
 
 };

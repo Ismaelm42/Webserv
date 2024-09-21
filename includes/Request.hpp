@@ -25,7 +25,6 @@ class Request
 		bool										getMultiformFlag();								// ver documentación sobre formularios html al final de este documento
 		int 										getErrorCode();									// se usa para obtener el código de error, mi intención es usarlos para mostrar la página de error adecuada		
 		void										saveHeader(std::string &, std::string &);       // se usa para almacenar los datos limpios sin espacios al final y al principio y con los nombres en minúsculas
-		void										setClientMaxBodySize(size_t);					// se usa para establecer el tamaño máximo del cuerpo de la solicitud No tengo claro si tambienlimita el tamaño de los chunks o del total de los chunked
 		void										fillRequest(char *data, size_t size);			// se usa para alimentar el parser con los datos recibidos
 		void										fillCgi(char *buffer);							// Almacena el output del script (CGI) en un string (_cgiString)
 		bool										isParsed();										// para comprobar desde fuera si esta parseado y se puede enviar la respuesta
@@ -52,7 +51,6 @@ class Request
 		std::string							_boundary;
 		fillStatusEnum						_fillStatus;			// se usa para almacenar el estado actual del parser y lo que buscamos o esperamos en cada momento
 		size_t								_body_size;		   		// se usa para almacenar la longitud del cuerpo de la solicitud aportado por el heade content-length
-		size_t								_client_max_body_size;
 		size_t							  	_chunk_size;
 		size_t							  	_uri_size;
 		int									_error_code;
