@@ -132,6 +132,12 @@
             height: auto;
         }
 
+		h1 span{
+				font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+				font-size: 1.2em;
+				color: red;
+				font-weight: bold;
+			}	
         /* Responsiveness */
         @media (max-width: 768px) {
             header h1 {
@@ -146,12 +152,18 @@
                 width: 200px;
                 height: 200px;
             }
+			h1 span{
+				display:none;
+			}	
         }
 
 		@media (max-width: 480px) {
             header h1 {
                 font-size: 1.5em;
             }
+			h1 span{
+				display:none;
+			}
 
             .image-container {
                 width: 150px;
@@ -222,7 +234,7 @@
 
 		#intro h1 {
 			font-family: 'TrashMetal', sans-serif;
-			font-size: 5rem;
+			font-size: 6vw;
 			color: red;
 			text-transform: uppercase;
 			letter-spacing: 0.2em;
@@ -273,11 +285,11 @@
 <body>
 	
 	<div id="intro">	
-		<h1> 42 - WEBSERVER - 42</h1>
+		<h1> <span>42- </span>WEBSERVER<span> - 42</span></h1>
 	</div>
 	<div id="main-content">
 	    <header>
-		<h1>- 42 - WEBSERVER - 42 -</h1>	
+		<h1>- <span>42 - </span>WEBSERVER<span> - 42</span> -</h1>	
 		</header>
 
 		<nav>

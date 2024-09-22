@@ -100,3 +100,34 @@ void Cgi::executeCgi(int (&cgiFd)[2])
 		cgiFd[1] = _pipeFd[1];
 	}
 }
+
+
+/*Ismael:
+
+He creado la carpeta CGI para ver como se parsean los formaularios porque me estaba volviendo loco para ver qué se recibe con el método action:
+
+La razón para crearla era la de probar el formulario con un archivo cgi en un servidor HTTP de python que solo ejecuta los archivos que estén en esa carpeta
+
+Para hacer las pruebas puedes seguir estos pasos:
+
+ir a la carpeta root desde la terminal y ejecutar el servidor de Python:
+
+python3 -m http.server --cgi 8000
+
+Asegurando (which python3) que la versión de python3 esté en: /usr/bin/python3
+
+y que el [archivo.py](http://archivo.py) tenga permisos de ejecución 
+
+onectacte con un navegador:
+
+http://localhost:8000/assets/get.html 
+
+Rellenar el formulario y pulsar enviar
+
+si no funciona, revisa que el método del form action="/cgi-bin/formget.py"
+
+Si ejecutas algun formulario en nuestro server es posible que te casque pero al menos ya podemos estár
+seguros de que los archivos de prueba html y cgi funcionan correctamente por lo que 
+si seguimos dando error ya es por nuestra parte y no por los archivos
+
+*/
