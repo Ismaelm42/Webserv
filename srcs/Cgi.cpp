@@ -25,6 +25,7 @@ Cgi::~Cgi()
 
 void Cgi::setEnvironment()
 {
+	std::cout << "setEnvironment" << std::endl;
 	std::string envp[13];
 
 	envp[0] = "REQUEST_METHOD=" + _request->getMethodStr(); 
@@ -49,8 +50,10 @@ void Cgi::setEnvironment()
 //Para set Arguments estaría bien tener un puntero a la clase Config. Se puede enviar perfectamente a Request.
 void Cgi::setArguments()
 {
+	if(DEBUG)
+		std::cout << "setArguments" << std::endl;
 	_argv = (char **)calloc(sizeof(char *), 2);
-	_argv[0] = strdup("./sum.sh");
+	_argv[0] = strdup("./formget.py");
 	_argv[1] = NULL;
 }
 
@@ -62,16 +65,21 @@ void Cgi::setArguments()
 
 void Cgi::childProcess()
 {
+	if(DEBUG)
+		std::cout << "childProcess" << std::endl;
 	if (dup2(_pipeFd[0], STDIN_FILENO) < 0 || dup2(_pipeFd[1], STDOUT_FILENO) < 0)
 		exit(-1);
 	close(_pipeFd[0]);
 	close(_pipeFd[1]);
-	if (execve("./root/cgi/sum.sh", _argv, _envp) < 0)
+	// if (execve("./root/cgi/sum.sh", _argv, _envp) < 0)
+	if (execve("./root/cgi-bin/formget.py", _argv, _envp) < 0)
 		exit(EXIT_FAILURE);
 }
 
 void Cgi::executeCgi(int (&cgiFd)[2])
 {
+	if(DEBUG)
+		std::cout << "executeCgi" << std::endl;
 	setEnvironment();
 	setArguments();
 	if (pipe(_pipeFd) == -1)

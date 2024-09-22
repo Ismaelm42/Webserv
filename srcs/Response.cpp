@@ -7,6 +7,7 @@ Response::Response(Client *client, Server_config *config, Request *request, stru
 		std::cout << "Response constructor" << std::endl;
 	_responseString = "";
 		_code = _request->getErrorCode(); 				// usado como condición no iniciar a 200
+	_hasIndexFlag = 0;
 	//_client = NULL;
 }
 
@@ -20,6 +21,7 @@ void Response::reset() {
 	mime =  "";
 	cgiFlag = 0;
 	_auto_index_flag = 0;
+	_hasIndexFlag = 0;
 	// _request = NULL;
 	// _config = NULL;
 }	// resetea la respuesta
@@ -281,13 +283,18 @@ void    Response::setHeaders()								// setea los headers de la respuesta
         mime = _mime.getMimeType(_target.substr(_target.rfind(".", std::string::npos) + 1)); // obtiene el mime type de la extension del archivo
     _response_str.append(mime);   // Corregido: remover el paréntesis extra
     _response_str.append("\r\n");
-	std::cout << Red << "contentType: " <<_response_str << White;
+	std::cout << White << "contentType: " <<_response_str << White;
 
 	////////////////////////////////////
-	//  ** Location - redirection **  //
+	//  ** Location - redirection **  //				OJO !!! REvisar redirecciones no funcionan sin la ultima barra en la location
 	////////////////////////////////////
 	if (_location.length())
-        _response_str.append("Location: "+ _location +"\r\n");
+	{
+		if(_location[_location.length() - 1] != '/')		
+			_location.append("/");
+		std::cout << "Location: " << _location << std::endl;
+		_response_str.append("Location: "+ _location +"\r\n");
+	}
 
 	////////////////////////////////////
 	//   **   Content-Length    **    //
@@ -302,16 +309,24 @@ void    Response::setHeaders()								// setea los headers de la respuesta
 	_response_str.append("\r\n");
 
 	if (DEBUG)
-		std::cout << Red << "setHeaders: " <<_response_str << White <<std::endl;
+		std::cout << White << "setHeaders: " <<_response_str << White <<std::endl;
 	
 }
 
-
 std::string Response::getMatch(std::string path, std::vector<Location_config> locations)
 {
-	if (DEBUG)
-		std::cout << "en getMatch____________________" << std::endl;
 
+	if (DEBUG)
+	{	
+		std::cout << Green << "en getMatch____________________" << std::endl;
+		std::cout << "path: " << path << std::endl;
+		std::cout << "locations: " << std::endl;
+		for (std::vector<Location_config>::iterator it = locations.begin(); it != locations.end(); it++) // itera sobre las locations
+		{
+			std::cout << "location: " << it->location << std::endl;
+		}
+		std::cout << White << std::endl;
+	}
 	std::string locationMatch = "";                           	// variable que almacena la key de la location
 	std::string longestMatch = "";                            	// variable que almacena la key de la location más larga
 	size_t longestMatchLength = 0;
@@ -426,6 +441,70 @@ int Response::isNotValidMethod()
 	return (setReturnCode(405));
 }
 
+/**
+ * @brief join the path removing the firs directory is it is repeatted
+ * Para su posible uso en el autoindex y si no se encuentra el archivo index
+ * PEndiente de testear por un cambio de enfoque en la implementación
+ * @param locationMatch 
+ * @param requestPath 
+ * @return std::string 
+ */
+// std::string joinPaths(const std::string& locationMatch, const std::string& requestPath) {
+//     // Quitar la barra final de locationMatch si existe
+//     std::string path1 = locationMatch;
+//     if (path1.back() == '/') {
+//         path1 = path1.substr(0, path1.size() - 1);
+//     }
+//     // Quitar la barra inicial de requestPath si existe
+//     std::string path2 = requestPath;
+//     if (path2.front() == '/') {
+//         path2 = path2.substr(1);
+//     }
+//     // Encontrar el último directorio en path1
+//     size_t lastSlash = path1.find_last_of('/');
+//     std::string lastDir;
+//     if (lastSlash != std::string::npos) {
+//         lastDir = path1.substr(lastSlash + 1);
+//         path1 = path1.substr(0, lastSlash); // Eliminar el último directorio
+//     }
+//     // Encontrar el primer directorio en path2
+//     size_t firstSlash = path2.find('/');
+//     std::string firstDir; 
+//     if (firstSlash != std::string::npos) {
+//         firstDir = path2.substr(0, firstSlash);
+//     } else {
+//         firstDir = path2; // Si no hay más barras, toda la cadena es el primer directorio
+//     }
+//     // Verificar si el último directorio de path1 es igual al primer directorio de path2
+//     if (lastDir == firstDir) {
+//         // Concatenar sin el último directorio de path1
+//         return path1 + "/" + path2;
+//     } else {
+//         // Concatenar normalmente
+//         return locationMatch + "/" + requestPath;
+//     }
+// }
+
+bool isReadableDirectory(const std::string& path) {
+	
+	struct stat info;
+    // Verificar si la ruta es un directorio
+    if (stat(path.c_str(), &info) != 0) {
+        // No se pudo acceder al archivo o directorio
+        return false;
+    } else if (!(info.st_mode & S_IFDIR)) {
+        // No es un directorio
+        return false;
+    }
+    // Verificar si el directorio tiene permisos de lectura
+    if (access(path.c_str(), R_OK) != 0) {
+        // No tiene permisos de lectura
+        return false;
+    }
+    // Es un directorio y tiene permisos de lectura
+    return true;
+}
+
 int Response:: setIndex()			// el index puede se un directorio?
 {
 	std::vector<std::string> index;
@@ -443,9 +522,17 @@ int Response:: setIndex()			// el index puede se un directorio?
 			_target = index[i];
 			std::cout << "target dentro del bucle: " << _target << std::endl;
 			if(isValidTargetFile())
+			{
+				_hasIndexFlag = 1;
 				return (0);			
+			}
 		}
-		return (setReturnCode(404));
+		_target = concatenatePaths(_config->root, _request->getPath(), "");
+		std::cout << "A evaluar en SetIndex" << _target << std::endl;
+		std::cout << _location_config->autoindex << std::endl;
+		if (!isReadableDirectory(_target) ||
+			!_location_config->autoindex)
+			return (setReturnCode(404));
 	}
 	return (0);
 }
@@ -506,6 +593,7 @@ int Response::launchCgi()
     // El flag debe quedarse en true aunque igual ni hace falta. Creo que no hace falta pero por ahora lo vamos a dejar.
 
     _client->initCgi();
+	cgiFlag = 0;
 	// Desde esta función podríamos realizar el pipe y guardar el fd[2] en la response y setReturnCode(500) si falla																			// flag para saber si se esta ejecutando un cgi y su estado	
 
 	// Llamar a la función de obtener las variables de entorno
@@ -523,13 +611,16 @@ int Response::getTarget()
 	//--------------------------------------------------------------------------//
 	_location_config = NULL;
     std::string locationMatch = "";                     	//clave de la location
+	std::cout << Blue <<
+		"requestPath en getTarget: " << _request->getPath() <<
+			White << std::endl;
+
     locationMatch = getMatch(_request->getPath(), _config->locations);                                                        // variable que almacena la key de la location
 	if (!locationMatch.empty())
 	{ 
 	_location_config = find_location(*_config,locationMatch);
 	std::cout << "_location_config:_______________	____________- "  << std::endl;
     printLocationConfig(_location_config);
-
 	
 	//--------------------------------------------------------------------------//
 	//    cofigurar target con las directivas de la location y el server      	//
@@ -562,6 +653,7 @@ int Response::getTarget()
 	// 		SetIdex devuelve 0 si el index es válido o si no debe haber index   //
 	//		uso el size del target para saber si debemos seguir buscandolo		//							//
 	//--------------------------------------------------------------------------//
+
 	if (setIndex())							
 		return (413);				
 	else if(_target.size() == 0 )	// si el target es vacío lo asgina asginación temporal 
@@ -569,7 +661,7 @@ int Response::getTarget()
 			std::cout << "locationMatch: " << locationMatch << std::endl;
 			std::cout << "_request->getPath(): "  << _request->getPath() << std::endl; 
 			_target= concatenatePaths(_config->root, _request->getPath(), "");		// combina el root del server con el path del request
-	
+			std::cout << "target: " << _target << std::endl;
 	}
 	//--------------------------------------------------------------------------//
 	//								** return **								//
@@ -582,6 +674,7 @@ int Response::getTarget()
 		std::cout << "en return____________________" << std::endl;
 		_location = _location_config->redir.second;
 		_response_body_str = ""; // prueba para ver si funcionar la redirección con el header Location
+		_target = "";
 		return (setReturnCode(_location_config->redir.first));
 	}
 
@@ -597,8 +690,22 @@ int Response::getTarget()
 	//--------------------------------------------------------------------------//
 	//		Comprueba si el target es un directorio y si no tiene autoindex		//
 	//--------------------------------------------------------------------------//
-	//        	Pendiente de configurar y ver como hay que devolverlo 			//	
-	//--------------------------------------------------------------------------//
+	// comprobar si el target es un directorio, si no tiene un index válidd 
+	// y si no tiene autoindex
+
+	std::cout << Yellow;
+	std::cout << "autoindex: " << _location_config->autoindex << std::endl;
+	std::cout << "target: " << _target << std::endl;
+	std::cout << "isReadableDirectory: " << isReadableDirectory(_target) << std::endl;
+	std::cout << "hasIndexFlag: " << _hasIndexFlag << std::endl;
+	std::cout << White;
+
+	if (!_hasIndexFlag && _location_config->autoindex && isReadableDirectory(_target))
+	{
+		std::cout << Red << "isReadableDirectory: " << _target << White << std::endl;
+		_auto_index_flag = 1;
+		return (0);
+	}
 	}
 	else
 	{
@@ -667,15 +774,158 @@ int Response::buildBody()
 	return (0);
 }
 
+// int Response::buildDirHtml()
+// {
+//     struct dirent   *structDirent;
+//     DIR             *dir;
+//     std::string     dirHtmlStr;  
+//     dir = opendir(_target.c_str());
+//     if (dir == NULL)
+//     {    
+//         std::cerr << "opendir failed" << std::endl;
+//         return (1);
+//     }
+//     dirHtmlStr.append("<html>\n");
+//     dirHtmlStr.append("<head>\n");
+//     dirHtmlStr.append("<title> Index of");
+//     dirHtmlStr.append(_target);
+//     dirHtmlStr.append("</title>\n");
+//     dirHtmlStr.append("</head>\n");
+//     dirHtmlStr.append("<body >\n");
+//     dirHtmlStr.append("<h1> Index of " + _target + "</h1>\n");
+//     dirHtmlStr.append("<table style=\"width:80%; font-size: 15px\">\n");
+//     dirHtmlStr.append("<hr>\n");
+//     dirHtmlStr.append("<th style=\"text-align:left\"> File Name </th>\n");
+//     dirHtmlStr.append("<th style=\"text-align:left\"> Last Modification  </th>\n");
+//     dirHtmlStr.append("<th style=\"text-align:left\"> File Size </th>\n");
+//     struct stat file_stat;
+//     std::string file_path;
+//     while((structDirent = readdir(dir)) != NULL)
+//     {
+//         if(strcmp(structDirent->d_name, ".") == 0)
+//             continue;
+//         file_path = _target + structDirent->d_name;
+//         stat(file_path.c_str() , &file_stat);
+//         dirHtmlStr.append("<tr>\n");
+//         dirHtmlStr.append("<td>\n");
+//         dirHtmlStr.append("<a href=\"");
+//         dirHtmlStr.append(structDirent->d_name);
+//         if (S_ISDIR(file_stat.st_mode))
+//             dirHtmlStr.append("/");
+//         dirHtmlStr.append("\">");
+//         dirHtmlStr.append(structDirent->d_name);
+//         if (S_ISDIR(file_stat.st_mode))
+//             dirHtmlStr.append("/");
+//         dirHtmlStr.append("</a>\n");
+//         dirHtmlStr.append("</td>\n");
+//         dirHtmlStr.append("<td>\n");
+//         dirHtmlStr.append(ctime(&file_stat.st_mtime));
+//         dirHtmlStr.append("</td>\n");
+//         dirHtmlStr.append("<td>\n");
+//         if (!S_ISDIR(file_stat.st_mode))
+//             dirHtmlStr.append(toStr(file_stat.st_size));
+//         dirHtmlStr.append("</td>\n");
+//         dirHtmlStr.append("</tr>\n");
+//     }
+//     dirHtmlStr.append("</table>\n");
+//     dirHtmlStr.append("<hr>\n");
+//     dirHtmlStr.append("</body>\n");
+//     dirHtmlStr.append("</html>\n");
+// 	_response_body_str = dirHtmlStr;
+//     // body.insert(body.begin(), dirHtmlStr.begin(), dirHtmlStr.end());
+//     // body_len = body.size();
+//     return (0);
+// }
+
+int Response::buildDirHtml()
+{
+    std::string directoryListing = "<html lang='es'>\n"
+                                   "<head>\n"
+                                   "    <meta charset='UTF-8'>\n"
+                                   "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>\n"
+                                   "    <title>Directorio del Servidor</title>\n"
+                                   "    <style>\n"
+                                   "        body {\n"
+                                   "            background-color: #000;  /* Fondo negro */\n"
+                                   "            color: #ff0000;           /* Texto rojo */\n"
+                                   "            font-family: 'Courier New', monospace;\n"
+                                   "        }\n"
+                                   "        h1 {\n"
+                                   "            text-transform: uppercase;\n"
+                                   "            text-align: center;\n"
+                                   "            letter-spacing: 2px;\n"
+                                   "            margin-top: 20px;\n"
+                                   "        }\n"
+                                   "        .directory-listing {\n"
+                                   "            font-size: 1.2rem;\n"
+                                   "            margin: 40px auto;\n"
+                                   "            width: 60%;\n"
+                                   "            border: 2px solid #ff0000;\n"
+                                   "            padding: 20px;\n"
+                                   "        }\n"
+                                   "        .folder, .file {\n"
+                                   "            display: block;\n"
+                                   "            padding: 5px 0;\n"
+                                   "        }\n"
+                                   "        .folder::before {\n"
+                                   "            content: '[DIR] ';\n"
+                                   "            color: #ff0000;  /* Texto rojo para carpetas */\n"
+                                   "        }\n"
+                                   "        .file::before {\n"
+                                   "            content: '[FILE] ';\n"
+                                   "            color: #777;     /* Texto gris para archivos */\n"
+                                   "        }\n"
+                                   "        .footer {\n"
+                                   "            text-align: center;\n"
+                                   "            font-size: 0.8rem;\n"
+                                   "            margin-top: 50px;\n"
+                                   "            color: #ff0000;\n"
+                                   "        }\n"
+                                   "    </style>\n"
+                                   "</head>\n"
+                                   "<body>\n"
+                                   "    <h1>Listado de Directorios</h1>\n"
+                                   "    <div class='directory-listing'>\n"
+                                   "        <span class='folder'>/home/trashmetal</span>\n"
+                                   "        <span class='folder'>/home/trashmetal/albums</span>\n"
+                                   "        <span class='file'>/home/trashmetal/albums/chaos_reigns.mp3</span>\n"
+                                   "        <span class='file'>/home/trashmetal/albums/speed_killer.mp3</span>\n"
+                                   "        <span class='folder'>/home/trashmetal/live</span>\n"
+                                   "        <span class='file'>/home/trashmetal/live/paris_live_2023.mp4</span>\n"
+                                   "        <span class='folder'>/home/trashmetal/merch</span>\n"
+                                   "        <span class='file'>/home/trashmetal/merch/tshirt_2024.jpg</span>\n"
+                                   "    </div>\n"
+                                   "    <div class='footer'>\n"
+                                   "        <p>Trash Metal Directory &mdash; Powered by C++98 Server</p>\n"
+                                   "    </div>\n"
+                                   "</body>\n"
+                                   "</html>\n";
+    _response_body_str = directoryListing;
+    return 0;
+}
+
 void Response::buildResponse()
 {	
 	if (DEBUG)
 		std::cout << "Building response is called" << std::endl;
 	if (isErrorCode() || buildBody())                                     		 // forma de comprobar si hay error en el request y si no lo hay error construye el body
-	{
 		std::cout << "en build response codigo de error es: " << _code << std::endl;                                               // si hay error construye el error body	
 // -->		aquí debo incluir la construcción de las páginas de error con el código de error
-	}
+    std::cout<< "en build response hasIndexFlag: " << _hasIndexFlag << std::endl;
+	if	(cgiFlag)                                                           // si es un cgi retorna
+		return;
+	else if (_auto_index_flag)                                               // si es un auto index
+    {		
+        // if (buildDirHtml(_target, _body_vector,_response_body_str.size()))          // construye el index
+        if (buildDirHtml())          // construye el index	
+		{
+            _code = 500;
+            // Llamar a la construcción del error body
+        }
+        else
+            _code = 200;
+        _response_body_str.insert(_response_body_str.begin(), _response_body_str.begin(), _response_body_str.end());
+    }
 
 	setStatusline();													// construye la linea de estado de la respuesta	
 	setHeaders();														// setea los headers de la respuesta
@@ -702,51 +952,3 @@ std::string Response::getResString()
 		std::cout << "getResString is called" << std::endl;
 	return _responseString;
 }
-
-
-/*int Response::getFile()
-{
-    std::ifstream file;
-    
-    // Determina si el archivo es binario o no usando el MIME type
-    bool isBinary = (mime == "image/png" || mime == "image/jpeg" || mime == "image/jpg");
-    
-    // Abrir el archivo en modo texto o binario dependiendo del tipo
-    if (isBinary) {
-        file.open(_target.c_str(), std::ios::binary); // Abrir en modo binario
-    } else {
-        file.open(_target.c_str()); // Abrir en modo texto por defecto
-    }
-    
-    // Verificar si la apertura del archivo ha fallado
-    if (file.fail()) {
-        _code = 404;
-        return (1); // Error 404 si el archivo no existe
-    }
-
-    // Si es binario, leerlo en un std::vector<char>
-    if (isBinary) {
-        file.seekg(0, std::ios::end); // Moverse al final para obtener el tamaño del archivo
-        std::streamsize size = file.tellg();
-        file.seekg(0, std::ios::beg); // Volver al inicio
-
-        // Redimensionar el vector para contener todo el archivo
-        std::vector<char> buffer(size);
-        if (!file.read(buffer.data(), size)) {
-            _code = 500; // Error 500 si la lectura falla
-            return (1);
-        }
-
-        // Convertir el vector a string para almacenarlo en _response_body_str
-        _response_body_str.assign(buffer.begin(), buffer.end());
-    } 
-    // Si es un archivo de texto, leerlo directamente en un string
-    else {
-        std::ostringstream ss;
-        ss << file.rdbuf();
-        _response_body_str = ss.str();
-    }
-
-    return (0); // Éxito
-}
-*/

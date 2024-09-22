@@ -25,6 +25,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
+#include <dirent.h> 
 
 #define	Black	"\e[0;30m"
 #define	Red		"\e[0;31m"
@@ -99,6 +100,14 @@ inline void deleteEvent(int fd, struct Epoll_events *events)
 	if (epoll_ctl(events->epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
 		throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
     events->added.erase(fd);
+}
+
+template <typename T>
+std::string toStr(const T toConvert)
+{
+    std::stringstream stream;
+	stream << toConvert;
+    return stream.str();
 }
 
 enum Methods

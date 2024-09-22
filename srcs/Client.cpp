@@ -28,7 +28,16 @@ int Client::getRequest()
 	std::memset(buffer, 0, 10000);
 	if (!_isCgi)
 	{
+		/*
+			Ismael:
+			¿Te suena porque cuando incluyo localhost:8081/redir sin la barra al final 
+			la lectura me da: GET /.root/ HTTP/1.1 y cuando incluyo la barra al final
+			puedo realizar la redirección de forma correcta?
+		*/
 		bytesRead = read(_fd, buffer, 10000);
+		std::cout << High_Purple;
+		std::cout << "bytesRead: " << bytesRead << std::endl;
+		std::cout << buffer << White << std::endl;
 		if (bytesRead == 0 || bytesRead < 0)
 		{
 			std::cout << Red << "Connection closed on fd " << _fd << Reset << std::endl;
@@ -90,6 +99,12 @@ int Client::sendResponse()
 
 void Client::initCgi()
 {
+	return;	//	ismael retorno temporal para detectar si el segfault es por el cgi 
+
+	if(DEBUG)
+		std::cout << "Init CGI" << std::endl;
+	_response->cgiFlag = 0;	//	ismael: lo cambio a 0 para simular que el cgi ha terminado de forma correcta
+	return;	//	ismael retorno temporal para detectar si el segfault es por el cgi 
 	_cgi = new Cgi(_fd ,_request, _events);
 	_cgi->executeCgi(_cgiFd);
 	this->_isCgi = true;

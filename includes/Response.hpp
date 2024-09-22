@@ -54,6 +54,8 @@ class Response
 		int 				setIndex();
 		int 				launchCgi();
 		std::string 		_location;											// location	to store the redirections
+		int 				buildDirHtml();
+		bool 				_hasIndexFlag;
 
 
 };
