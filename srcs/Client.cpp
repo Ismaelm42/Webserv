@@ -80,6 +80,11 @@ int Client::sendResponse()
 	// En Send hay que gestionar que se mande toda la respuesta y no una parte de ella.
 	// Si Send retorna < 0 y no es un CGI entiendo que se debería entonces simplemente eliminar el cliente junto a los fds ya que el cliente ha cerrado la conexión antes de poder enviarle una respuesta.
 	// Después de enviar la respuesta hay que cerrar los fds y eliminarlos del container de tracking de Epoll.
+	// Ismael:
+	// Esto me gustaría verlo juntos, Hay que chequear las locations y ver si se permiten cgi antes de lanzarlo
+	// y una vez que se lanza creo que los formularios le envían directamente los datos del formulario al archivo especificado en action 
+	// y el archivo se encarga de procesar los datos y devolver la respuesta o establecer los códigos de error.	
+	
 	return 0;
 }
 

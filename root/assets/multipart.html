@@ -136,8 +136,7 @@
 		<header>
 	    	<h1>Sube tu archivo</h1>
 		</header>
-		<form id="miFormulario" action="../upload" method="post" enctype="multipart/form-data">
-			
+		<form id="miFormulario" action="../upload/test.py" method="post" enctype="multipart/form-data">			
 			<!-- <input id="nombre_archivo_id" class="nombre_archivo" type="text" name="nombre" placeholder="Nombre del archivo"> -->
 			<input id="nombre_archivo_id" class="nombre_archivo" type="text" name="nombre" placeholder="Nombre del archivo";>
 		
@@ -173,7 +172,7 @@
     	</form> -->
 	</div>
 
-<script>
+	<script>
 	function enviarYLimpiar() {
 		console.log('enviarYLimpiar');
 		const form = document.getElementById('miFormulario');

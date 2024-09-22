@@ -584,8 +584,6 @@ int Response::getTarget()
 		_response_body_str = ""; // prueba para ver si funcionar la redirección con el header Location
 		return (setReturnCode(_location_config->redir.first));
 	}
-    // Imprimir cgi (vector de pares de strings)
-
 
 	//--------------------------------------------------------------------------//
 	//								** cgi **									//
@@ -629,7 +627,7 @@ int Response::buildBody()
         if (getFile())													// lee el archivo					
             return (1);
     }
-	//////////////////////////////////////////	
+	//////////////////////////////////////////	Pendiente de retomar coon los cgi ///////////////////////////////
     else if (_request->getMethod() == POST)
     {
 		std::cout <<" El método es post----------------------->>" << std::endl;
@@ -641,8 +639,10 @@ int Response::buildBody()
         // std::ofstream file(_target.c_str(), std::ios::binary);
         // if (file.fail())
         //     return (setReturnCode(404));
-        if (_request->getMultiformFlag()){
-			
+        if (_request->getMultiformFlag()){							// si el request es multiform deberá ir enlazado a un archivo que en condiciones normales
+																	// sería el encargado de validar los datos y establecer los códigos de salida en caso de
+																	// éxito u error
+																	// pendiente de limpiar los boundaries ver como debería guardarlos para enlazarlo con el archivo del servidor		
             std::string body = _request->getBody();
 			std::cout << "_target: " << _target << std::endl;
 			std::cout << "body en if: " << body << std::endl;
@@ -663,7 +663,7 @@ int Response::buildBody()
             return (setReturnCode(500));
     }
     _code = 200;
-	/////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	return (0);
 }
 
