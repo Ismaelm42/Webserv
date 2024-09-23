@@ -1,7 +1,7 @@
 #include "../includes/lib.hpp"
 
 Response::Response(Client *client, Server_config *config, Request *request, struct Epoll_events *events)
-:_client(client), _config(config), _request(request), _events(events), cgiFlag(0),_auto_index_flag(0)												// constructor
+:_client(client), _config(config), _request(request), _events(events), _cgiFlag(false), _auto_index_flag(0)												// constructor
 {
 	if (DEBUG)
 		std::cout << "Response constructor" << std::endl;
@@ -11,15 +11,18 @@ Response::Response(Client *client, Server_config *config, Request *request, stru
 	//_client = NULL;
 }
 
-void Response::reset() { 
+void Response::reset(bool cgiFlag)
+{ 
 	_responseString = ""; 
 	_code = _request->getErrorCode(); 				// usado como condición no iniciar a 200
+    if (cgiFlag == true)
+        _client->resetCgi();
+    _cgiFlag = false;
 	_client = NULL;
 	_response_str = "";
 	_target = "";
 	_response_body_str = "";
 	mime =  "";
-	cgiFlag = 0;
 	_auto_index_flag = 0;
 	_hasIndexFlag = 0;
 	// _request = NULL;
@@ -258,8 +261,11 @@ std::string concatenatePaths(std::string str1, std::string str2, std::string str
 int Response::getFile()
 {
     std::ifstream file( _target.c_str());
-	std::cout << "en getFile: "<< _target.c_str();
-	std::cout <<std::endl;
+    if (DEBUG)
+    {
+	    std::cout << "en getFile: "<< _target.c_str();
+	    std::cout <<std::endl;
+    }
     if (file.fail())
     {
         _code = 404;
@@ -283,7 +289,8 @@ void    Response::setHeaders()								// setea los headers de la respuesta
         mime = _mime.getMimeType(_target.substr(_target.rfind(".", std::string::npos) + 1)); // obtiene el mime type de la extension del archivo
     _response_str.append(mime);   // Corregido: remover el paréntesis extra
     _response_str.append("\r\n");
-	std::cout << White << "contentType: " <<_response_str << White;
+    if (DEBUG)
+	    std::cout << White << "contentType: " <<_response_str << White;
 
 	////////////////////////////////////
 	//  ** Location - redirection **  //				OJO !!! REvisar redirecciones no funcionan sin la ultima barra en la location
@@ -292,7 +299,8 @@ void    Response::setHeaders()								// setea los headers de la respuesta
 	{
 		if(_location[_location.length() - 1] != '/')		
 			_location.append("/");
-		std::cout << "Location: " << _location << std::endl;
+        if (DEBUG)
+		    std::cout << "Location: " << _location << std::endl;
 		_response_str.append("Location: "+ _location +"\r\n");
 	}
 
@@ -344,8 +352,9 @@ std::string Response::getMatch(std::string path, std::vector<Location_config> lo
 		}
 	}
 	if (longestMatchLength > 0)                                                              // si la longitud de la location más larga es mayor que 0
-		locationMatch = longestMatch;                                                        // asigna la location más larga a la variable de la location
-	std::cout << "locationMatch: " << locationMatch << std::endl;
+		locationMatch = longestMatch;
+    if (DEBUG)                                                        // asigna la location más larga a la variable de la location
+	    std::cout << "locationMatch: " << locationMatch << std::endl;
 	return locationMatch;                                                                    // retorna la location
 }
 
@@ -360,60 +369,60 @@ static Location_config* find_location(Server_config &server, const std::string &
 }
 
 // Función para imprimir los valores de un Location_config
-static void printLocationConfig(const Location_config* locConf) {
-    if (locConf == NULL) {
-        std::cout << "El puntero a Location_config es nulo." << std::endl;
-        return;
-    }
+// static void printLocationConfig(const Location_config* locConf) {
+//     if (locConf == NULL) {
+//         std::cout << "El puntero a Location_config es nulo." << std::endl;
+//         return;
+//     }
 
-    // Imprimir autoindex
-    std::cout << "Autoindex: " << (locConf->autoindex ? "true" : "false") << std::endl;
+//     // Imprimir autoindex
+//     std::cout << "Autoindex: " << (locConf->autoindex ? "true" : "false") << std::endl;
 
-    // Imprimir location
-    std::cout << "Location: " << locConf->location << std::endl;
+//     // Imprimir location
+//     std::cout << "Location: " << locConf->location << std::endl;
 
-    // Imprimir index (vector de strings)
-    std::cout << "Index files: ";
-    if (locConf->index.empty()) {
-        std::cout << "No hay archivos index definidos." << std::endl;
-    } else {
-        for (size_t i = 0; i < locConf->index.size(); ++i) {
-            std::cout << locConf->index[i];
-            if (i < locConf->index.size() - 1) {
-                std::cout << ", ";
-            }
-        }
-        std::cout << std::endl;
-    }
-    // Imprimir methods (set de strings)
-    std::cout << "Allowed methods: ";
-    if (locConf->methods.empty()) {
-        std::cout << "No hay métodos permitidos." << std::endl;
-    } else {
-        for (std::set<std::string>::const_iterator it = locConf->methods.begin(); it != locConf->methods.end(); ++it) {
-            std::cout << *it;
-            if (it != --locConf->methods.end()) {
-                std::cout << ", ";
-            }
-        }
-        std::cout << std::endl;
-    }
-    // Imprimir redir (pair de int y string)
-    std::cout << "Redirection: Código " << locConf->redir.first << ", Nueva dirección: " << locConf->redir.second << std::endl;
-    // Imprimir cgi (vector de pares de strings)
-    std::cout << "CGI mappings: ";
-    if (locConf->cgi.empty()) {
-        std::cout << "No hay CGI mappings." << std::endl;
-    } else {
-        for (size_t i = 0; i < locConf->cgi.size(); ++i) {
-            std::cout << "(" << locConf->cgi[i].first << " -> " << locConf->cgi[i].second << ")";
-            if (i < locConf->cgi.size() - 1) {
-                std::cout << ", ";
-            }
-        }
-        std::cout << std::endl;
-    }
-}
+//     // Imprimir index (vector de strings)
+//     std::cout << "Index files: ";
+//     if (locConf->index.empty()) {
+//         std::cout << "No hay archivos index definidos." << std::endl;
+//     } else {
+//         for (size_t i = 0; i < locConf->index.size(); ++i) {
+//             std::cout << locConf->index[i];
+//             if (i < locConf->index.size() - 1) {
+//                 std::cout << ", ";
+//             }
+//         }
+//         std::cout << std::endl;
+//     }
+//     // Imprimir methods (set de strings)
+//     std::cout << "Allowed methods: ";
+//     if (locConf->methods.empty()) {
+//         std::cout << "No hay métodos permitidos." << std::endl;
+//     } else {
+//         for (std::set<std::string>::const_iterator it = locConf->methods.begin(); it != locConf->methods.end(); ++it) {
+//             std::cout << *it;
+//             if (it != --locConf->methods.end()) {
+//                 std::cout << ", ";
+//             }
+//         }
+//         std::cout << std::endl;
+//     }
+//     // Imprimir redir (pair de int y string)
+//     std::cout << "Redirection: Código " << locConf->redir.first << ", Nueva dirección: " << locConf->redir.second << std::endl;
+//     // Imprimir cgi (vector de pares de strings)
+//     std::cout << "CGI mappings: ";
+//     if (locConf->cgi.empty()) {
+//         std::cout << "No hay CGI mappings." << std::endl;
+//     } else {
+//         for (size_t i = 0; i < locConf->cgi.size(); ++i) {
+//             std::cout << "(" << locConf->cgi[i].first << " -> " << locConf->cgi[i].second << ")";
+//             if (i < locConf->cgi.size() - 1) {
+//                 std::cout << ", ";
+//             }
+//         }
+//         std::cout << std::endl;
+//     }
+// }
 
 int Response::isValidTargetFile()
 {
@@ -508,19 +517,25 @@ bool isReadableDirectory(const std::string& path) {
 int Response:: setIndex()			// el index puede se un directorio?
 {
 	std::vector<std::string> index;
-	std::cout << "en setIndex_______________________" << std::endl;
-	std::cout << "_location_config->index.size(): " << _location_config->index.size() << std::endl;
-	std::cout << "_config->index.size(): " << _config->index.size() << std::endl;
-	if(_location_config->index.size() > 0)
+    if (DEBUG)
+    {
+	    std::cout << "en setIndex_______________________" << std::endl;
+	    std::cout << "_location_config->index.size(): " << _location_config->index.size() << std::endl;
+	    std::cout << "_config->index.size(): " << _config->index.size() << std::endl;
+    }
+    if(_location_config->index.size() > 0)
 		index = _location_config->index;
 	else if (_config->index.size() > 0)
 		index = _config->index;
 	if (index.size() > 0 && (_request->getPath() == "/" || _request->getPath() == ""))
 	{
-		std::cout << "Entra en el bucle"<< std::endl;
-		for (size_t i = 0; i < index.size(); i++){
+        if (DEBUG)
+		    std::cout << "Entra en el bucle"<< std::endl;
+		for (size_t i = 0; i < index.size(); i++)
+        {
 			_target = index[i];
-			std::cout << "target dentro del bucle: " << _target << std::endl;
+            if (DEBUG)
+			    std::cout << "target dentro del bucle: " << _target << std::endl;
 			if(isValidTargetFile())
 			{
 				_hasIndexFlag = 1;
@@ -528,9 +543,12 @@ int Response:: setIndex()			// el index puede se un directorio?
 			}
 		}
 		_target = concatenatePaths(_config->root, _request->getPath(), "");
-		std::cout << "A evaluar en SetIndex" << _target << std::endl;
-		std::cout << _location_config->autoindex << std::endl;
-		if (!isReadableDirectory(_target) ||
+		if (DEBUG)
+        {
+            std::cout << "A evaluar en SetIndex" << _target << std::endl;
+		    std::cout << _location_config->autoindex << std::endl;
+        }
+        if (!isReadableDirectory(_target) ||
 			!_location_config->autoindex)
 			return (setReturnCode(404));
 	}
@@ -573,27 +591,22 @@ int Response::launchCgi()
 		*/
 	
 	
-	
-	std::cout << "en launchCgi____________________" << std::endl;
+	if (DEBUG)
+	    std::cout << "en launchCgi____________________" << std::endl;
 
 
 	std::string cgi_path = _config->root + _request->getPath();
-	std::cout << "cgi_path: " << cgi_path << std::endl;
+	if (DEBUG)
+        std::cout << "cgi_path: " << cgi_path << std::endl;
 	
 	// Podemos chequear si es un archivo ejecutable y si tiene permisos de ejecución
 	//	si no es así setReturnCode(403);
 
-	//llamar una instancia del objeto cgi y a su llamada para resetear los valores																		// retorna 1		
+	//llamar una instancia del objeto cgi y a su llamada para resetear los valores		// retorna 1		
     // asignarle el path 
-	cgiFlag = true;								
-
-    // Alfonsete:
-    // Como tengo un puntero al cliente, he creado una función en Cliente que lo que hace es crear la clase CGI y lanzar el execute CGI.
-    // De esta manera lo hace con el CGI del cliente y se lanza desde aquí. Matamos dos tiros de un pájaro ;)
-    // El flag debe quedarse en true aunque igual ni hace falta. Creo que no hace falta pero por ahora lo vamos a dejar.
+	_cgiFlag = true;								
 
     _client->initCgi();
-	cgiFlag = 0;
 	// Desde esta función podríamos realizar el pipe y guardar el fd[2] en la response y setReturnCode(500) si falla																			// flag para saber si se esta ejecutando un cgi y su estado	
 
 	// Llamar a la función de obtener las variables de entorno
@@ -611,16 +624,17 @@ int Response::getTarget()
 	//--------------------------------------------------------------------------//
 	_location_config = NULL;
     std::string locationMatch = "";                     	//clave de la location
-	std::cout << Blue <<
-		"requestPath en getTarget: " << _request->getPath() <<
-			White << std::endl;
-
+	if (DEBUG)
+    {
+        std::cout << Blue << "requestPath en getTarget: " << _request->getPath() << White << std::endl;
+    }
     locationMatch = getMatch(_request->getPath(), _config->locations);                                                        // variable que almacena la key de la location
 	if (!locationMatch.empty())
 	{ 
 	_location_config = find_location(*_config,locationMatch);
-	std::cout << "_location_config:_______________	____________- "  << std::endl;
-    printLocationConfig(_location_config);
+    if (DEBUG)
+	    std::cout << "_location_config:_______________	____________- "  << std::endl;
+    // printLocationConfig(_location_config);
 	
 	//--------------------------------------------------------------------------//
 	//    cofigurar target con las directivas de la location y el server      	//
@@ -658,10 +672,14 @@ int Response::getTarget()
 		return (413);				
 	else if(_target.size() == 0 )	// si el target es vacío lo asgina asginación temporal 
 	{
-			std::cout << "locationMatch: " << locationMatch << std::endl;
-			std::cout << "_request->getPath(): "  << _request->getPath() << std::endl; 
-			_target= concatenatePaths(_config->root, _request->getPath(), "");		// combina el root del server con el path del request
-			std::cout << "target: " << _target << std::endl;
+            if (DEBUG)
+            {
+			    std::cout << "locationMatch: " << locationMatch << std::endl;
+			    std::cout << "_request->getPath(): "  << _request->getPath() << std::endl; 
+            }
+            _target= concatenatePaths(_config->root, _request->getPath(), "");		// combina el root del server con el path del request
+			if (DEBUG)
+                std::cout << "target: " << _target << std::endl;
 	}
 	//--------------------------------------------------------------------------//
 	//								** return **								//
@@ -671,7 +689,8 @@ int Response::getTarget()
 	//--------------------------------------------------------------------------//
      if(_location_config->redir.first)
  	{
-		std::cout << "en return____________________" << std::endl;
+        if (DEBUG)
+		    std::cout << "en return____________________" << std::endl;
 		_location = _location_config->redir.second;
 		_response_body_str = ""; // prueba para ver si funcionar la redirección con el header Location
 		_target = "";
@@ -693,16 +712,20 @@ int Response::getTarget()
 	// comprobar si el target es un directorio, si no tiene un index válidd 
 	// y si no tiene autoindex
 
-	std::cout << Yellow;
-	std::cout << "autoindex: " << _location_config->autoindex << std::endl;
-	std::cout << "target: " << _target << std::endl;
-	std::cout << "isReadableDirectory: " << isReadableDirectory(_target) << std::endl;
-	std::cout << "hasIndexFlag: " << _hasIndexFlag << std::endl;
-	std::cout << White;
+    if (DEBUG)
+    {
+	    std::cout << Yellow;
+	    std::cout << "autoindex: " << _location_config->autoindex << std::endl;
+	    std::cout << "target: " << _target << std::endl;
+	    std::cout << "isReadableDirectory: " << isReadableDirectory(_target) << std::endl;
+	    std::cout << "hasIndexFlag: " << _hasIndexFlag << std::endl;
+	    std::cout << White;
+    }
 
 	if (!_hasIndexFlag && _location_config->autoindex && isReadableDirectory(_target))
 	{
-		std::cout << Red << "isReadableDirectory: " << _target << White << std::endl;
+        if (DEBUG)
+		    std::cout << Red << "isReadableDirectory: " << _target << White << std::endl;
 		_auto_index_flag = 1;
 		return (0);
 	}
@@ -725,21 +748,27 @@ int Response::buildBody()
 		return (setReturnCode(413));                             	// retorna 413 y lo setea como error para la gestión de errores       
 	if (getTarget())
 		return (1);
-	if (cgiFlag || _auto_index_flag || _code)	//	Condiciones para que no se ejecute el getFile pendientes de diseñar o terminar d epulir	
+	if (_cgiFlag || _auto_index_flag || _code)	//	Condiciones para que no se ejecute el getFile pendientes de diseñar o terminar d epulir	
 	    return (0);
 	if (_request->getMethod() == GET )			// si el método del request es GET o HEAD
     {
-		std::cout << "GET" << std::endl;
-		std::cout << _request->getMethod() << std::endl;
+        if (DEBUG)
+        {
+		    std::cout << "GET" << std::endl;
+		    std::cout << _request->getMethod() << std::endl;
+        }
         if (getFile())													// lee el archivo					
             return (1);
     }
 	//////////////////////////////////////////	Pendiente de retomar coon los cgi ///////////////////////////////
     else if (_request->getMethod() == POST)
     {
-		std::cout <<" El método es post----------------------->>" << std::endl;
-        std::cout << "_target: " << _target << std::endl;
-		// if (isValidTargetFile()){								// Comentado para permitir la creación de archivos
+        if (DEBUG)
+        {
+		    std::cout <<" El método es post----------------------->>" << std::endl;
+            std::cout << "_target: " << _target << std::endl;
+        }
+        // if (isValidTargetFile()){								// Comentado para permitir la creación de archivos
 		// 	std::cout << "isValidTargetFile" << std::endl;			// si el archivo es válido me detecta lacarpeta /upload como archivo
 		// 	return (setCode(204));									// y retorna 204 Ismael, habría que cambiar la llamada en el htl y enlazarlo von un archivo cgi...
 		// }
@@ -751,14 +780,19 @@ int Response::buildBody()
 																	// éxito u error
 																	// pendiente de limpiar los boundaries ver como debería guardarlos para enlazarlo con el archivo del servidor		
             std::string body = _request->getBody();
-			std::cout << "_target: " << _target << std::endl;
+		if (DEBUG)
+        {	
+            std::cout << "_target: " << _target << std::endl;
 			std::cout << "body en if: " << body << std::endl;
+        }
             //body = removeBoundary(body, _request->getBoundary());
             //file.write(body.c_str(), body.length());
 			return (setCode(204));
         }
-        else{
-			std::cout << "body en else: " << _request->getBody() << std::endl;
+        else
+        {
+            if (DEBUG)
+			    std::cout << "body en else: " << _request->getBody() << std::endl;
             //file.write(_request->getBody().c_str(), _request->getBody().length());
         }
     }
@@ -907,13 +941,17 @@ int Response::buildDirHtml()
 void Response::buildResponse()
 {	
 	if (DEBUG)
-		std::cout << "Building response is called" << std::endl;
-	if (isErrorCode() || buildBody())                                     		 // forma de comprobar si hay error en el request y si no lo hay error construye el body
-		std::cout << "en build response codigo de error es: " << _code << std::endl;                                               // si hay error construye el error body	
+        std::cout << "Building response is called" << std::endl;
+    if ((isErrorCode() || buildBody()) && DEBUG)                                     		 // forma de comprobar si hay error en el request y si no lo hay error construye el body
+        std::cout << "en build response codigo de error es: " << _code << std::endl;                                               // si hay error construye el error body	
 // -->		aquí debo incluir la construcción de las páginas de error con el código de error
-    std::cout<< "en build response hasIndexFlag: " << _hasIndexFlag << std::endl;
-	if	(cgiFlag)                                                           // si es un cgi retorna
-		return;
+    if (DEBUG)
+        std::cout<< "en build response hasIndexFlag: " << _hasIndexFlag << std::endl;
+    if (_cgiFlag)
+    {
+       _responseString = _request->getcgiString();
+       return ;
+    }
 	else if (_auto_index_flag)                                               // si es un auto index
     {		
         // if (buildDirHtml(_target, _body_vector,_response_body_str.size()))          // construye el index

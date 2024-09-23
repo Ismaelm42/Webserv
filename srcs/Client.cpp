@@ -6,6 +6,8 @@ Client::Client(Server_config *config, struct Epoll_events *events, int fd, int p
 	_request = new Request(this, _config, _events);
 	_response = new Response(this, _config, _request, _events);
 	_cgi = NULL;
+	_cgiFd[0] = 0;
+	_cgiFd[1] = 0;
 }
 
 Client::~Client()
@@ -13,7 +15,7 @@ Client::~Client()
 	delete _request;
 	delete _response;
 	if (_cgi != NULL)
-		delete _cgi;
+		resetCgi();
 }
 
 /*
@@ -29,15 +31,12 @@ int Client::getRequest()
 	if (!_isCgi)
 	{
 		/*
-			Ismael:
+			IMPORTANTE: Ismael:
 			¿Te suena porque cuando incluyo localhost:8081/redir sin la barra al final 
 			la lectura me da: GET /.root/ HTTP/1.1 y cuando incluyo la barra al final
 			puedo realizar la redirección de forma correcta?
 		*/
 		bytesRead = read(_fd, buffer, 10000);
-		std::cout << High_Purple;
-		std::cout << "bytesRead: " << bytesRead << std::endl;
-		std::cout << buffer << White << std::endl;
 		if (bytesRead == 0 || bytesRead < 0)
 		{
 			std::cout << Red << "Connection closed on fd " << _fd << Reset << std::endl;
@@ -52,12 +51,17 @@ int Client::getRequest()
 	else
 	{
 		bytesRead = read(_cgiFd[0], buffer, 10000);
-		if (bytesRead == 0)
-			_isReady = true;
-		else if (bytesRead < 0)
+		// if (bytesRead == 0)
+		// 	_isReady = true;
+		// else if (bytesRead < 0)
+		// 	throw std::runtime_error("Error: read: " + std::string(strerror(errno)));
+		if (bytesRead < 0)
 			throw std::runtime_error("Error: read: " + std::string(strerror(errno)));
 		else
+		{
 			_request->fillCgi(buffer);
+			_response->buildResponse();
+		}
 	}
 	return 0;
 }
@@ -71,41 +75,57 @@ int Client::getRequest()
 */
 int Client::sendResponse()
 {
+	std::string res;
+	int bytesSent;
+
 	if (!_isCgi)
 	{
-		int bytesSent;
-		_request->reset();
-		std::string res = _response->getResString(); 
+		res = _response->getResString(); 
 		bytesSent = send(_fd, res.c_str(), res.size(), 0);
 		if (bytesSent < 0)
-			throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
-		_response->reset();
-		_isReady = false;
-		return 0;
+		{
+			std::cout << Red << "Connection closed on fd " << _fd << Reset << std::endl;
+			return -1;
+		}
+		_request->reset();
+		_response->reset(false);
 	}
-	// Alfonsete:
-	// Si es CGI habría simplemente que gestionar el volcado del contenido de _cgiString de _request.
-	// Antes de hacer cualquier cosa, Response debería checkear si hay un flag CGI establecido o no.
-	// En Send hay que gestionar que se mande toda la respuesta y no una parte de ella.
-	// Si Send retorna < 0 y no es un CGI entiendo que se debería entonces simplemente eliminar el cliente junto a los fds ya que el cliente ha cerrado la conexión antes de poder enviarle una respuesta.
-	// Después de enviar la respuesta hay que cerrar los fds y eliminarlos del container de tracking de Epoll.
+	else
+	{
+		res = _request->getcgiString();
+		bytesSent = write(_cgiFd[1], res.c_str(), res.size());
+		if (bytesSent < 0)
+			throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
+		_isCgi = false;
+		_request->reset();
+		_response->reset(true);
+	}
 	// Ismael:
 	// Esto me gustaría verlo juntos, Hay que chequear las locations y ver si se permiten cgi antes de lanzarlo
 	// y una vez que se lanza creo que los formularios le envían directamente los datos del formulario al archivo especificado en action 
 	// y el archivo se encarga de procesar los datos y devolver la respuesta o establecer los códigos de error.	
-	
+	_isReady = false;
 	return 0;
 }
 
 void Client::initCgi()
 {
-	return;	//	ismael retorno temporal para detectar si el segfault es por el cgi 
-
-	if(DEBUG)
-		std::cout << "Init CGI" << std::endl;
-	_response->cgiFlag = 0;	//	ismael: lo cambio a 0 para simular que el cgi ha terminado de forma correcta
-	return;	//	ismael retorno temporal para detectar si el segfault es por el cgi 
 	_cgi = new Cgi(_fd ,_request, _events);
 	_cgi->executeCgi(_cgiFd);
-	this->_isCgi = true;
+	std::cout << "_cgiFd[0] = " << _cgiFd[0] << std::endl;
+	std::cout << "_cgiFd[1] = " << _cgiFd[1] << std::endl;
+	_isCgi = true;
+}
+
+void Client::resetCgi()
+{
+	_isCgi = false;
+	_events->cgi_in.erase(_cgiFd[0]);
+	_events->cgi_in.erase(_cgiFd[1]);
+	deleteEvent(_cgiFd[0], _events);
+	deleteEvent(_cgiFd[1], _events);
+	close(_cgiFd[0]);
+	close(_cgiFd[1]);
+	delete _cgi;
+	_cgi = NULL;
 }

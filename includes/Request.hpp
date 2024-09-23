@@ -24,6 +24,7 @@ class Request
 		std::string									&getBoundary();									// se usa para obtener el boundary en caso de que se esté recibiendo un formulario multiform
 		bool										getMultiformFlag();								// ver documentación sobre formularios html al final de este documento
 		int 										getErrorCode();									// se usa para obtener el código de error, mi intención es usarlos para mostrar la página de error adecuada		
+		std::string									getcgiString();									// Retorna el output del cgi
 		void										saveHeader(std::string &, std::string &);       // se usa para almacenar los datos limpios sin espacios al final y al principio y con los nombres en minúsculas
 		void										fillRequest(char *data, size_t size);			// se usa para alimentar el parser con los datos recibidos
 		void										fillCgi(char *buffer);							// Almacena el output del script (CGI) en un string (_cgiString)

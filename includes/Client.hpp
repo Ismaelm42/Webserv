@@ -28,5 +28,6 @@ class Client
 		int getRequest();
 		int sendResponse();
 		void initCgi();
+		void resetCgi();
 };
 

@@ -149,7 +149,11 @@ void Server::handleResponse(int fd)
 		if (_clients.find(fd) == _clients.end())
 			fd = _events->cgi_out[fd];
 		if (_clients[fd]->_isReady)
-			_clients[fd]->sendResponse();
+			if (_clients[fd]->sendResponse() < 0)
+			{
+				deleteEvent(fd, _events);
+				deleteClient(fd);
+			}
 	}
 }
 
