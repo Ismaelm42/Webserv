@@ -650,7 +650,7 @@ int Response::getTarget()
 	//--------------------------------------------------------------------------//
 	//								** index **									//
 	//--------------------------------------------------------------------------//
-	// 		SetIdex devuelve 0 si el index es válido o si no debe haber index   //
+	// 		SetIndex devuelve 0 si el index es válido o si no debe haber index   //
 	//		uso el size del target para saber si debemos seguir buscandolo		//							//
 	//--------------------------------------------------------------------------//
 
@@ -774,8 +774,94 @@ int Response::buildBody()
 	return (0);
 }
 
+
+std::string removeRoot(std::string target, std::string root)
+{
+	std::string::size_type pos = target.find(root);
+	if (pos != std::string::npos)
+		target.erase(pos, root.length());
+	return target;
+}
+
+int Response::buildDirHtml()
+{
+	std::string root = _config->root;
+	std::cout << Yellow << "en buildDirHtml____________________" << White << std::endl;
+    struct dirent   *structDirent;
+    DIR             *dir;
+	_response_body_str = "";
+    dir = opendir(_target.c_str());
+    if (dir == NULL)
+    {   
+        std::cerr << "Error in opendir" << std::endl;
+        return (1);
+    }
+    _response_body_str.append("<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset='UTF-8'>\n<meta name='viewport' content='width=device-width, initial-scale=1.0'>\n");
+    _response_body_str.append(
+    "    <style>\n"
+  	"        .footer {\n"
+    "            text-align: center;\n"
+    "            font-size: 0.8rem;\n"
+    "            margin-top: 50px;\n"
+    "            color: #940f0f;\n"
+	"            text-shadow: #e8fd81ad 1px 0px 2px;\n"
+    "        }\n"
+    "    </style>\n"
+    );
+	_response_body_str.append("<title>Index of ");
+    _response_body_str.append(_target);
+    _response_body_str.append("</title>\n</head>\n<body style=\"background-color: black; color: red; font-family: Arial, sans-serif;\">\n");
+    _response_body_str.append("<h1 style=\"text-align: center;\">Index of " + _target + "</h1>\n");
+    _response_body_str.append("<table style=\"width:80%; margin: auto; border-collapse: collapse; font-size: 15px;\">\n");
+    _response_body_str.append("<hr style=\"border: 1px solid red; width:90%;margin-bottom: 0px;\">\n");
+    _response_body_str.append("<hr style=\"border: 1px solid #e8fd81; width:90%; margin-top:0px;\">\n");
+    _response_body_str.append("<thead style=\"color: #e8fd81;\">\n<tr>\n<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Name</th>\n");
+    _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">Last Modification</th>\n");
+    _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Size</th>\n");
+    _response_body_str.append("</tr>\n</thead>\n<tbody>\n");
+    struct stat file_stat;
+    std::string file_path;
+	
+    while((structDirent = readdir(dir)) != NULL)
+    {
+        if(strcmp(structDirent->d_name, ".") == 0)
+            continue;
+        file_path = concatenatePaths(_target, structDirent->d_name,"");
+        stat(file_path.c_str(), &file_stat);
+		file_path = removeRoot(file_path, root);
+		std::cout << Red << "file_path: " << file_path << White << std::endl;
+        _response_body_str.append("<tr>\n");
+        _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">\n");
+        _response_body_str.append("<a href=\"");
+        _response_body_str.append(file_path);
+        // _response_body_str.append(structDirent->d_name);
+        if (S_ISDIR(file_stat.st_mode))
+            _response_body_str.append("/");
+        _response_body_str.append("\" style=\"color: red; text-decoration: none;\">");
+        _response_body_str.append(structDirent->d_name);
+        if (S_ISDIR(file_stat.st_mode))
+            _response_body_str.append("/");
+        _response_body_str.append("</a>\n");
+        _response_body_str.append("</td>\n");
+        _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
+        _response_body_str.append(ctime(&file_stat.st_mtime));
+        _response_body_str.append("</td>\n");
+        _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
+        if (!S_ISDIR(file_stat.st_mode))
+            _response_body_str.append(toStr(file_stat.st_size));
+        _response_body_str.append("</td>\n");  
+        _response_body_str.append("</tr>\n");
+		std::cout << Yellow << "file_path: " <<file_path << White << std::endl;
+    }   
+    _response_body_str.append("</tbody>\n</table>\n");
+	_response_body_str.append("<div class='footer'>\n<p>Powered by Imoro-sa & Alfofern C++98 WebServer</p>\n</div>\n");
+    _response_body_str.append("</body>\n</html>\n");
+    return (0);
+}
+
 // int Response::buildDirHtml()
 // {
+// 	std::cout << Yellow << "en buildDirHtml____________________" << White << std::endl;
 //     struct dirent   *structDirent;
 //     DIR             *dir;
 //     std::string     dirHtmlStr;  
@@ -785,19 +871,27 @@ int Response::buildBody()
 //         std::cerr << "opendir failed" << std::endl;
 //         return (1);
 //     }
-//     dirHtmlStr.append("<html>\n");
-//     dirHtmlStr.append("<head>\n");
-//     dirHtmlStr.append("<title> Index of");
+//     dirHtmlStr.append("<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset='UTF-8'>\n<meta name='viewport' content='width=device-width, initial-scale=1.0'>\n");
+//     dirHtmlStr.append(
+//     "    <style>\n"
+//   	"        .footer {\n"
+//     "            text-align: center;\n"
+//     "            font-size: 0.8rem;\n"
+//     "            margin-top: 50px;\n"
+//     "            color: #ff0000;\n"
+//     "        }\n"
+//     "    </style>\n"
+//     );
+// 	dirHtmlStr.append("<title>Index of ");
 //     dirHtmlStr.append(_target);
-//     dirHtmlStr.append("</title>\n");
-//     dirHtmlStr.append("</head>\n");
-//     dirHtmlStr.append("<body >\n");
-//     dirHtmlStr.append("<h1> Index of " + _target + "</h1>\n");
-//     dirHtmlStr.append("<table style=\"width:80%; font-size: 15px\">\n");
-//     dirHtmlStr.append("<hr>\n");
-//     dirHtmlStr.append("<th style=\"text-align:left\"> File Name </th>\n");
-//     dirHtmlStr.append("<th style=\"text-align:left\"> Last Modification  </th>\n");
-//     dirHtmlStr.append("<th style=\"text-align:left\"> File Size </th>\n");
+//     dirHtmlStr.append("</title>\n</head>\n<body style=\"background-color: black; color: red; font-family: Arial, sans-serif;\">\n");
+//     dirHtmlStr.append("<h1 style=\"text-align: center;\">Index of " + _target + "</h1>\n");
+//     dirHtmlStr.append("<table style=\"width:80%; margin: auto; border-collapse: collapse; font-size: 15px;\">\n");
+//     dirHtmlStr.append("<hr style=\"border: 1px solid red;\">\n");
+//     dirHtmlStr.append("<thead style=\"color: yellow;\">\n<tr>\n<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Name</th>\n");
+//     dirHtmlStr.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">Last Modification</th>\n");
+//     dirHtmlStr.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Size</th>\n");
+//     dirHtmlStr.append("</tr>\n</thead>\n<tbody>\n");
 //     struct stat file_stat;
 //     std::string file_path;
 //     while((structDirent = readdir(dir)) != NULL)
@@ -805,104 +899,34 @@ int Response::buildBody()
 //         if(strcmp(structDirent->d_name, ".") == 0)
 //             continue;
 //         file_path = _target + structDirent->d_name;
-//         stat(file_path.c_str() , &file_stat);
+//         stat(file_path.c_str(), &file_stat);
 //         dirHtmlStr.append("<tr>\n");
-//         dirHtmlStr.append("<td>\n");
+//         dirHtmlStr.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">\n");
 //         dirHtmlStr.append("<a href=\"");
 //         dirHtmlStr.append(structDirent->d_name);
 //         if (S_ISDIR(file_stat.st_mode))
 //             dirHtmlStr.append("/");
-//         dirHtmlStr.append("\">");
+//         dirHtmlStr.append("\" style=\"color: red; text-decoration: none;\">");
 //         dirHtmlStr.append(structDirent->d_name);
 //         if (S_ISDIR(file_stat.st_mode))
 //             dirHtmlStr.append("/");
 //         dirHtmlStr.append("</a>\n");
 //         dirHtmlStr.append("</td>\n");
-//         dirHtmlStr.append("<td>\n");
+//         dirHtmlStr.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
 //         dirHtmlStr.append(ctime(&file_stat.st_mtime));
 //         dirHtmlStr.append("</td>\n");
-//         dirHtmlStr.append("<td>\n");
+//         dirHtmlStr.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
 //         if (!S_ISDIR(file_stat.st_mode))
 //             dirHtmlStr.append(toStr(file_stat.st_size));
-//         dirHtmlStr.append("</td>\n");
+//         dirHtmlStr.append("</td>\n");  
 //         dirHtmlStr.append("</tr>\n");
-//     }
-//     dirHtmlStr.append("</table>\n");
-//     dirHtmlStr.append("<hr>\n");
-//     dirHtmlStr.append("</body>\n");
-//     dirHtmlStr.append("</html>\n");
-// 	_response_body_str = dirHtmlStr;
-//     // body.insert(body.begin(), dirHtmlStr.begin(), dirHtmlStr.end());
-//     // body_len = body.size();
+//     }   
+//     dirHtmlStr.append("</tbody>\n</table>\n");
+// 	dirHtmlStr.append("<div class='footer'>\n<p>Powered by Imoro-sa & Alfofern C++98 WebServer</p>\n</div>\n");
+//     dirHtmlStr.append("</body>\n</html>\n");
+//     _response_body_str = dirHtmlStr;
 //     return (0);
 // }
-
-int Response::buildDirHtml()
-{
-    std::string directoryListing = "<html lang='es'>\n"
-                                   "<head>\n"
-                                   "    <meta charset='UTF-8'>\n"
-                                   "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>\n"
-                                   "    <title>Directorio del Servidor</title>\n"
-                                   "    <style>\n"
-                                   "        body {\n"
-                                   "            background-color: #000;  /* Fondo negro */\n"
-                                   "            color: #ff0000;           /* Texto rojo */\n"
-                                   "            font-family: 'Courier New', monospace;\n"
-                                   "        }\n"
-                                   "        h1 {\n"
-                                   "            text-transform: uppercase;\n"
-                                   "            text-align: center;\n"
-                                   "            letter-spacing: 2px;\n"
-                                   "            margin-top: 20px;\n"
-                                   "        }\n"
-                                   "        .directory-listing {\n"
-                                   "            font-size: 1.2rem;\n"
-                                   "            margin: 40px auto;\n"
-                                   "            width: 60%;\n"
-                                   "            border: 2px solid #ff0000;\n"
-                                   "            padding: 20px;\n"
-                                   "        }\n"
-                                   "        .folder, .file {\n"
-                                   "            display: block;\n"
-                                   "            padding: 5px 0;\n"
-                                   "        }\n"
-                                   "        .folder::before {\n"
-                                   "            content: '[DIR] ';\n"
-                                   "            color: #ff0000;  /* Texto rojo para carpetas */\n"
-                                   "        }\n"
-                                   "        .file::before {\n"
-                                   "            content: '[FILE] ';\n"
-                                   "            color: #777;     /* Texto gris para archivos */\n"
-                                   "        }\n"
-                                   "        .footer {\n"
-                                   "            text-align: center;\n"
-                                   "            font-size: 0.8rem;\n"
-                                   "            margin-top: 50px;\n"
-                                   "            color: #ff0000;\n"
-                                   "        }\n"
-                                   "    </style>\n"
-                                   "</head>\n"
-                                   "<body>\n"
-                                   "    <h1>Listado de Directorios</h1>\n"
-                                   "    <div class='directory-listing'>\n"
-                                   "        <span class='folder'>/home/trashmetal</span>\n"
-                                   "        <span class='folder'>/home/trashmetal/albums</span>\n"
-                                   "        <span class='file'>/home/trashmetal/albums/chaos_reigns.mp3</span>\n"
-                                   "        <span class='file'>/home/trashmetal/albums/speed_killer.mp3</span>\n"
-                                   "        <span class='folder'>/home/trashmetal/live</span>\n"
-                                   "        <span class='file'>/home/trashmetal/live/paris_live_2023.mp4</span>\n"
-                                   "        <span class='folder'>/home/trashmetal/merch</span>\n"
-                                   "        <span class='file'>/home/trashmetal/merch/tshirt_2024.jpg</span>\n"
-                                   "    </div>\n"
-                                   "    <div class='footer'>\n"
-                                   "        <p>Trash Metal Directory &mdash; Powered by C++98 Server</p>\n"
-                                   "    </div>\n"
-                                   "</body>\n"
-                                   "</html>\n";
-    _response_body_str = directoryListing;
-    return 0;
-}
 
 void Response::buildResponse()
 {	
@@ -915,21 +939,19 @@ void Response::buildResponse()
 	if	(cgiFlag)                                                           // si es un cgi retorna
 		return;
 	else if (_auto_index_flag)                                               // si es un auto index
-    {		
-        // if (buildDirHtml(_target, _body_vector,_response_body_str.size()))          // construye el index
-        if (buildDirHtml())          // construye el index	
+    {	
+        if (buildDirHtml())          												// construye el index con el _target
 		{
-            _code = 500;
-            // Llamar a la construcción del error body
+			_code = 500;
+      		// Llamar a la construcción del error body crear uno con int como argumento y otro sin
+			// debe rellenar _response_body_str
         }
         else
             _code = 200;
-        _response_body_str.insert(_response_body_str.begin(), _response_body_str.begin(), _response_body_str.end());
     }
-
 	setStatusline();													// construye la linea de estado de la respuesta	
 	setHeaders();														// setea los headers de la respuesta
-    if(_request->getMethod() == GET || _code != 200) 	// si el método del request no es HEAD y el método del request es GET o el código no es 200
+    if(_request->getMethod() == GET || _code != 200) 					// si el método del request no es HEAD y el método del request es GET o el código no es 200
     {
 		_response_str.append(_response_body_str);										// agrega el body a la respuesta	
 	}
