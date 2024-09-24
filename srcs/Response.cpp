@@ -714,6 +714,34 @@ int Response::getTarget()
 	return 0;
 }
 
+int Response::buildErrorPage(int code)
+{
+
+	std::cout << "en BuildErrorPage____________________" << std::endl;
+	//	std::map<int, std::string> error_pages; // Mapa de páginas de error
+	if(_config->error_pages.find(code)==_config->error_pages.end()|| _config->error_pages.at(code).empty())
+	{
+		std::cout << Yellow << "No hay página de error para el código: " << code <<White << std::endl;
+		// llamar a la función que genera la página de error por defecto y la asigna a _response_body_str
+		return (0);
+	}
+	
+	for (std::map<int, std::string>::iterator itm = _config->error_pages.begin(); itm != _config->error_pages.end(); itm++)
+	{
+		if (itm->first == code)
+			_target = itm->second;
+		// std::cout << "Paáginas de errores:\t\t\t" << itm->first << "->" << itm->second << std::endl;
+	}
+	if (getFile())													// lee el archivo					
+        return (1);
+    // if (_config->error_pages.find(code) == _config->error_pages.end())		
+	// //it = _config->error_pages.find(code);
+	// std::string errorPage = "<html>\n<head>\n<title>Error</title>\n</head>\n<body>\n<h1>Error ";
+	// errorPage.append(std::to_string(code));
+	// errorPage.append("</h1>\n</body>\n</html>\n");
+	return (0);
+}
+
 int Response::buildBody()
 {
 	if (DEBUG)
@@ -933,8 +961,7 @@ void Response::buildResponse()
 	if (DEBUG)
 		std::cout << "Building response is called" << std::endl;
 	if (isErrorCode() || buildBody())                                     		 // forma de comprobar si hay error en el request y si no lo hay error construye el body
-		std::cout << "en build response codigo de error es: " << _code << std::endl;                                               // si hay error construye el error body	
-// -->		aquí debo incluir la construcción de las páginas de error con el código de error
+		buildErrorPage(_code);                                           // si hay error construye el error body	
     std::cout<< "en build response hasIndexFlag: " << _hasIndexFlag << std::endl;
 	if	(cgiFlag)                                                           // si es un cgi retorna
 		return;

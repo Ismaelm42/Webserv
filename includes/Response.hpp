@@ -56,6 +56,7 @@ class Response
 		std::string 		_location;											// location	to store the redirections
 		int 				buildDirHtml();
 		bool 				_hasIndexFlag;
-
+		int 				buildErrorPage(int code);
+;
 
 };

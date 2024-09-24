@@ -1,0 +1,59 @@
+https://blog.marcnuri.com/curl-post-request-ejemplos
+
+
+cURL: ejemplos de POST requests
+2021-08-29 en Herramientas etiquetado curl / HTTP / Consejo breve por Marc Nuri | Última actualización: 2021-08-29
+English version
+
+Ejemplos de cURL HTTP POST requests con los comandos que uso más frecuentemente.
+HTTP POST request
+
+El comando más básico que puedes ejecutar con cURL es una petición HTTP POST sin cuerpo.
+
+Para indicarle a cURL que utilice un método POST en la petición, podemos emplear la opción de línea de comandos -X, --request. El siguiente comando realizará la petición y mostrará por pantalla el cuerpo de la respuesta:
+
+	curl -X POST https://blog.marcnuri.com
+
+HTTP POST request con datos
+
+Lo más probable cuando realices una petición POST es que necesites enviar algún tipo de información al servidor.
+
+Para enviar datos junto a la petición podemos emplear la opción de línea de comandos -d, --data. Esto hará que cURL envíe la información del mismo modo que lo haría el navegador cuando rellenas un formulario y presionas el botón enviar (submit). Asimismo, cURL también se encarga de añadir la cabecera Content-Type con el valor application/x-www-form-urlencoded a la petición.
+
+	curl -X POST -d "field=value&tool=curl" https://postman-echo.com/post
+
+HTTP POST request para subir un fichero
+
+Para colgar un fichero empleando cURL puedes emplear la opción de línea de comandos -F, --form. De forma similar a la opción --data, cURL simula lo que ocurre cuándo un usuario envía un formulario HTTP.
+
+En este caso, cURL también añade la cabecera Content-Type pero con un valor multipart/form-data.
+
+	curl -X POST -F "field=@/path/to/file.txt" https://postman-echo.com/post
+
+Nótese el símbolo @ antes de la ruta del fichero. Esto fuerza a cURL a que adjunte el fichero como un file upload.
+
+Mediante esta opción también se pueden enviar tantos campos (del formulario) como haga falta:
+
+	curl -X POST -F "field=@/path/to/file.txt" -F "tool=curl" -F "other-file=@/path/to/other" https://postman-echo.com/post
+
+Subir un fichero cambiando el nombre
+
+Si quieres modificar el nombre del fichero que estás subiendo, puedes hacerlo modificando un poco el valor del campos suministrador en el comando cURL. Después de la ruta del fichero hay que añadir ;filename= seguido del nombre del fichero que queremos utilizar en su lugar.
+
+	curl -X POST -F 'field=@"/path/to/file.txt";filename="other-name.txt' https://postman-echo.com/post
+
+HTTP POST request con datos JSON
+
+Para realizar una petición HTTP POST con contenido JSON en el cuerpo de la petición puedes emplear la opción -d, --data junto a una cabecera Content-Type customizada (-H, --header).
+
+	curl -X POST -d '{"field":"value"}' -H "Content-Type: application/json" https://postman-echo.com/post
+
+JSON desde un fichero
+
+Si quieres cargar los datos JSON desde un fichero en lugar de suministrarlos en la línea de comandos, puedes hacerlo utilizando el símbolo @ seguido de la ruta del fichero que contiene los datos JSON.
+
+	curl -X POST -d "@file-with-json.json" -H "Content-Type: application/json" https://postman-echo.com/post
+
+Resumen
+
+Estos son algunos de los ejemplos más comunes de peticiones HTTP POST mediante cURL que utilizo a diario. Espero que también sean de utilidad para vosotros.
