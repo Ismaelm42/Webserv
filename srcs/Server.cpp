@@ -91,7 +91,7 @@ void Server::addClient(int fd)
 {
 	if (fd > 0 && _clients.find(fd) == _clients.end())
 	{
-		std::cout << High_Cyan << "Socket with fd " << fd << " has been created" << Reset << std::endl;
+		std::cout << High_Green << "Socket with fd " << fd << " has been created" << Reset << std::endl;
     	Client *client = new Client(_config, _events, fd, _port, _host);
     	_clients[fd] = client;
 	}
@@ -112,7 +112,7 @@ void Server::deleteClient(int fd)
 	delete _clients[fd];
 	_clients.erase(fd);
 	close(fd);
-	std::cout << "Event and client associated with fd " << fd << " has been removed." << std::endl;   
+	std::cout << Yellow << "Event and client associated with fd " << fd << " has been removed." << Reset << std::endl;   
 }
 
 /*
@@ -126,8 +126,12 @@ void Server::handleRequest(int fd)
 {
 	if (_clients.find(fd) != _clients.end() || _events->cgi_in.find(fd) != _events->cgi_in.end())
 	{
+		std::cout << "fd handleRequest in " << fd << std::endl;
 		if (_clients.find(fd) == _clients.end())
+		{
+			std::cout << "CGI detected in handleRequest" << std::endl;
 			fd = _events->cgi_in[fd];
+		}
 		if (_clients[fd]->getRequest() < 0)
 		{
 			deleteEvent(fd, _events);
@@ -146,14 +150,20 @@ void Server::handleResponse(int fd)
 {
 	if (_clients.find(fd) != _clients.end() || _events->cgi_out.find(fd) != _events->cgi_out.end())
 	{
-		if (_clients.find(fd) == _clients.end())
+		if (_clients.find(fd) == _clients.end() && _clients[_events->cgi_out[fd]]->_isReady)
+		{
+			std::cout << "CGI detected in handleResponse" << std::endl;
 			fd = _events->cgi_out[fd];
+		}
 		if (_clients[fd]->_isReady)
+		{
+			std::cout << "fd handleResponse in " << fd << std::endl;
 			if (_clients[fd]->sendResponse() < 0)
 			{
 				deleteEvent(fd, _events);
 				deleteClient(fd);
 			}
+		}
 	}
 }
 

@@ -28,6 +28,7 @@ int Client::getRequest()
 	int bytesRead;
 
 	std::memset(buffer, 0, 10000);
+
 	if (!_isCgi)
 	{
 		/*
@@ -44,24 +45,18 @@ int Client::getRequest()
 		}
 		std::cout << Cyan << "Message received from fd " << _fd << "\taddress " << _host << ":" << _port << Reset << std::endl;
 		_request->fillRequest(buffer, bytesRead);
-		_response->buildResponse();
 		if (_request->isParsed())
 			_isReady = true;
+		std::cout << Purple << "Request no CGI client fd " << _fd << Reset << std::endl;
 	}
 	else
 	{
 		bytesRead = read(_cgiFd[0], buffer, 10000);
-		// if (bytesRead == 0)
-		// 	_isReady = true;
-		// else if (bytesRead < 0)
-		// 	throw std::runtime_error("Error: read: " + std::string(strerror(errno)));
 		if (bytesRead < 0)
 			throw std::runtime_error("Error: read: " + std::string(strerror(errno)));
-		else
-		{
-			_request->fillCgi(buffer);
-			_response->buildResponse();
-		}
+		_request->fillCgi(buffer);
+		_isReady = true;
+		std::cout << Purple << "Request CGI client fd " << _fd << Reset << std::endl;
 	}
 	return 0;
 }
@@ -80,15 +75,27 @@ int Client::sendResponse()
 
 	if (!_isCgi)
 	{
-		res = _response->getResString(); 
-		bytesSent = send(_fd, res.c_str(), res.size(), 0);
-		if (bytesSent < 0)
+		_response->buildResponse();
+		if (_isCgi)
 		{
-			std::cout << Red << "Connection closed on fd " << _fd << Reset << std::endl;
-			return -1;
+			_request->reset();
+			_response->reset(false);
+			_isReady = false;
+			return 0;
 		}
-		_request->reset();
-		_response->reset(false);
+		else
+		{
+			res = _response->getResString(); 
+			bytesSent = send(_fd, res.c_str(), res.size(), 0);
+			if (bytesSent < 0)
+			{
+				std::cout << Red << "Connection closed on fd " << _fd << Reset << std::endl;
+				return -1;
+			}
+			_request->reset();
+			_response->reset(false);
+			_isReady = false;
+		}
 	}
 	else
 	{
@@ -99,26 +106,26 @@ int Client::sendResponse()
 		_isCgi = false;
 		_request->reset();
 		_response->reset(true);
+		_isReady = false;
 	}
 	// Ismael:
 	// Esto me gustaría verlo juntos, Hay que chequear las locations y ver si se permiten cgi antes de lanzarlo
 	// y una vez que se lanza creo que los formularios le envían directamente los datos del formulario al archivo especificado en action 
 	// y el archivo se encarga de procesar los datos y devolver la respuesta o establecer los códigos de error.	
-	_isReady = false;
 	return 0;
 }
 
 void Client::initCgi()
 {
+	std::cout << Yellow << "InitCGI" << Reset << std::endl; 
 	_cgi = new Cgi(_fd ,_request, _events);
 	_cgi->executeCgi(_cgiFd);
-	std::cout << "_cgiFd[0] = " << _cgiFd[0] << std::endl;
-	std::cout << "_cgiFd[1] = " << _cgiFd[1] << std::endl;
 	_isCgi = true;
 }
 
 void Client::resetCgi()
 {
+	std::cout << Yellow << "ResetCGI" << Reset << std::endl;
 	_isCgi = false;
 	_events->cgi_in.erase(_cgiFd[0]);
 	_events->cgi_in.erase(_cgiFd[1]);

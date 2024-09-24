@@ -97,7 +97,6 @@ inline void addEvent(int fd, struct Epoll_events *events)
 
 inline void deleteEvent(int fd, struct Epoll_events *events)
 {
-	std::cout << "deleting fd " << fd << std::endl;
 	if (epoll_ctl(events->epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
 		throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
     events->added.erase(fd);

@@ -18,7 +18,6 @@ void Response::reset(bool cgiFlag)
     if (cgiFlag == true)
         _client->resetCgi();
     _cgiFlag = false;
-	_client = NULL;
 	_response_str = "";
 	_target = "";
 	_response_body_str = "";
