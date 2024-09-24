@@ -57,6 +57,7 @@ int Client::getRequest()
 		_request->fillCgi(buffer);
 		_isReady = true;
 		std::cout << Purple << "Request CGI client fd " << _fd << Reset << std::endl;
+		std::cout << High_Blue << buffer << Reset << std::endl;
 	}
 	return 0;
 }
@@ -100,7 +101,9 @@ int Client::sendResponse()
 	else
 	{
 		res = _request->getcgiString();
-		bytesSent = write(_cgiFd[1], res.c_str(), res.size());
+		std::cout << Purple << "Response CGI client fd " << _fd << Reset << std::endl;
+		bytesSent = send(_fd, res.c_str(), res.size(), 0);
+		// bytesSent = write(_cgiFd[1], res.c_str(), res.size());
 		if (bytesSent < 0)
 			throw std::runtime_error("Error: send: " + std::string(strerror(errno)));
 		_isCgi = false;

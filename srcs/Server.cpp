@@ -146,15 +146,10 @@ void Server::handleRequest(int fd)
 		También verifica si es un fd de un proceso cgi, y le atribuye el fd del cliente.
 		Si es así, llama a sendResponse() del cliente para enviar la respuesta.
 */
-void Server::handleResponse(int fd)
+void Server::handleResponse(int fd) //Con más de una configuración de server peta. Está accediendo a lugares que no puede.
 {
-	if (_clients.find(fd) != _clients.end() || _events->cgi_out.find(fd) != _events->cgi_out.end())
+	if (_clients.find(fd) != _clients.end())
 	{
-		if (_clients.find(fd) == _clients.end() && _clients[_events->cgi_out[fd]]->_isReady)
-		{
-			std::cout << "CGI detected in handleResponse" << std::endl;
-			fd = _events->cgi_out[fd];
-		}
 		if (_clients[fd]->_isReady)
 		{
 			std::cout << "fd handleResponse in " << fd << std::endl;
