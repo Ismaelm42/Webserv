@@ -26,6 +26,7 @@ Request::Request(Client *client, Server_config *config, struct Epoll_events *eve
 	_header_name_temp = "";
 	_multiform_flag = false;
 	_boundary = "";
+	(void)_events;
 }
 
 Request::~Request()

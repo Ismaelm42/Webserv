@@ -17,7 +17,7 @@ void Response::reset(bool cgiFlag)
 	_code = _request->getErrorCode(); 				// usado como condición no iniciar a 200
     if (cgiFlag == true)
         _client->resetCgi();
-    _0= false;
+    _cgiFlag= false;
 	_response_str = "";
 	_target = "";
 	_response_body_str = "";
@@ -525,10 +525,30 @@ int Response::launchCgi()
 
     //Establecer el _code
 
-    setStatusline();
-	setHeaders();														// setea los headers de la respuesta
-    setClientCGIBody()  //	incluir en el _response_body_str la cadena de texto respuesta del cgi 														// setea los headers de la respuesta
-                        // 
+    // setStatusline();
+	// setHeaders();														// setea los headers de la respuesta
+    // setClientCGIBody()  //	incluir en el _response_body_str la cadena de texto respuesta del cgi 														// setea los headers de la respuesta
+    //                     // 
+
+    /*
+
+        IDEA FINAL:
+        Intentar realizar un dup al socket para enviar la información no a stdout sino al fd del socket
+        Probar si es posible ya que dup2 puede ser que de problemas a la hora de utilizarlo.
+        Si no da problemas está todo perfecto ya que no necesitamos realizar ningún read y ningún write.
+        Simplifica por completo todo el proceso.
+        Mirar una solución para añadir los headers y el status line. La respuesta del cgi iría en medio.
+        Habría una forma de realizar esto enviándolo todo quizás con un dup o algo por el estilo?
+        Enviarlo como variable de entorno tampoco tiene mucho sentido ya que sería igual que escribirlo
+        en el mismo script? Es una opción, aunque el script tendría que utilizar obligatoriamente esa variable
+        de entorno para generar la respuesta.
+        Cómo se controlarían esos errores? Si el script no contempla esas variables de entorno la respuesta
+        no se enviaría correctamente. Darle una vuelta a esto.
+
+        Correcciones realizadas en la variable _events de Request
+        Se usa void para callar las flags de unused.
+        Corrección en variable de entorno CGIport que se estaba enviando un número y daba error.    
+    */
 	return (0);
 }
 
@@ -847,10 +867,10 @@ std::string Response::getResString()
 }
 
 
-1era vuelta que va a dar va a ser meterse en el fillRequest
+// 1era vuelta que va a dar va a ser meterse en el fillRequest
 
-En el response va a establecer el flag de cgi, y va a lanzar el cgi (execve)
+// En el response va a establecer el flag de cgi, y va a lanzar el cgi (execve)
 
-2nda vuelta request lee del fd del pipe y lo almacena en una variable de request
+// 2nda vuelta request lee del fd del pipe y lo almacena en una variable de request
 
-En el response, detecta que es cgi 
+// En el response, detecta que es cgi 

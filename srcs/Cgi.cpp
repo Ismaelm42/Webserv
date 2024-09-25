@@ -39,7 +39,7 @@ void Cgi::setEnvironment()
 	envp[7] = "HTTP_USER_AGENT=";
 	envp[8] = "HTTP_COOKIE=";
 	envp[9] = "SERVER_NAME=" + _request->getServerName();
-	envp[10] = "SERVER_PORT=" + _request->getPort();
+	envp[10] = "SERVER_PORT=";
 	envp[11] = "SERVER_PROTOCOL=HTTP/1.1";
 
 	_envp = (char **)calloc(sizeof(char *), 13);
