@@ -97,12 +97,12 @@ void Cgi::executeCgi(int (&cgiFd)[2])
         if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
 		{
 			if (WEXITSTATUS(status) == 255)
-            	throw std::runtime_error("Error: dup2 failed in child process");
+            	throw std::runtime_error("Error: dup2 failed in child process"); // 500 error
 			if (WEXITSTATUS(status) == 1)
-				throw std::runtime_error("Error: execve script failed");
+				throw std::runtime_error("Error: execve script failed"); // 500 error
 		}
 		if (fcntl(_pipeFd[0], F_SETFL, O_NONBLOCK) < 0 || fcntl(_pipeFd[1], F_SETFL, O_NONBLOCK) < 0)
-        	throw std::runtime_error("Error: fcntl: " + std::string(strerror(errno)));
+        	throw std::runtime_error("Error: fcntl: " + std::string(strerror(errno))); // 500 error
 		addEvent(_pipeFd[0], _events);
 		addEvent(_pipeFd[1], _events);
 		_events->cgi_in[_pipeFd[0]] = _fd;
@@ -123,7 +123,7 @@ Para hacer las pruebas puedes seguir estos pasos:
 
 ir a la carpeta root desde la terminal y ejecutar el servidor de Python:
 
-python3 -m http.server --cgi 8000
+			/////				python3 -m http.server --cgi 8000
 
 Asegurando (which python3) que la versión de python3 esté en: /usr/bin/python3
 
@@ -131,7 +131,7 @@ y que el [archivo.py](http://archivo.py) tenga permisos de ejecución
 
 onectacte con un navegador:
 
-http://localhost:8000/assets/get.html 
+			//////	           http://localhost:8000/assets/get.html 
 
 Rellenar el formulario y pulsar enviar
 

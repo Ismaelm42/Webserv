@@ -17,7 +17,7 @@ void Response::reset(bool cgiFlag)
 	_code = _request->getErrorCode(); 				// usado como condición no iniciar a 200
     if (cgiFlag == true)
         _client->resetCgi();
-    _cgiFlag = false;
+    _0= false;
 	_response_str = "";
 	_target = "";
 	_response_body_str = "";
@@ -367,62 +367,6 @@ static Location_config* find_location(Server_config &server, const std::string &
     return NULL;  // Si no se encuentra, devuelve NULL
 }
 
-// Función para imprimir los valores de un Location_config
-// static void printLocationConfig(const Location_config* locConf) {
-//     if (locConf == NULL) {
-//         std::cout << "El puntero a Location_config es nulo." << std::endl;
-//         return;
-//     }
-
-//     // Imprimir autoindex
-//     std::cout << "Autoindex: " << (locConf->autoindex ? "true" : "false") << std::endl;
-
-//     // Imprimir location
-//     std::cout << "Location: " << locConf->location << std::endl;
-
-//     // Imprimir index (vector de strings)
-//     std::cout << "Index files: ";
-//     if (locConf->index.empty()) {
-//         std::cout << "No hay archivos index definidos." << std::endl;
-//     } else {
-//         for (size_t i = 0; i < locConf->index.size(); ++i) {
-//             std::cout << locConf->index[i];
-//             if (i < locConf->index.size() - 1) {
-//                 std::cout << ", ";
-//             }
-//         }
-//         std::cout << std::endl;
-//     }
-//     // Imprimir methods (set de strings)
-//     std::cout << "Allowed methods: ";
-//     if (locConf->methods.empty()) {
-//         std::cout << "No hay métodos permitidos." << std::endl;
-//     } else {
-//         for (std::set<std::string>::const_iterator it = locConf->methods.begin(); it != locConf->methods.end(); ++it) {
-//             std::cout << *it;
-//             if (it != --locConf->methods.end()) {
-//                 std::cout << ", ";
-//             }
-//         }
-//         std::cout << std::endl;
-//     }
-//     // Imprimir redir (pair de int y string)
-//     std::cout << "Redirection: Código " << locConf->redir.first << ", Nueva dirección: " << locConf->redir.second << std::endl;
-//     // Imprimir cgi (vector de pares de strings)
-//     std::cout << "CGI mappings: ";
-//     if (locConf->cgi.empty()) {
-//         std::cout << "No hay CGI mappings." << std::endl;
-//     } else {
-//         for (size_t i = 0; i < locConf->cgi.size(); ++i) {
-//             std::cout << "(" << locConf->cgi[i].first << " -> " << locConf->cgi[i].second << ")";
-//             if (i < locConf->cgi.size() - 1) {
-//                 std::cout << ", ";
-//             }
-//         }
-//         std::cout << std::endl;
-//     }
-// }
-
 int Response::isValidTargetFile()
 {
 	std::ifstream file(_target.c_str());
@@ -448,50 +392,6 @@ int Response::isNotValidMethod()
 	// }
 	return (setReturnCode(405));
 }
-
-/**
- * @brief join the path removing the firs directory is it is repeatted
- * Para su posible uso en el autoindex y si no se encuentra el archivo index
- * PEndiente de testear por un cambio de enfoque en la implementación
- * @param locationMatch 
- * @param requestPath 
- * @return std::string 
- */
-// std::string joinPaths(const std::string& locationMatch, const std::string& requestPath) {
-//     // Quitar la barra final de locationMatch si existe
-//     std::string path1 = locationMatch;
-//     if (path1.back() == '/') {
-//         path1 = path1.substr(0, path1.size() - 1);
-//     }
-//     // Quitar la barra inicial de requestPath si existe
-//     std::string path2 = requestPath;
-//     if (path2.front() == '/') {
-//         path2 = path2.substr(1);
-//     }
-//     // Encontrar el último directorio en path1
-//     size_t lastSlash = path1.find_last_of('/');
-//     std::string lastDir;
-//     if (lastSlash != std::string::npos) {
-//         lastDir = path1.substr(lastSlash + 1);
-//         path1 = path1.substr(0, lastSlash); // Eliminar el último directorio
-//     }
-//     // Encontrar el primer directorio en path2
-//     size_t firstSlash = path2.find('/');
-//     std::string firstDir; 
-//     if (firstSlash != std::string::npos) {
-//         firstDir = path2.substr(0, firstSlash);
-//     } else {
-//         firstDir = path2; // Si no hay más barras, toda la cadena es el primer directorio
-//     }
-//     // Verificar si el último directorio de path1 es igual al primer directorio de path2
-//     if (lastDir == firstDir) {
-//         // Concatenar sin el último directorio de path1
-//         return path1 + "/" + path2;
-//     } else {
-//         // Concatenar normalmente
-//         return locationMatch + "/" + requestPath;
-//     }
-// }
 
 bool isReadableDirectory(const std::string& path) {
 	
@@ -606,12 +506,30 @@ int Response::launchCgi()
 	_cgiFlag = true;								
 
     _client->initCgi();
-	// Desde esta función podríamos realizar el pipe y guardar el fd[2] en la response y setReturnCode(500) si falla																			// flag para saber si se esta ejecutando un cgi y su estado	
+	
 
+    // Desde esta función podríamos realizar el pipe y guardar el fd[2] en la response y setReturnCode(500) si falla																			// flag para saber si se esta ejecutando un cgi y su estado	
 	// Llamar a la función de obtener las variables de entorno
 	// llamara a la función execute del objeto cgi
 
-	return (1);
+
+    // NUEVO COMENTARIO
+    // Devolver un número positivo si el código falla.
+    // Crear una función que establezca el _code con el error que sea. Devolver 500 si falla
+    // alguna movida en el exec cgi (por ejemplo un dup2 o el fork o el mismo execve)
+
+    // 403 -> Permisos de ejecución
+    // 500 -> fallo de cgi
+    // 504 -> Timeout, echarle un vistazo
+
+
+    //Establecer el _code
+
+    setStatusline();
+	setHeaders();														// setea los headers de la respuesta
+    setClientCGIBody()  //	incluir en el _response_body_str la cadena de texto respuesta del cgi 														// setea los headers de la respuesta
+                        // 
+	return (0);
 }
 
 int Response::getTarget()
@@ -807,68 +725,6 @@ int Response::buildBody()
 	return (0);
 }
 
-// int Response::buildDirHtml()
-// {
-//     struct dirent   *structDirent;
-//     DIR             *dir;
-//     std::string     dirHtmlStr;  
-//     dir = opendir(_target.c_str());
-//     if (dir == NULL)
-//     {    
-//         std::cerr << "opendir failed" << std::endl;
-//         return (1);
-//     }
-//     dirHtmlStr.append("<html>\n");
-//     dirHtmlStr.append("<head>\n");
-//     dirHtmlStr.append("<title> Index of");
-//     dirHtmlStr.append(_target);
-//     dirHtmlStr.append("</title>\n");
-//     dirHtmlStr.append("</head>\n");
-//     dirHtmlStr.append("<body >\n");
-//     dirHtmlStr.append("<h1> Index of " + _target + "</h1>\n");
-//     dirHtmlStr.append("<table style=\"width:80%; font-size: 15px\">\n");
-//     dirHtmlStr.append("<hr>\n");
-//     dirHtmlStr.append("<th style=\"text-align:left\"> File Name </th>\n");
-//     dirHtmlStr.append("<th style=\"text-align:left\"> Last Modification  </th>\n");
-//     dirHtmlStr.append("<th style=\"text-align:left\"> File Size </th>\n");
-//     struct stat file_stat;
-//     std::string file_path;
-//     while((structDirent = readdir(dir)) != NULL)
-//     {
-//         if(strcmp(structDirent->d_name, ".") == 0)
-//             continue;
-//         file_path = _target + structDirent->d_name;
-//         stat(file_path.c_str() , &file_stat);
-//         dirHtmlStr.append("<tr>\n");
-//         dirHtmlStr.append("<td>\n");
-//         dirHtmlStr.append("<a href=\"");
-//         dirHtmlStr.append(structDirent->d_name);
-//         if (S_ISDIR(file_stat.st_mode))
-//             dirHtmlStr.append("/");
-//         dirHtmlStr.append("\">");
-//         dirHtmlStr.append(structDirent->d_name);
-//         if (S_ISDIR(file_stat.st_mode))
-//             dirHtmlStr.append("/");
-//         dirHtmlStr.append("</a>\n");
-//         dirHtmlStr.append("</td>\n");
-//         dirHtmlStr.append("<td>\n");
-//         dirHtmlStr.append(ctime(&file_stat.st_mtime));
-//         dirHtmlStr.append("</td>\n");
-//         dirHtmlStr.append("<td>\n");
-//         if (!S_ISDIR(file_stat.st_mode))
-//             dirHtmlStr.append(toStr(file_stat.st_size));
-//         dirHtmlStr.append("</td>\n");
-//         dirHtmlStr.append("</tr>\n");
-//     }
-//     dirHtmlStr.append("</table>\n");
-//     dirHtmlStr.append("<hr>\n");
-//     dirHtmlStr.append("</body>\n");
-//     dirHtmlStr.append("</html>\n");
-// 	_response_body_str = dirHtmlStr;
-//     // body.insert(body.begin(), dirHtmlStr.begin(), dirHtmlStr.end());
-//     // body_len = body.size();
-//     return (0);
-// }
 
 int Response::buildDirHtml()
 {
@@ -989,3 +845,12 @@ std::string Response::getResString()
 		std::cout << "getResString is called" << std::endl;
 	return _responseString;
 }
+
+
+1era vuelta que va a dar va a ser meterse en el fillRequest
+
+En el response va a establecer el flag de cgi, y va a lanzar el cgi (execve)
+
+2nda vuelta request lee del fd del pipe y lo almacena en una variable de request
+
+En el response, detecta que es cgi 

@@ -45,6 +45,7 @@ int Client::getRequest()
 		}
 		std::cout << Cyan << "Message received from fd " << _fd << "\taddress " << _host << ":" << _port << Reset << std::endl;
 		_request->fillRequest(buffer, bytesRead);
+		
 		if (_request->isParsed())
 			_isReady = true;
 		std::cout << Purple << "Request no CGI client fd " << _fd << Reset << std::endl;

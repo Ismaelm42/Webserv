@@ -30,4 +30,3 @@ class Client
 		void initCgi();
 		void resetCgi();
 };
-
