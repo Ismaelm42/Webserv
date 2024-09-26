@@ -44,7 +44,6 @@
 #define	High_Purple	"\e[0;95m"
 #define	High_Cyan	"\e[0;96m"
 #define	High_White	"\e[0;97m"
-
 #define Reset	"\e[0m"
 
 extern int globalSigint;

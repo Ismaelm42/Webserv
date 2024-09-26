@@ -1,4 +1,63 @@
 #include "../includes/lib.hpp"
+#include "../includes/common.hpp"
+
+void Response::buildErrorMap() {
+    // Limpia el mapa antes de llenarlo
+    httpStatusMap.clear();
+
+    // Agregar pares al mapa utilizando insert
+    httpStatusMap.insert(std::make_pair(100, std::make_pair("Continue", "El cliente debe continuar con su solicitud.")));
+    httpStatusMap.insert(std::make_pair(101, std::make_pair("Switching Protocols", "El servidor ha aceptado cambiar a un protocolo diferente.")));
+    httpStatusMap.insert(std::make_pair(200, std::make_pair("OK", "La solicitud ha sido procesada con éxito.")));
+    httpStatusMap.insert(std::make_pair(201, std::make_pair("Created", "La solicitud se ha cumplido y se ha creado un nuevo recurso.")));
+    httpStatusMap.insert(std::make_pair(202, std::make_pair("Accepted", "La solicitud ha sido aceptada para procesamiento, pero no se ha completado.")));
+    httpStatusMap.insert(std::make_pair(203, std::make_pair("Non-Authoritative Information", "La información devuelta no es definitiva.")));
+    httpStatusMap.insert(std::make_pair(204, std::make_pair("No Content", "La solicitud fue exitosa, pero no hay contenido que devolver.")));
+    httpStatusMap.insert(std::make_pair(205, std::make_pair("Reset Content", "La solicitud fue exitosa, por favor restablezca el formulario.")));
+    httpStatusMap.insert(std::make_pair(206, std::make_pair("Partial Content", "El servidor está devolviendo solo una parte de los datos solicitados.")));
+    httpStatusMap.insert(std::make_pair(300, std::make_pair("Multiple Choices", "Hay varias opciones para la solicitud.")));
+    httpStatusMap.insert(std::make_pair(301, std::make_pair("Moved Permanently", "El recurso solicitado ha sido movido de forma permanente.")));
+    httpStatusMap.insert(std::make_pair(302, std::make_pair("Found", "El recurso solicitado ha sido encontrado temporalmente en otra ubicación.")));
+    httpStatusMap.insert(std::make_pair(303, std::make_pair("See Other", "El cliente debe hacer una solicitud a otra URL para obtener el recurso.")));
+    httpStatusMap.insert(std::make_pair(304, std::make_pair("Not Modified", "El recurso no ha sido modificado desde la última solicitud.")));
+    httpStatusMap.insert(std::make_pair(307, std::make_pair("Temporary Redirect", "El recurso está temporalmente disponible en otra ubicación.")));
+    httpStatusMap.insert(std::make_pair(308, std::make_pair("Permanent Redirect", "El recurso está permanentemente disponible en otra ubicación.")));
+    httpStatusMap.insert(std::make_pair(400, std::make_pair("Bad Request", "El servidor no puede procesar la solicitud debido a un error de cliente.")));
+    httpStatusMap.insert(std::make_pair(401, std::make_pair("Unauthorized", "Se requiere autenticación para acceder al recurso.")));
+    httpStatusMap.insert(std::make_pair(403, std::make_pair("Forbidden", "No tienes permiso para acceder a este recurso.")));
+    httpStatusMap.insert(std::make_pair(404, std::make_pair("Not Found", "El recurso solicitado no fue encontrado en el servidor.")));
+    httpStatusMap.insert(std::make_pair(405, std::make_pair("Method Not Allowed", "El método de solicitud no está permitido para el recurso solicitado.")));
+    httpStatusMap.insert(std::make_pair(406, std::make_pair("Not Acceptable", "El servidor no puede generar una respuesta aceptable según las cabeceras 'Accept' enviadas por el cliente.")));
+    httpStatusMap.insert(std::make_pair(407, std::make_pair("Proxy Authentication Required", "Es necesario autenticarse en un proxy.")));
+    httpStatusMap.insert(std::make_pair(408, std::make_pair("Request Timeout", "El servidor agotó el tiempo de espera para la solicitud.")));
+    httpStatusMap.insert(std::make_pair(409, std::make_pair("Conflict", "La solicitud no puede procesarse debido a un conflicto con el estado actual del recurso.")));
+    httpStatusMap.insert(std::make_pair(410, std::make_pair("Gone", "El recurso solicitado ya no está disponible y no se conoce ninguna dirección de reenvío.")));
+    httpStatusMap.insert(std::make_pair(411, std::make_pair("Length Required", "Se requiere la longitud del contenido para la solicitud.")));
+    httpStatusMap.insert(std::make_pair(412, std::make_pair("Precondition Failed", "Una precondición en las cabeceras de la solicitud ha fallado.")));
+    httpStatusMap.insert(std::make_pair(413, std::make_pair("Payload Too Large", "La carga útil de la solicitud es demasiado grande para ser procesada por el servidor.")));
+    httpStatusMap.insert(std::make_pair(414, std::make_pair("URI Too Long", "El URI solicitado es demasiado largo para ser procesado por el servidor.")));
+    httpStatusMap.insert(std::make_pair(415, std::make_pair("Unsupported Media Type", "El tipo de medio de la solicitud no es compatible con el servidor.")));
+    httpStatusMap.insert(std::make_pair(416, std::make_pair("Range Not Satisfiable", "El rango especificado no es válido para el recurso solicitado.")));
+    httpStatusMap.insert(std::make_pair(417, std::make_pair("Expectation Failed", "El servidor no puede cumplir con las expectativas dadas en la cabecera 'Expect'.")));
+    httpStatusMap.insert(std::make_pair(418, std::make_pair("I'm a teapot", "Soy una tetera. Este código es una broma del Protocolo HTCPCP.")));
+    httpStatusMap.insert(std::make_pair(421, std::make_pair("Misdirected Request", "La solicitud fue dirigida a un servidor que no puede producir una respuesta.")));
+    httpStatusMap.insert(std::make_pair(425, std::make_pair("Too Early", "El servidor no está dispuesto a procesar una solicitud que puede ser repetida.")));
+    httpStatusMap.insert(std::make_pair(426, std::make_pair("Upgrade Required", "El cliente debe cambiar a un protocolo diferente.")));
+    httpStatusMap.insert(std::make_pair(428, std::make_pair("Precondition Required", "El servidor requiere que la solicitud sea condicional.")));
+    httpStatusMap.insert(std::make_pair(429, std::make_pair("Too Many Requests", "El cliente ha enviado demasiadas solicitudes en un tiempo determinado.")));
+    httpStatusMap.insert(std::make_pair(431, std::make_pair("Request Header Fields Too Large", "Las cabeceras de la solicitud son demasiado grandes.")));
+    httpStatusMap.insert(std::make_pair(451, std::make_pair("Unavailable For Legal Reasons", "El recurso no está disponible por razones legales.")));
+    httpStatusMap.insert(std::make_pair(500, std::make_pair("Internal Server Error", "El servidor encontró un error interno y no pudo completar la solicitud.")));
+    httpStatusMap.insert(std::make_pair(501, std::make_pair("Not Implemented", "El servidor no tiene la funcionalidad requerida para cumplir con la solicitud.")));
+    httpStatusMap.insert(std::make_pair(502, std::make_pair("Bad Gateway", "El servidor actuando como pasarela recibió una respuesta inválida.")));
+    httpStatusMap.insert(std::make_pair(503, std::make_pair("Service Unavailable", "El servidor no está disponible para manejar la solicitud en este momento.")));
+    httpStatusMap.insert(std::make_pair(504, std::make_pair("Gateway Timeout", "El servidor actuando como pasarela no recibió una respuesta a tiempo.")));
+    httpStatusMap.insert(std::make_pair(505, std::make_pair("HTTP Version Not Supported", "La versión HTTP utilizada en la solicitud no es compatible con el servidor.")));
+    httpStatusMap.insert(std::make_pair(506, std::make_pair("Variant Also Negotiates", "La negociación de contenido transparente para este recurso causó una referencia circular.")));
+    httpStatusMap.insert(std::make_pair(507, std::make_pair("Insufficient Storage", "El servidor no puede almacenar la representación necesaria para completar la solicitud.")));
+    httpStatusMap.insert(std::make_pair(510, std::make_pair("Not Extended", "El servidor requiere más extensiones para cumplir con la solicitud.")));
+    httpStatusMap.insert(std::make_pair(511, std::make_pair("Network Authentication Required", "Es necesaria la autenticación de red para acceder al recurso.")));
+}
 
 Response::Response(Client *client, Server_config *config, Request *request, struct Epoll_events *events)
 :_client(client), _config(config), _request(request), _events(events), cgiFlag(0),_auto_index_flag(0)												// constructor
@@ -90,118 +149,132 @@ void Response::setClient(Client* client) {
     _client = client;  // Guarda el puntero al objeto Client
 }
 
-std::string statusString(short statusCode)
-{
-    switch (statusCode)
-    {
-        case 100:
-            return "Continue";
-        case 101:
-            return "Switching Protocol";
-        case 200:
-            return "OK";
-        case 201:
-            return "Created";
-        case 202:
-            return "Accepted";
-        case 203:
-            return "Non-Authoritative Information";
-        case 204:
-            return "No Content";
-        case 205:
-            return "Reset Content";
-        case 206:
-            return "Partial Content";
-        case 300:
-            return "Multiple Choice";
-        case 301:
-            return "Moved Permanently";
-        case 302:
-            return "Moved Temporarily";
-        case 303:
-            return "See Other";
-        case 304:
-            return "Not Modified";
-        case 307:
-            return "Temporary Redirect";
-        case 308:
-            return "Permanent Redirect";
-        case 400:
-            return "Bad Request";
-        case 401:
-            return "Unauthorized";
-        case 403:
-            return "Forbidden";
-        case 404:
-            return "Not Found";
-        case 405:
-            return "Method Not Allowed";
-        case 406:
-            return "Not Acceptable";
-        case 407:
-            return"Proxy Authentication Required";
-        case 408:
-            return "Request Timeout";
-        case 409:
-            return "Conflict";
-        case 410:
-            return "Gone";
-        case 411:
-            return "Length Required";
-        case 412:
-            return "Precondition Failed";
-        case 413:
-            return "Payload Too Large";
-        case 414:
-            return "URI Too Long";
-        case 415:
-            return "Unsupported Media Type";
-        case 416:
-            return "Requested Range Not Satisfiable";
-        case 417:
-            return "Expectation Failed";
-        case 418:
-            return "I'm a teapot";
-        case 421:
-            return "Misdirected Request";
-        case 425:
-            return "Too Early";
-        case 426:
-            return "Upgrade Required";
-        case 428:
-            return "Precondition Required";
-        case 429:
-            return "Too Many Requests";
-        case 431:
-            return "Request Header Fields Too Large";
-        case 451:
-            return "Unavailable for Legal Reasons";
-        case 500:
-            return "Internal Server Error";
-        case 501:
-            return "Not Implemented";
-        case 502:
-            return "Bad Gateway";
-        case 503:
-            return "Service Unavailable";
-        case 504:
-            return "Gateway Timeout";
-        case 505:
-            return "HTTP Version Not Supported";
-        case 506:
-            return "Variant Also Negotiates";
-        case 507:
-            return "Insufficient Storage";
-        case 510:
-            return "Not Extended";
-        case 511:
-            return "Network Authentication Required";
-        default:
-            return "Undefined";
-        }
+std::string Response::getStatusDescription(int statusCode) {
+    std::map<int, std::pair<std::string, std::string> >::const_iterator it = httpStatusMap.find(statusCode);
+    if (it != httpStatusMap.end()) {
+        return it->second.second; // Retorna el segundo valor del par (descripción del estado)
+    } else {
+        return "No description available"; // Retorna un valor por defecto si no encuentra el código
+    }
 }
 
-/* Constructs Status line based on status code. */
+std::string Response::statusString(int statusCode)
+{
+	std::map<int, std::pair<std::string, std::string> >::const_iterator it = httpStatusMap.find(statusCode);
+    if (it != httpStatusMap.end()) {
+        return it->second.first; // Retorna el primer valor del par (mensaje de estado)
+    } else {
+        return "Undefined"; // Retorna "Undefined" si no encuentra el código
+    }
+
+    // switch (statusCode)
+    // {
+    //     case 100:
+    //         return "Continue";
+    //     case 101:
+    //         return "Switching Protocol";
+    //     case 200:
+    //         return "OK";
+    //     case 201:
+    //         return "Created";
+    //     case 202:
+    //         return "Accepted";
+    //     case 203:
+    //         return "Non-Authoritative Information";
+    //     case 204:
+    //         return "No Content";
+    //     case 205:
+    //         return "Reset Content";
+    //     case 206:
+    //         return "Partial Content";
+    //     case 300:
+    //         return "Multiple Choice";
+    //     case 301:
+    //         return "Moved Permanently";
+    //     case 302:
+    //         return "Moved Temporarily";
+    //     case 303:
+    //         return "See Other";
+    //     case 304:
+    //         return "Not Modified";
+    //     case 307:
+    //         return "Temporary Redirect";
+    //     case 308:
+    //         return "Permanent Redirect";
+    //     case 400:
+    //         return "Bad Request";
+    //     case 401:
+    //         return "Unauthorized";
+    //     case 403:
+    //         return "Forbidden";
+    //     case 404:
+    //         return "Not Found";
+    //     case 405:
+    //         return "Method Not Allowed";
+    //     case 406:
+    //         return "Not Acceptable";
+    //     case 407:
+    //         return"Proxy Authentication Required";
+    //     case 408:
+    //         return "Request Timeout";
+    //     case 409:
+    //         return "Conflict";
+    //     case 410:
+    //         return "Gone";
+    //     case 411:
+    //         return "Length Required";
+    //     case 412:
+    //         return "Precondition Failed";
+    //     case 413:
+    //         return "Payload Too Large";
+    //     case 414:
+    //         return "URI Too Long";
+    //     case 415:
+    //         return "Unsupported Media Type";
+    //     case 416:
+    //         return "Requested Range Not Satisfiable";
+    //     case 417:
+    //         return "Expectation Failed";
+    //     case 418:
+    //         return "I'm a teapot";
+    //     case 421:
+    //         return "Misdirected Request";
+    //     case 425:
+    //         return "Too Early";
+    //     case 426:
+    //         return "Upgrade Required";
+    //     case 428:
+    //         return "Precondition Required";
+    //     case 429:
+    //         return "Too Many Requests";
+    //     case 431:
+    //         return "Request Header Fields Too Large";
+    //     case 451:
+    //         return "Unavailable for Legal Reasons";
+    //     case 500:
+    //         return "Internal Server Error";
+    //     case 501:
+    //         return "Not Implemented";
+    //     case 502:
+    //         return "Bad Gateway";
+    //     case 503:
+    //         return "Service Unavailable";
+    //     case 504:
+    //         return "Gateway Timeout";
+    //     case 505:
+    //         return "HTTP Version Not Supported";
+    //     case 506:
+    //         return "Variant Also Negotiates";
+    //     case 507:
+    //         return "Insufficient Storage";
+    //     case 510:
+    //         return "Not Extended";
+    //     case 511:
+    //         return "Network Authentication Required";
+    //     default:
+    //         return "Undefined";
+    //     }
+}
 
 void        Response::setStatusline()
 {
@@ -255,18 +328,40 @@ std::string concatenatePaths(std::string str1, std::string str2, std::string str
     return (res);														// retorna el resultado	
 }
 
+// int Response::getFile()
+// {
+//     std::ifstream file( _target.c_str());
+// 	std::cout << "en getFile: "<< _target.c_str();
+// 	std::cout <<std::endl;
+//     if (file.fail())
+//     {
+//         _code = 404;
+//         return (1);
+//     }
+//     std::ostringstream ss;
+// 	ss << file.rdbuf();
+//     _response_body_str = ss.str();
+//     return (0);
+// }
+
 int Response::getFile()
 {
-    std::ifstream file( _target.c_str());
-	std::cout << "en getFile: "<< _target.c_str();
-	std::cout <<std::endl;
-    if (file.fail())
-    {
-        _code = 404;
-        return (1);
+    // Comprobar si el archivo existe
+    struct stat buffer;
+    if (stat(_target.c_str(), &buffer) != 0) 	// Comprobar si el archivo existe
+        return (setReturnCode(404));			// No encontrado: el archivo no existe	
+    if (!(buffer.st_mode & S_IRUSR)) { 			// Comprobar permisos de usuario
+        return (setReturnCode(403));			// Prohibido: no hay permisos de lectura
     }
-    std::ostringstream ss;
-	ss << file.rdbuf();
+    std::ifstream file(_target.c_str());
+    if (!file.is_open())
+        return (setReturnCode(404));			// No encontrado: el archivo no existe	
+
+    std::ostringstream ss;						// Verificar si hay problemas de lectura después de abrir el archivo
+    ss << file.rdbuf();
+    if (file.rdstate() & std::ifstream::failbit || file.rdstate() & std::ifstream::badbit)
+        return (setReturnCode(500));			 // Error interno del servidor: problemas de lectura
+		// Error interno del servidor: error de flujo de entrada/salida
     _response_body_str = ss.str();
     return (0);
 }
@@ -714,31 +809,42 @@ int Response::getTarget()
 	return 0;
 }
 
+void Response::getDefaultErrorBody(int code)
+{
+	std::cout << "en getDefaultErrorBody________________-" << std::endl;
+	_response_body_str = err_first_sec_title 
+					+ toStr(code) + " " + statusString(code) 
+					+ err_sec_sec_error + toStr(code)
+					+ err_th_sec_errmsg + statusString(code) 
+					+ err_fth_sec_errdesc + getStatusDescription(code) + err_last_sec_end;
+}
+
+/**
+ * @brief Construye un string con el cuerpo de la respuesta _response_body_str si hay 
+ * páginas de error en el archivo de configuración _config->error_pages toma la información
+ * de esos archivos y si no la genera con la información del mapa httpStatusMap y el texto
+ * predefinido en la plantilla de error.hpp. Lo ideal sería aplicar un template con la plantilla
+ * html y variables para los valores que cambian y posteriormente buscar y reemplazar dichas variables 
+ * por los valores correspondientes. Pero eso ya lo dejamos para más adelante, o para profesionales...
+ * 
+ * @param code 
+ * @return int devuelve mayor que 
+ */
 int Response::buildErrorPage(int code)
 {
-
-	std::cout << "en BuildErrorPage____________________" << std::endl;
-	//	std::map<int, std::string> error_pages; // Mapa de páginas de error
+	std::cout << "en buildErrorPage____________________" << std::endl;
 	if(_config->error_pages.find(code)==_config->error_pages.end()|| _config->error_pages.at(code).empty())
 	{
-		std::cout << Yellow << "No hay página de error para el código: " << code <<White << std::endl;
-		// llamar a la función que genera la página de error por defecto y la asigna a _response_body_str
+		getDefaultErrorBody(code);
 		return (0);
 	}
-	
 	for (std::map<int, std::string>::iterator itm = _config->error_pages.begin(); itm != _config->error_pages.end(); itm++)
 	{
 		if (itm->first == code)
 			_target = itm->second;
-		// std::cout << "Paáginas de errores:\t\t\t" << itm->first << "->" << itm->second << std::endl;
 	}
-	if (getFile())													// lee el archivo					
-        return (1);
-    // if (_config->error_pages.find(code) == _config->error_pages.end())		
-	// //it = _config->error_pages.find(code);
-	// std::string errorPage = "<html>\n<head>\n<title>Error</title>\n</head>\n<body>\n<h1>Error ";
-	// errorPage.append(std::to_string(code));
-	// errorPage.append("</h1>\n</body>\n</html>\n");
+	if (getFile())
+		getDefaultErrorBody(setReturnCode(code));
 	return (0);
 }
 
@@ -801,7 +907,6 @@ int Response::buildBody()
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	return (0);
 }
-
 
 std::string removeRoot(std::string target, std::string root)
 {

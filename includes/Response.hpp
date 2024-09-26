@@ -41,7 +41,10 @@ class Response
 		Request*				_request;
 		struct Epoll_events 	*_events;
 		int 					cgiFlag;
-
+		std::map<int, std::pair<std::string, std::string> > httpStatusMap;
+		std::string 			getStatusDescription(int statusCode);
+		std::string 			statusString(int statusCode);
+		
 	private:
 		std::string 		_responseString;										// respuesta
 		int 				_code;													// codigo de respuesta
@@ -57,6 +60,7 @@ class Response
 		int 				buildDirHtml();
 		bool 				_hasIndexFlag;
 		int 				buildErrorPage(int code);
-;
+		void				buildErrorMap();	
+		void 				getDefaultErrorBody(int code);
 
 };
