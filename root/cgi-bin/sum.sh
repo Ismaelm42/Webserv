@@ -39,16 +39,3 @@ fi
 
 # Suma los números
 sum=$(($num1 + $num2))
-
-# Imprime la cabecera HTTP necesaria
-echo "HTTP/1.1 200 OK\r\n"
-echo "Content-Type: text/html"
-
-# Imprime el resultado en formato HTML
-echo "<html>"
-echo "<head><title>Sum Result</title></head>"
-echo "<body>"
-echo "<h1>Sum Result</h1>"
-echo "<p>$num1 + $num2 = $sum</p>"
-echo "</body>"
-echo "</html>"

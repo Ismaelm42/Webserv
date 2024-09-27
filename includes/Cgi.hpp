@@ -12,13 +12,18 @@ class Cgi
 		char **_argv;
 		char **_envp;
 		int _pipeFd[2];
+	    char line[1024];
+		std::string _cmd;
+		std::string _path;
 		Request *_request;
-		struct Epoll_events *_events;
+		Server_config *_config;
+	    std::stringstream buffer;
 	public:
-		Cgi(int fd, Request *request, Epoll_events *events);
+		Cgi(int fd, Request *request, Server_config *config);
 		~Cgi();
+		int checkCmdAndPath();
 		void setEnvironment();
 		void setArguments();
 		void childProcess();
-		void executeCgi(int (&cgiFd)[2]);
+		int executeCgi(std::string &output);
 };

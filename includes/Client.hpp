@@ -10,8 +10,6 @@ class Client
 {
 	private:
 		Cgi *_cgi;								// Puntero a una clase CGI
-		bool _isCgi;							// Flag que indica si el cliente debe procesar un cgi
-		int _cgiFd[2];							// Fds del CGI
 		Request *_request;						// Puntero a estructura request
 		Response *_response;					// Puntero a estructura response
 		Server_config *_config;					// Puntero a la estructura de config
@@ -27,6 +25,6 @@ class Client
 		~Client();
 		int getRequest();
 		int sendResponse();
-		void initCgi();
-		void resetCgi();
+		void initCgi(int *code, std::string &output);
+		void resetClient();
 };

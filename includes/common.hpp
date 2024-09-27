@@ -78,8 +78,6 @@ struct Epoll_events
 	int epfd;														// Epoll fd
 	std::vector<struct epoll_event> log;							// Notificaciones de Eventos
 	std::map<int, struct epoll_event> added;						// Configuración de Eventos
-	std::map<int, int> cgi_in;										// Track del fd de lectura cgi con el fd del cliente
-	std::map<int, int> cgi_out;										// Track del fd de escritura cgi con el fd del cliente
 };
 
 inline void addEvent(int fd, struct Epoll_events *events)
@@ -108,6 +106,24 @@ std::string toStr(const T toConvert)
     std::stringstream stream;
 	stream << toConvert;
     return stream.str();
+}
+
+inline int checkFileOrDirectory(std::string &path, const std::string type)
+{
+	struct stat stat_buffer;
+
+    if (stat(path.c_str(), &stat_buffer) < 0)
+    {
+		if (errno == ENOENT)
+			return 404;
+		else if (errno == EACCES || !(stat_buffer.st_mode & S_IRUSR))
+			return 403;
+        else
+			return 500;
+    }
+	if ((type == "dir" && !S_ISDIR(stat_buffer.st_mode)) || (type == "file" && S_ISDIR(stat_buffer.st_mode)))
+		return 400;
+	return 0;
 }
 
 enum Methods

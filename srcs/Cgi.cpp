@@ -1,10 +1,15 @@
 #include "../includes/lib.hpp"
 
-Cgi::Cgi(int fd, Request *request, Epoll_events *events)
-:_fd(fd), _request(request), _events(events)
+Cgi::Cgi(int fd, Request *request, Server_config *config)
+:_fd(fd), _request(request), _config(config)
 {
 	_envp = NULL;
 	_argv = NULL;
+	_path = _config->root + _request->getPath();
+    if (_request->getPath().rfind("/") != std::string::npos)
+        _cmd = _request->getPath().substr(_request->getPath().rfind("/") + 1);
+    else
+		_cmd = _request->getPath();
 }
 
 Cgi::~Cgi()
@@ -25,8 +30,6 @@ Cgi::~Cgi()
 
 void Cgi::setEnvironment()
 {
-	if (DEBUG)
-		std::cout << "setEnvironment" << std::endl;
 	std::string envp[13];
 
 	envp[0] = "REQUEST_METHOD=" + _request->getMethodStr(); 
@@ -34,12 +37,12 @@ void Cgi::setEnvironment()
 	envp[2] = "PATH_INFO=" + _request->getPath();
 	envp[3] = "PATH_TRANSLATED=" + _request->getPath();
 	envp[4] = "QUERY_STRING=" + _request->getQuery();
-	envp[5] = "CONTENT_LENGTH=";
-	envp[6] = "CONTENT_TYPE=";
-	envp[7] = "HTTP_USER_AGENT=";
-	envp[8] = "HTTP_COOKIE=";
+	envp[5] = "CONTENT_LENGTH=" + _request->getBody().size();
+	envp[6] = "CONTENT_TYPE=" + _request->getHeader("content-type");
+	envp[7] = "HTTP_USER_AGENT=" + _request->getHeader("user-agent");
+	envp[8] = "HTTP_COOKIE=" + _request->getHeader("cookie");
 	envp[9] = "SERVER_NAME=" + _request->getServerName();
-	envp[10] = "SERVER_PORT=";
+	envp[10] = "SERVER_PORT=" + toStr(_request->getPort());
 	envp[11] = "SERVER_PROTOCOL=HTTP/1.1";
 
 	_envp = (char **)calloc(sizeof(char *), 13);
@@ -48,97 +51,64 @@ void Cgi::setEnvironment()
 	_envp[12] = NULL; 
 }
 
-//Para set Arguments estaría bien tener un puntero a la clase Config. Se puede enviar perfectamente a Request.
+int Cgi::checkCmdAndPath()
+{
+
+	int ret = checkFileOrDirectory(_path, "file");
+	if (ret != 0)
+		return ret;
+	return 0;
+}
+
 void Cgi::setArguments()
 {
-	if(DEBUG)
-		std::cout << "setArguments" << std::endl;
 	_argv = (char **)calloc(sizeof(char *), 2);
-	// _argv[0] = strdup("./formget.py");
-	_argv[0] = strdup("./sum.sh");
+	_argv[0] = strdup(_cmd.c_str());
 	_argv[1] = NULL;
 }
 
-// const char *pathname = "/bin/ls";
-// // Argumentos del programa
-// char *const argv[] = {(char *)"ls", (char *)"-l", NULL};
-// // Variables de entorno
-// char *const envp[] = {(char *)"PATH=/usr/bin", NULL};
-
 void Cgi::childProcess()
 {
-	if(DEBUG)
-		std::cout << "childProcess" << std::endl;
 	if (dup2(_pipeFd[0], STDIN_FILENO) < 0 || dup2(_pipeFd[1], STDOUT_FILENO) < 0)
 		exit(-1);
 	close(_pipeFd[0]);
 	close(_pipeFd[1]);
-	if (execve("./root/cgi-bin/sum.sh", _argv, _envp) < 0)
+	if (execve(_path.c_str(), _argv, _envp) < 0)
 		exit(EXIT_FAILURE);
-	// if (execve("./root/cgi-bin/formget.py", _argv, _envp) < 0)
-	// 	exit(EXIT_FAILURE);
 }
 
-void Cgi::executeCgi(int (&cgiFd)[2])
+/*
+	Faltaría comprobar que tenemos permisos para ejecutar el ejecutable, es decir,
+	/bin/bash o /usr/bin/python3 o el path que sea. Aunque en principio no
+	debería servir de mucho. Se podría escribir cualquier cosa y funcionaría.
+	Echarle un vistazo.
+*/
+int Cgi::executeCgi(std::string &output)
 {
-	if(DEBUG)
-		std::cout << "executeCgi" << std::endl;
+	if (int ret = checkFileOrDirectory(_path, "file") != 0)
+		return ret;
 	setEnvironment();
 	setArguments();
 	if (pipe(_pipeFd) == -1)
-		throw std::runtime_error("Error: pipe: " + std::string(strerror(errno)));
+		return 500;
 	_pid = fork();
 	if (_pid == 0)
 		childProcess();
-	else
-	{
-		int status;
-		waitpid(_pid, &status, 0);
-        if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-		{
-			if (WEXITSTATUS(status) == 255)
-            	throw std::runtime_error("Error: dup2 failed in child process"); // 500 error
-			if (WEXITSTATUS(status) == 1)
-				throw std::runtime_error("Error: execve script failed"); // 500 error
-		}
-		if (fcntl(_pipeFd[0], F_SETFL, O_NONBLOCK) < 0 || fcntl(_pipeFd[1], F_SETFL, O_NONBLOCK) < 0)
-        	throw std::runtime_error("Error: fcntl: " + std::string(strerror(errno))); // 500 error
-		addEvent(_pipeFd[0], _events);
-		addEvent(_pipeFd[1], _events);
-		_events->cgi_in[_pipeFd[0]] = _fd;
-		_events->cgi_out[_pipeFd[1]] = _fd;
-		cgiFd[0] = _pipeFd[0];
-		cgiFd[1] = _pipeFd[1];
-	}
+	int status;
+	waitpid(_pid, &status, 0);
+	if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+		if (WEXITSTATUS(status) == 255 || WEXITSTATUS(status) == 1)
+			return 500;
+	close(_pipeFd[1]);
+	FILE *readstream = fdopen(_pipeFd[0], "r");
+	if (!readstream)
+		return 500;
+    while (fgets(line, sizeof(line), readstream))
+		buffer << line;
+	if (ferror(readstream))
+		return 500;
+	fclose(readstream);
+	close (_pipeFd[0]);
+	output = buffer.str();
+	return 0;
 }
-
-
-/*Ismael:
-
-He creado la carpeta CGI para ver como se parsean los formaularios porque me estaba volviendo loco para ver qué se recibe con el método action:
-
-La razón para crearla era la de probar el formulario con un archivo cgi en un servidor HTTP de python que solo ejecuta los archivos que estén en esa carpeta
-
-Para hacer las pruebas puedes seguir estos pasos:
-
-ir a la carpeta root desde la terminal y ejecutar el servidor de Python:
-
-			/////				python3 -m http.server --cgi 8000
-
-Asegurando (which python3) que la versión de python3 esté en: /usr/bin/python3
-
-y que el [archivo.py](http://archivo.py) tenga permisos de ejecución 
-
-onectacte con un navegador:
-
-			//////	           http://localhost:8000/assets/get.html 
-
-Rellenar el formulario y pulsar enviar
-
-si no funciona, revisa que el método del form action="/cgi-bin/formget.py"
-
-Si ejecutas algun formulario en nuestro server es posible que te casque pero al menos ya podemos estár
-seguros de que los archivos de prueba html y cgi funcionan correctamente por lo que 
-si seguimos dando error ya es por nuestra parte y no por los archivos
-
-*/

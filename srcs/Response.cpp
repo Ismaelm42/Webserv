@@ -11,12 +11,10 @@ Response::Response(Client *client, Server_config *config, Request *request, stru
 	//_client = NULL;
 }
 
-void Response::reset(bool cgiFlag)
+void Response::reset()
 { 
 	_responseString = ""; 
 	_code = _request->getErrorCode(); 				// usado como condición no iniciar a 200
-    if (cgiFlag == true)
-        _client->resetCgi();
     _cgiFlag= false;
 	_response_str = "";
 	_target = "";
@@ -480,76 +478,11 @@ static bool hasValidExtension(const std::string& path, const std::vector<std::pa
  */
 int Response::launchCgi()
 {
-	/* 
-		Ismael en esta función podemos lanzar el CGI
-		creo que necesito gestionar algo más dentro de la función
-		buildBody() para que se ejecute el CGI pero estoy reventao.
-
-		El flag del cgi lo necesito para que no continue la función en el caso 
-		de estar eecutandose un CGI
-		*/
-	
-	
-	if (DEBUG)
-	    std::cout << "en launchCgi____________________" << std::endl;
-
-
-	std::string cgi_path = _config->root + _request->getPath();
-	if (DEBUG)
-        std::cout << "cgi_path: " << cgi_path << std::endl;
-	
-	// Podemos chequear si es un archivo ejecutable y si tiene permisos de ejecución
-	//	si no es así setReturnCode(403);
-
-	//llamar una instancia del objeto cgi y a su llamada para resetear los valores		// retorna 1		
-    // asignarle el path 
-	_cgiFlag = true;								
-
-    _client->initCgi();
-	
-
-    // Desde esta función podríamos realizar el pipe y guardar el fd[2] en la response y setReturnCode(500) si falla																			// flag para saber si se esta ejecutando un cgi y su estado	
-	// Llamar a la función de obtener las variables de entorno
-	// llamara a la función execute del objeto cgi
-
-
-    // NUEVO COMENTARIO
-    // Devolver un número positivo si el código falla.
-    // Crear una función que establezca el _code con el error que sea. Devolver 500 si falla
-    // alguna movida en el exec cgi (por ejemplo un dup2 o el fork o el mismo execve)
-
-    // 403 -> Permisos de ejecución
-    // 500 -> fallo de cgi
-    // 504 -> Timeout, echarle un vistazo
-
-
-    //Establecer el _code
-
-    // setStatusline();
-	// setHeaders();														// setea los headers de la respuesta
-    // setClientCGIBody()  //	incluir en el _response_body_str la cadena de texto respuesta del cgi 														// setea los headers de la respuesta
-    //                     // 
-
-    /*
-
-        IDEA FINAL:
-        Intentar realizar un dup al socket para enviar la información no a stdout sino al fd del socket
-        Probar si es posible ya que dup2 puede ser que de problemas a la hora de utilizarlo.
-        Si no da problemas está todo perfecto ya que no necesitamos realizar ningún read y ningún write.
-        Simplifica por completo todo el proceso.
-        Mirar una solución para añadir los headers y el status line. La respuesta del cgi iría en medio.
-        Habría una forma de realizar esto enviándolo todo quizás con un dup o algo por el estilo?
-        Enviarlo como variable de entorno tampoco tiene mucho sentido ya que sería igual que escribirlo
-        en el mismo script? Es una opción, aunque el script tendría que utilizar obligatoriamente esa variable
-        de entorno para generar la respuesta.
-        Cómo se controlarían esos errores? Si el script no contempla esas variables de entorno la respuesta
-        no se enviaría correctamente. Darle una vuelta a esto.
-
-        Correcciones realizadas en la variable _events de Request
-        Se usa void para callar las flags de unused.
-        Corrección en variable de entorno CGIport que se estaba enviando un número y daba error.    
-    */
-	return (0);
+    _cgiFlag = true;
+    _client->initCgi(&_code, _response_body_str);
+    if (_code != 0)
+        return 1;
+    return 0;
 }
 
 int Response::getTarget()
@@ -637,10 +570,8 @@ int Response::getTarget()
 	//--------------------------------------------------------------------------//
 	//								** cgi **									//
 	//--------------------------------------------------------------------------//
-	if (!_location_config->cgi.empty() && 
-		hasValidExtension(_request->getPath(), _location_config->cgi)) {
+	if (!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
         return(launchCgi());
-        }
 	//--------------------------------------------------------------------------//
 	//								** autoindex **								//
 	//--------------------------------------------------------------------------//
@@ -865,12 +796,3 @@ std::string Response::getResString()
 		std::cout << "getResString is called" << std::endl;
 	return _responseString;
 }
-
-
-// 1era vuelta que va a dar va a ser meterse en el fillRequest
-
-// En el response va a establecer el flag de cgi, y va a lanzar el cgi (execve)
-
-// 2nda vuelta request lee del fd del pipe y lo almacena en una variable de request
-
-// En el response, detecta que es cgi 

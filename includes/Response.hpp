@@ -34,7 +34,7 @@ class Response
 		int 					getFile();
 		std::string 			getResString();
 		void    				setHeaders();											// setea los headers de la respuesta
-		void 					reset(bool cgiFlag);									// resetea la respuesta
+		void 					reset();												// resetea la respuesta
 		std::string 			_response_str;											// contenido de la respuesta en string
 		Client*					_client;												// cliente
 		Server_config* 			_config;												// request

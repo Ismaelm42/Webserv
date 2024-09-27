@@ -124,14 +124,8 @@ void Server::deleteClient(int fd)
 */
 void Server::handleRequest(int fd)
 {
-	if (_clients.find(fd) != _clients.end() || _events->cgi_in.find(fd) != _events->cgi_in.end())
+	if (_clients.find(fd) != _clients.end())
 	{
-		std::cout << "fd handleRequest in " << fd << std::endl;
-		if (_clients.find(fd) == _clients.end())
-		{
-			std::cout << "CGI detected in handleRequest" << std::endl;
-			fd = _events->cgi_in[fd];
-		}
 		if (_clients[fd]->getRequest() < 0)
 		{
 			deleteEvent(fd, _events);
@@ -152,7 +146,6 @@ void Server::handleResponse(int fd) //Con más de una configuración de server p
 	{
 		if (_clients[fd]->_isReady)
 		{
-			std::cout << "fd handleResponse in " << fd << std::endl;
 			if (_clients[fd]->sendResponse() < 0)
 			{
 				deleteEvent(fd, _events);
