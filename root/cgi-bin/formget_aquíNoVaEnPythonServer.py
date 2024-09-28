@@ -8,7 +8,7 @@ nombre = form.getvalue('nombre', 'Visitante')  # Valor predeterminado si no se p
 email = form.getvalue('email', 'No proporcionado')
 
 # Generar la cabecera de la respuesta HTTP
-print("Content-Type: text/html\n")
+# print("Content-Type: text/html\n") // comentado para no tener que eliminar si viene con cabeceras
 
 # Generar el contenido HTML de la respuesta
 print(f"""

@@ -58,9 +58,8 @@ int Client::sendResponse()
 
 void Client::initCgi(int *code, std::string &output)
 {
-	std::cout << Yellow << "InitCGI" << Reset << std::endl; 
 	_cgi = new Cgi(_fd, _request, _config);
-	*code = _cgi->executeCgi(output);
+	*code = _cgi->executeCgi(output, _request->getBody());
 }
 
 void Client::resetClient()

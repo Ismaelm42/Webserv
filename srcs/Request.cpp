@@ -686,9 +686,9 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 	}
 	if( _fillStatus == Parsed)												// si el estado es Parsed
 	{
+		_body_str.append((char*)_body.data(), _body.size());				// Se incluye el body en _body_str
 		if (DEBUG)	
 			printParsed();						// se imprime el path
-		_body_str.append((char*)_body.data(), _body.size());				// Se incluye el body en _body_str
 	}																		// es más eficiente que hacer append de un char a un string
 }
 

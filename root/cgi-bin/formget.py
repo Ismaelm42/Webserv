@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import cgi
+# import os
 
 # Obtener los datos del formulario
 form = cgi.FieldStorage()
@@ -8,9 +9,8 @@ nombre = form.getvalue('nombre', 'Visitante')  # Valor predeterminado si no se p
 email = form.getvalue('email', 'No proporcionado')
 
 # Generar la cabecera de la respuesta HTTP
-print("Content-Type: text/html\n")
-
-# Generar el contenido HTML de la respuesta
+# print("HTTP/1.1 200 OK") # DE emomento no sé si bloque o si podemos hacerlo aquí 
+# print("Content-type: text/html\r\n\r\n")	# No sé si funciona o si es lo que bloquea el get
 print(f"""
 <!DOCTYPE html>
 <html lang="es">
