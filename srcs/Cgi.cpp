@@ -101,7 +101,7 @@ int Cgi::executeCgi(std::string &output, std::string &body)
             exit(EXIT_FAILURE);  							// Terminar el proceso hijo si execve falla
     }
     // Proceso padre (servidor)
-    close(_pipeFd[0]);						    			// Cerramos el extremo de lectura del pipe de solicitud  
+    close(_pipeFd[0]);						    				// Cerramos el extremo de lectura del pipe de solicitud  
     FILE* requestStream = fdopen(_pipeFd[1], "w");				// Escribir los datos del cuerpo de la solicitud en el primer pipe
     if (requestStream == NULL)									// Verificar si se pudo abrir el stream del pipe
         return 500;							
@@ -119,8 +119,7 @@ int Cgi::executeCgi(std::string &output, std::string &body)
         std::cerr << "Error al abrir el stream de lectura: " << strerror(errno) << std::endl;
         return 500;
     }
-
-    char line[1024];
+    char line[2048];
     std::stringstream buffer;								// Buffer para almacenar la respuesta
     while (fgets(line, sizeof(line), responseStream)) {		// mete la respuesta línea por línea y almacenarla en un buffer	
         buffer << line;										// Almacenar la línea en el buffer
@@ -136,8 +135,9 @@ int Cgi::executeCgi(std::string &output, std::string &body)
     if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
         return 500;
     }
+	
     output = buffer.str();									// Asigna a output la respuesta generada por el CGI
-    return 0;
+    return 200;
 }
 
 	///////////////////////                                 fin de las pruebas         ////////////////////////////////////////

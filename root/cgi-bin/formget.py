@@ -10,7 +10,8 @@ email = form.getvalue('email', 'No proporcionado')
 
 # Generar la cabecera de la respuesta HTTP
 # print("HTTP/1.1 200 OK") # DE emomento no sé si bloque o si podemos hacerlo aquí 
-# print("Content-type: text/html\r\n\r\n")	# No sé si funciona o si es lo que bloquea el get
+print("Content-Type: text/html")	# No sé si funciona o si es lo que bloquea el get
+print()
 print(f"""
 <!DOCTYPE html>
 <html lang="es">

@@ -64,6 +64,7 @@ Response::Response(Client *client, Server_config *config, Request *request, stru
 {
 	if (DEBUG)
 		std::cout << "Response constructor" << std::endl;
+	buildErrorMap();
 	_responseString = "";
 		_code = _request->getErrorCode(); 				// usado como condición no iniciar a 200
 	_hasIndexFlag = 0;
@@ -277,9 +278,18 @@ void	Response::setHeaders()								// setea los headers de la respuesta
 	_response_str.append("Content-Length: " + ss.str() + "\r\n");
 
 	//////////////////////////////////////
+	//   **   Cookies			**		//
+	//////////////////////////////////////
+
+	// Pendiente de ver si es necesario devolver la cookie o si te pueden pasar 
+	// la petición de Set-Cookie y hubiera que incluirla en la respuesta
+
+	//////////////////////////////////////
 	//	**   End of headers	**   		//
 	//////////////////////////////////////
 	_response_str.append("\r\n");
+
+
 
 	if (DEBUG)
 		std::cout << White << "setHeaders: " <<_response_str << White <<std::endl;
@@ -450,7 +460,7 @@ int Response::launchCgi()
 	_response_body_str = "";
 	_client->initCgi(&_code, _response_body_str);
 	std::cout << "Response body en launchCgi: " << _response_body_str << std::endl;
-	if (_code != 0)
+	if (_code != 0 && _code != 200)	// si el código no es 0 ni 200 revisar el trazadod el código
 		return 1;
 	// _cgiFlag = false;
 	return 0;
@@ -772,22 +782,51 @@ int Response::buildDirHtml()
     return (0);
 }
 
+/**
+ * @brief calcula el content lenght saltando los headers que pueda traer del cgi
+ * 
+ * @param _response_body_str 
+ * @return int 
+ */
+int countCharsAfterEmptyLines(const std::string& _response_body_str) {
+    // Buscar dos saltos de línea seguidos
+    std::size_t pos = _response_body_str.find("\n\n");
+    if (pos != std::string::npos) {
+        // Si se encuentran, contar los caracteres desde el siguiente carácter hasta el final
+        return _response_body_str.size() - pos - 2;
+    }
+    // Si no se encuentran dos saltos de línea seguidos, devolver -1
+    return -1;
+}
+
 void Response::buildResponse()
 {	
 	if (DEBUG)
 		std::cout << "Building response is called" << std::endl;
 	if (isErrorCode() || buildBody())                                     		 // forma de comprobar si hay error en el request y si no lo hay error construye el body
 		buildErrorPage(_code);                                           	// si hay error construye el error body	
-	
 	std::cout << "en build response codigo de error es: " << _code << std::endl;                                               // si hay error construye el error body	
 // -->		aquí debo incluir la construcción de las páginas de error con el código de error
     std::cout<< "en build response hasIndexFlag: " << _hasIndexFlag << std::endl;
 	if	(_cgiFlag)
 	{
-		setStatusline();
-		setHeaders();														// setea los headers de la respuesta
+		if (_code == 0 || _code == 200)
+		{
+			_code = 200;
+			setStatusline();
+			std::stringstream ss;
+			ss << countCharsAfterEmptyLines(_response_body_str);
+			_response_str.append("Content-Length: " + ss.str() + "\r\n");														// setea los headers de la respuesta
+		}
+		else
+		{
+			setStatusline();
+			setHeaders();
+		}
 		_response_str.append(_response_body_str);
 		_responseString = _response_str;
+		// _responseString = _response_body_str;
+		// std::cout << Blue << "Response body en buildResponse: " << _responseString << Reset << std::endl;
 		return ;                                                           // si es un cgi retorna
 	}
 	else if (_auto_index_flag)                                               // si es un auto index

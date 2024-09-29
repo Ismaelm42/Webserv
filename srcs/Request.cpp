@@ -265,7 +265,6 @@ void	Request::_handle_headers(){
 		this->_multiform_flag = true;
 		std::cout << "_multiform_flag: " << _multiform_flag << std::endl;
 		std::cout << "Boundary: " << _boundary << std::endl;
-
 	}
 }
 

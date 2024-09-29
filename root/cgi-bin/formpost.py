@@ -11,6 +11,8 @@ email = form.getvalue('email', 'No proporcionado')
 # print("Content-Type: text/html\n")
 
 # Generar el contenido HTML de la respuesta
+print("Content-Type: text/html")	# No sé si funciona o si es lo que bloquea el get
+print()
 print(f"""
 <!DOCTYPE html>
 <html lang="es">
