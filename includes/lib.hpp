@@ -7,5 +7,3 @@
 #include "./Webserv.hpp"
 #include "./Response.hpp"
 #include "./error.hpp"
-
-#endif // LIB_HPP
