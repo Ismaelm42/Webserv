@@ -784,11 +784,11 @@ int Response::buildBody()
 																	// éxito u error
 																	// pendiente de limpiar los boundaries ver como debería guardarlos para enlazarlo con el archivo del servidor		
 			std::string body = _request->getBody();
-		if (DEBUG)
-		{	
-			std::cout << "_target: " << _target << std::endl;
-			std::cout << "body en if: " << body << std::endl;
-		}
+			if (DEBUG)
+			{	
+				std::cout << "_target: " << _target << std::endl;
+				std::cout << "body en if: " << body << std::endl;
+			}
 			//body = removeBoundary(body, _request->getBoundary());
 			//file.write(body.c_str(), body.length());
 			return (setCode(204));
@@ -971,10 +971,11 @@ void Response::buildResponse()
 		std::cout << "Building response is called" << std::endl;
 	if (isErrorCode() || buildBody())                                     		 // forma de comprobar si hay error en el request y si no lo hay error construye el body
 		buildErrorPage(_code);                                           	// si hay error construye el error body	
-		std::cout << "en build response codigo de error es: " << _code << std::endl;                                               // si hay error construye el error body	
+	
+	std::cout << "en build response codigo de error es: " << _code << std::endl;                                               // si hay error construye el error body	
 // -->		aquí debo incluir la construcción de las páginas de error con el código de error
     std::cout<< "en build response hasIndexFlag: " << _hasIndexFlag << std::endl;
-	if	(cgiFlag)
+	if	(_cgiFlag)
 	{
 		setStatusline();
 		setHeaders();														// setea los headers de la respuesta
