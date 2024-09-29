@@ -1,3 +1,6 @@
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/300
+
+
  Example:
 
     error_page 404             /404.html;

@@ -22,6 +22,7 @@ _mime_types["png"] = "image/png";
 _mime_types["svg"] = "image/svg+xml";
 _mime_types["txt"] = "text/plain";
 _mime_types["xml"] = "application/xml";
+_mime_types["php"] = "application/x-httpd-php";
 }
 
 /**

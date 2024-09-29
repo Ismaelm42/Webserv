@@ -6,4 +6,5 @@
 #include "./Request.hpp"
 #include "./Webserv.hpp"
 #include "./Response.hpp"
+#include "./error.hpp"
 

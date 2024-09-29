@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +10,8 @@
             margin: 0;
             padding: 0;
             font-family: 'Arial', sans-serif;
-            background: #000;
+			background: url('../assets/fondo.png') no-repeat center center fixed; /* Imagen de fondo */
+            background-size: cover; /* Cubrir todo el fondo */
             color: #fff;
             text-align: center;
             overflow: hidden; /* Evitar barras de desplazamiento */
@@ -20,7 +21,10 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            background: rgba(0, 0, 0, 0.7); /* Fondo semitransparente para el contenedor */
             position: relative;
+			min-height: 90vh;
+
         }
 
         header {
@@ -116,7 +120,7 @@
         <main>
             <p class="description">Sorry, the server does not support the functionality required to fulfill the request.</p>
             <p class="methods-info">Only the GET, DELETE, and POST methods are required to be implemented</p>
-            <a href="#" class="home-link">Go to Homepage</a>
+            <a href="/" class="home-link">Go to Homepage</a>
         </main>
         <footer>
             <p class="footer-text">2024 Imoro-sa & Alfofern Webserv. All Rights Reserved.</p>

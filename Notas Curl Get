@@ -1,0 +1,46 @@
+https://blog.marcnuri.com/curl-get-request-ejemploshttps://blog.marcnuri.com/curl-get-request-ejemplos
+
+cURL: ejemplos de GET requests
+2021-08-02 en Herramientas etiquetado curl / HTTP / Consejo breve por Marc Nuri | Última actualización: 2021-08-02
+English version
+
+Ejemplos de cURL HTTP GET requests con los comandos que uso más frecuentemente.
+HTTP GET request
+
+El comando más básico que puedes ejecutar con cURL es una petición HTTP GET. El siguiente comando realizará la petición y mostrará por pantalla el cuerpo de la respuesta:
+
+curl https://blog.marcnuri.com
+
+HTTP GET request y seguir redirecciones (follow redirects)
+
+En muchas ocasiones, cuando realizamos peticiones HTTP GET, el servidor responde con un código de estado de redirección 3xx. La mayoría de veces no estamos interesados en está respuesta, sino en la respuesta de la URL final a la que hemos sido redirigidos.
+
+Para indicarle a cURL que siga las redirecciones, podemos emplear la opción de línea de comandos -L, --location:
+
+curl -L http://blog.marcnuri.com
+
+Por defecto, cURL seguirá un máximo de 50 redirecciones. Si esto no es suficiente, el valor puede modificarse utilizando la opción --max-redirs;
+
+curl -L --max-redirs 60 http://blog.marcnuri.com
+
+HTTP GET request y guardar respuesta en un fichero
+
+Para guardar la respuesta en un fichero, puedes utilizar las opciones -O o -o.
+
+En el caso en el que quieras guardar la respuesta en un fichero con el mismo nombre que el fichero remoto, puedes utilizar la opción -O, --remote-name (esto requiere que la petición se haga a un fichero remoto):
+
+curl -O https://blog.marcnuri.com/index.html
+
+Si prefieres guardar la respuesta en un fichero con un nombre concreto, puedes utilizar la opción de línea de comandos -o, --output:
+
+curl -o result.html https://blog.marcnuri.com
+
+HTTP HEAD request, recuperar sólo las cabeceras
+
+Puedes utilizar la opción -I, --head para indicarle a cURL que sólo recupere las cabeceras, es decir, que realice una petición HTTP HEAD.
+
+curl -I https://blog.marcnuri.com
+
+Resumen
+
+Estos son algunos de los ejemplos más comunes de peticiones HTTP GET mediante cURL que utilizo a diario. Espero que también sean de utilidad para vosotros.
