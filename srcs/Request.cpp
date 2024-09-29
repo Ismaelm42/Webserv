@@ -1,7 +1,8 @@
-#include "../includes/Request.hpp"
-#include "../includes/Client.hpp"
+#include "../includes/lib.hpp"
 
-Request::Request(){
+Request::Request(Client *client, Server_config *config, struct Epoll_events *events)
+:_client(client), _config(config), _events(events)
+{
 	if (DEBUG)
 		std::cout << "Request constructor" << std::endl;
 	_initMethodStr();
@@ -25,9 +26,11 @@ Request::Request(){
 	_header_name_temp = "";
 	_multiform_flag = false;
 	_boundary = "";
+	(void)_events;
 }
 
-Request::~Request() {
+Request::~Request()
+{
 	if (DEBUG)
 			std::cout << "Request destructor" << std::endl;
 }
@@ -47,8 +50,14 @@ int		Request::getErrorCode(){
     return (this->_error_code);
 }
 
+std::string	Request::getcgiString()
+{
+	return _cgiString;
+}
+
 void Request::printParsed()
 {
+	std::cout << _config << std::endl;
 	std::cout << "Parsed" << std::endl;
 	std::cout << "Method: " << _methods_str[_method] << std::endl;
 	std::cout << "Path: " << _path << std::endl;
@@ -67,8 +76,6 @@ void Request::printParsed()
 	std::cout << "Get Body Flag: " << _get_body_flag << std::endl;
 	std::cout << "_headers.size(): " << _headers.size() << std::endl;
 	std::cout << "URI Size: " << _uri_size << std::endl;
-
-
 }
 
 Methods  &Request::getMethod(){
@@ -112,16 +119,16 @@ std::string     Request::getServerName(){
     return (this->_server_name);
 }
 
+int	Request::getPort(){
+	return _client->_port;
+}
+
 bool    Request::getMultiformFlag(){
     return (this->_multiform_flag);
 }
 
 std::string     &Request::getBoundary(){
     return (this->_boundary);
-}
-
-void    Request::setClientMaxBodySize(size_t size){
-   	_client_max_body_size = size;
 }
 
 /**
@@ -176,11 +183,11 @@ bool	allowedURIChar(uint8_t ch){
  */
 bool	checkPath(std::string path){
 	std::string tmp(path);							 // se copia el path en tmp
-	if (DEBUG)
-	{
-		std::cout << "checkPath_______________________________________-" << std::endl;
-		std::cout << "path = " << path << std::endl;
-	}
+	// if (DEBUG)
+	// {
+	// 	std::cout << "checkPath_______________________________________-" << std::endl;
+	// 	std::cout << "path = " << path << std::endl;
+	// }
 	char *res = strtok((char*)tmp.c_str(), "/");		// se usa strtok para separar el path por las / y se almacena en res la primera sección
 	int pos = 0;										// se inicializa pos a 0
 	while (res != NULL)								// mientras res no sea NULL  
@@ -219,7 +226,6 @@ bool	isValidChar(uint8_t ch){
  * Si el body es chunked (es decir si va en fragmentos de tamaño variable), 
  * si hay un content-type con multipart/form-data se asigna el valor del boundary a _boundary
  * si hay un content-type con multipart/form-data se asigna true a _multiform_flag
- * 
  */
 void	Request::_handle_headers(){
 	
@@ -234,8 +240,15 @@ void	Request::_handle_headers(){
 		_get_body_flag = true;
 		std::istringstream iss(_headers["content-length"]);
 		iss >> _body_size;
-		if (_body_size > _client_max_body_size)
+		if (_body_size > _config->body_size)
+		{
+			if (DEBUG)
+			{
+				std::cout << "Body size: " << _body_size << std::endl;
+				std::cout << "Client max body size: " << _config->body_size << std::endl;	
+			}
 			return (_returnErr(413, "Request Entity Too Large", 0));
+		}
 	}
 	if (_headers.count("transfer-encoding"))
 	{
@@ -250,6 +263,9 @@ void	Request::_handle_headers(){
 			//this->_boundary = _headers["content-type"].substr(pos + 9, _headers["content-type"].size());
 			this->_boundary = _headers["content-type"].substr(pos + 9);		// se puede quitar el segundo argumento pero mejor revisar en caso de problemas
 		this->_multiform_flag = true;
+		std::cout << "_multiform_flag: " << _multiform_flag << std::endl;
+		std::cout << "Boundary: " << _boundary << std::endl;
+
 	}
 }
 
@@ -277,6 +293,25 @@ size_t hexStringToInt(const std::string& hexStr) {
     return result;
 }
 
+bool Request::isValidUri()
+{	
+
+	std::stringstream ss;
+	ss << _client->_port;
+	std::string portStr = ss.str();
+	std::string scheme = "http://";
+	std::string uriTotal = scheme + _client->_host  + ":" + portStr + _path + _query + _fragment;
+	if (DEBUG)
+	{	
+		std::cout << Yellow << "URI Total: " << uriTotal << White << std::endl;
+		std::cout << "URI Total Length: " << uriTotal.length() << std::endl;
+		std::cout << "URI_MAX_LENGTH: " << URI_MAX_LENGTH << White<< std::endl;
+	}
+
+	if (uriTotal.length() > URI_MAX_LENGTH)
+		return false;
+	return true;
+}
 
 void	Request::fillRequest(char *dt, size_t bytesRead)
 {
@@ -344,8 +379,10 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_fillStatus = get_Protocol;							  	// se pasa al siguiente estado get_Version
 					_path.append(_temp);									// hacemos un append en _path de lo que tengamos en temp		
 					_temp.clear();										  	// limpiamos temp
-					if (DEBUG)
-						std::cout << "_path = " << _path << std::endl;
+					// if (DEBUG)
+					// 	std::cout << "_path = " << _path << std::endl;
+					if ( !isValidUri())								// si el tamaño de la URI es mayor que el máximo permitido en este caso 4096 definido en header
+						return (_returnErr(414, "URI Too Long", charRead)); 	// lanza un error, el error es 400;
 					if (checkPath(_path))									// checkPath comprueba que wl path no vaya por encima de la raiz					return (_returnErr(400, "wrong URI location", charRead));
 						return (_returnErr(400, "wrong path address", charRead));	// salimos de la función
 					continue ;												// saltamos a la siguiente iteración del for
@@ -369,7 +406,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					continue ;												// saltamos a la siguiente iteración del for
 				}
 				else if (!allowedURIChar(charRead))							// si no es un caracter permitido según la RFC
-					return (_returnErr(400, "character not allowed", charRead)); // lanza un error, el error es 400;
+					return (_returnErr(400, "character not allowed", charRead)); // lanza un error, el error es 400;				
 				else if ( i > URI_MAX_LENGTH)								// si el tamaño de la URI es mayor que el máximo permitido en este caso 4096 definido en header
 					return (_returnErr(414, "URI Too Long", charRead)); 	// lanza un error, el error es 400;
 				break ;														// se sale del switch									 
@@ -378,9 +415,11 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 			{
 				if (charRead == ' ')										  	// si es un espacio hemos llegado al fin de la URI Query
 				{
-				_fillStatus = get_Protocol;;								 		// se pasa al siguiente estado get_Version
+				_fillStatus = get_Protocol;								 		// se pasa al siguiente estado get_Version
 				_query.append(_temp);											// se añade el contenido de temp a _query
-				_temp.clear();										  			// se limpia temp
+				_temp.clear();
+				if ( !isValidUri())								// si el tamaño de la URI es mayor que el máximo permitido en este caso 4096 definido en header
+					return (_returnErr(414, "URI Too Long", charRead)); 	// lanza un error, el error es 400;
 				continue ;												 		// saltamos a la siguiente iteración del for  
 				}
 				else if (charRead == '#')								 	// si es un #
@@ -403,6 +442,8 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_fragment.append(_temp);								// se añade el contenido de temp a _fragment
 					_temp.clear();											// se limpia temp
 					_fillStatus = get_Protocol;								// se pasa al siguiente estado get_Version
+					if ( !isValidUri())								// si el tamaño de la URI es mayor que el máximo permitido en este caso 4096 definido en header
+						return (_returnErr(414, "URI Too Long", charRead)); 	// lanza un error, el error es 400;
 					continue ;												// saltamos a la siguiente iteración del for
 				}
 				else if (!allowedURIChar(charRead))							// si no es un caracter permitido según la RFC
@@ -455,13 +496,13 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				{
 					_temp.clear();										  	// limpiamos temp
 					_headers_parsed = true;									// el flag de campos se pone a true ya que se han encontrado juntos \r\n
-					if (DEBUG){
-						std::cout << "Headers parsed" << std::endl;
-						// Imprimir el mapa
-						for(std::map<std::string, std::string>::iterator it = _headers.begin(); it != _headers.end(); ++it) {
-							std::cout << "Clave: " << it->first << " Valor: " << it->second << std::endl;
-						}
-					}
+					// if (DEBUG){
+					// 	std::cout << "Headers parsed" << std::endl;
+					// 	// Imprimir el mapa
+					// 	for(std::map<std::string, std::string>::iterator it = _headers.begin(); it != _headers.end(); ++it) {
+					// 		std::cout << "Clave: " << it->first << " Valor: " << it->second << std::endl;
+					// 	}
+					// }
 					_handle_headers();										// se llama a la función _handle_headers Pendiente de realizar 			
 					if (_get_body_flag == 1)								// si el flag de body es 1, damos el estado como parseado
 					{
@@ -552,10 +593,10 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					s.clear();												 	// limpiamos las flags del stream para que no haya errores de entrada y salida ni bloquee en caso de error
 					s << charRead;												// añadimos el caracter a s
 					s >> std::hex >> temp_len;								 	// convertimos el valor de s a hexadecimal y lo almacenamos en temp_len
-					_chunk_size *= 16;										// multiplicamos _chunk_size por 16
+					_chunk_size *= 16;											// multiplicamos _chunk_size por 16
 					_chunk_size += temp_len;								 	// sumamos temp_len a _chunk_size
 				}
-				else if (charRead == '\r')									// si el caracter es un retorno de carro
+				else if (charRead == '\r')										// si el caracter es un retorno de carro
 					_fillStatus = Chunk_Length_LF;								// cambiamos el estado a Chunk_Length_LF
 				else															// si no
 					_fillStatus = Chunk_Ignore;									// cambiamos el estado a Chunk_Ignore
@@ -637,7 +678,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 			case Parsed:												 	// en caso de Parsed
 			{	
 				if (DEBUG)	
-					std::cout << "Parsed dentro del switchhhhhhhhhhhhhhhhhhhhhhhhhhhhhh" << std::endl;	// Ver si es realmente necesario				std::cout << "Method = " << _method << std::endl;
+					std::cout << "Request parsed_________________________________________________" << std::endl;	// Ver si es realmente necesario				std::cout << "Method = " << _method << std::endl;
 				return ;													// salimos de la función
 			}
 		}
@@ -645,14 +686,17 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 	}
 	if( _fillStatus == Parsed)												// si el estado es Parsed
 	{
-		if (DEBUG)	
-		{
-			printParsed();						// se imprime el path
-		}
 		_body_str.append((char*)_body.data(), _body.size());				// Se incluye el body en _body_str
+		if (DEBUG)	
+			printParsed();						// se imprime el path
 	}																		// es más eficiente que hacer append de un char a un string
 }
 
+void Request::fillCgi(char *buffer)
+{
+	// _cgiString.append(buffer);
+	_cgiString = buffer;
+}
 
 void	Request::reset(){
 	_path.clear();
@@ -667,6 +711,7 @@ void	Request::reset(){
 	_chunk_size = 0x0;
 	_temp.clear();
 	_body_str = "";
+	_cgiString = "";
 	_header_name_temp.clear();
 	_headers.clear();
 	_server_name.clear();
@@ -685,7 +730,8 @@ void	Request::reset(){
  * 
  * @return true si es igual, false si no lo es 
  */
-bool    Request::isParsed(){
+bool    Request::isParsed()
+{
 	if (_fillStatus == 	Parsed)
 	    return (true);
 	return (false);

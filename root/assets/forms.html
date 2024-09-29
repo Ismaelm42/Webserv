@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>WeBSeRV</title>
+	<!-- Favicon -->
+	<!--<link rel="icon" href="/favicon.ico" type="image/x-icon"> -->
+	<style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #000000;
+            border-bottom: 5px solid #ff0000;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        header h1 {
+            color: #ff0000;
+            font-size: 2.5em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            margin: 0;
+			line-height: 1.5em;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            background-color: #ff0000;
+            margin: 0;
+			line-height: 2.5em;
+        }
+
+        nav ul li {
+            position: relative;
+            margin: 0 15px;
+        }
+
+        nav ul li a {
+            color: #1a1a1a;
+            text-decoration: none;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        nav ul li a:hover {
+            color: #ffffff;
+        }
+
+        /* Estilos para los submenús */
+        nav ul li ul {
+            display: none; /* Ocultar submenú por defecto */
+            position: absolute;
+            top: 100%; /* Alinearlo justo debajo del elemento padre */
+            left: 0;
+            background-color: #ff0000;
+            padding: 0;
+            list-style: none;
+            margin: 0;
+        }
+
+        nav ul li ul li {
+            width: 150px; /* Tamaño de los elementos del submenú */
+            margin: 0;
+        }
+
+        nav ul li ul li a {
+            color: #1a1a1a;
+            text-transform: none;
+            font-size: 1em;
+            letter-spacing: 1px;
+            padding: 10px;
+            display: block;
+        }
+
+        nav ul li ul li a:hover {
+            color: #ffffff;
+        }
+
+        /* Mostrar el submenú al hacer hover en el elemento padre */
+        nav ul li:hover ul {
+            display: block;
+        }
+
+        /* Efecto de transición suave en el hover del submenú */
+        nav ul li ul li a {
+            transition: color 0.3s ease;
+        }
+
+        .content {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 50px 0;
+        }
+
+		
+        .image-container {
+            margin: 20px;
+            width: 150px;
+            height: 150px;
+            border: 5px solid #ff0000;
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+        }
+		.form_title {	
+			text-decoration: none;
+			/* color: #ff0000;	 */
+		}
+		.form_title:hover {	
+		text-decoration: none;
+			/* color: #f7ecec;	 */
+		}
+	
+
+		.button-container {
+		    border: 2px solid #FF0000;
+		    /* border-radius: 5px; */
+		    text-align: center;
+		    /* padding: 20px; */
+		    display: inline-block;
+		    cursor: pointer; /* Hace que el cursor cambie en todo el div */
+		    transition: background-color 0.3s, color 0.3s;
+			transform: rotate(45deg);
+		}
+
+		.button-container a {
+		    display: block; /* El enlace ahora ocupa todo el espacio del div */
+		    color: #fff;
+		    text-decoration: none;
+		    font-weight: bold;
+		    width: 100%;
+		    height: 100%;
+		}
+
+		.button-container:hover {
+		    background-color: #FF0000;
+			color: #0f0f0f;
+		}
+		footer {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #666; /* Gris oscuro para el pie de página */
+			text-align: center;
+        }
+
+        .footer-text {
+            margin: 0;		footer {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #666; /* Gris oscuro para el pie de página */
+        }
+
+        .footer-text {
+            margin: 0;
+        }
+        }	
+        /* Responsiveness */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+
+            nav ul li a {
+                font-size: 1em;
+            }
+
+            .image-container {
+                width: 100px;
+                height: 100px;
+            }
+			.image-container h2{
+				font-size: 0.8em;
+            }
+        }
+
+		@media (max-width: 480px) {
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            .image-container {
+                width: 75px;
+                height: 75px;
+            }
+            .image-container h2{
+				font-size: 0.5em;
+            }
+            nav ul {
+                flex-direction: column;
+				text-align: center;
+            }
+
+            nav ul li {
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>- 42 - WEBSERVER - 42 -</h1>	
+</header>
+
+<nav>
+    <ul>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="#">Forms</a></li>
+		<li><a href="./cookies.html">Cookies</a></li>
+		<li><a href="../upload">Uploads</a></li>
+    </ul>
+</nav>
+
+<section class="content">
+    <div class="image-container button-container ">
+    	<!-- <img src="./assets/img1.jpg" alt="Image 1"> -->
+		<a class="form_title" href="./get.html"><h2>GET</h2></a>
+
+    </div>
+    <div class="image-container button-container ">
+		<!-- <img src="./assets/img2.png" alt="Image 2"> -->
+		<a class="form_title" href="./post.html"><h2>POST</h2></a>
+    </div>
+	<div class="image-container button-container ">
+		<!-- <img src="./assets/img2.png" alt="Image 2"> -->
+		<a class="form_title" href="./multipart.html"><h2>M.PART</h2></a>
+    </div>
+</section>
+<footer>
+	<p class="footer-text">2024 Imoro-sa & Alfofern Webserv. All Rights Reserved.</p>
+</footer>	
+
+</body>
+</html>

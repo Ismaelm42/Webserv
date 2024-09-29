@@ -13,8 +13,8 @@
 		Configura el socket para que escuche conexiones entrantes con una cola de 50 conexiones pendientes usando listen.
 		Imprime un mensaje de confirmación indicando que el servidor está escuchando en el puerto especificado.
 */
-Server::Server(std::string ip, int port, struct Epoll_events *events, Server_config *config)
-:_port(port), _ip(ip), _config(config), _events(events)
+Server::Server(std::string host, int port, struct Epoll_events *events, Server_config *config)
+:_port(port), _host(host), _config(config), _events(events)
 {
 	int optval = 1;
 
@@ -29,7 +29,7 @@ Server::Server(std::string ip, int port, struct Epoll_events *events, Server_con
     if (fcntl(_socket, F_SETFL, O_NONBLOCK) < 0)
         throw std::runtime_error("Error: fcntl: " + std::string(strerror(errno)));
 	
-    _sockaddr.sin_addr.s_addr = inet_addr(_ip.c_str());
+    _sockaddr.sin_addr.s_addr = inet_addr(_host.c_str());
 	_sockaddr.sin_family = AF_INET;
 	_sockaddr.sin_port = htons(_port);
 
@@ -38,7 +38,7 @@ Server::Server(std::string ip, int port, struct Epoll_events *events, Server_con
 
     if (listen(_socket, 50) < 0)
         throw std::runtime_error("Error: listen: " + std::string(strerror(errno)));
-    std::cout << High_Green << "Server listenning on " << _ip << ":" << _port << Reset << std::endl;
+    std::cout << High_Green << "Server listenning on " << _host << ":" << _port << Reset << std::endl;
 }
 /*
 	Destructor de la clase Server.
@@ -87,22 +87,13 @@ int Server::acceptConnections()
 		Asocia este objeto al descriptor de archivo en el contenedor _clients (un std::map de descriptores de archivo a punteros de Client).
 		La función asegura que cada descriptor de archivo tenga un objeto Client asociado.
 */
-void Server::addEventandClient(int fd)
+void Server::addClient(int fd)
 {
-	if (fd > 0)
+	if (fd > 0 && _clients.find(fd) == _clients.end())
 	{
-		if (_clients.find(fd) == _clients.end())
-		{
-			std::cout << High_Cyan << "Socket with fd " << fd << " has been created" << Reset << std::endl;
-    		Client *client = new Client(_ip, _port, fd, _config);
-    		_clients[fd] = client;
-		}
-		struct epoll_event event;
-		event.events = EPOLLIN | EPOLLOUT;
-		event.data.fd = fd;
-		_events->added[fd] = event;
-		if (epoll_ctl(_events->epfd, EPOLL_CTL_ADD, fd, &_events->added[fd]) == -1)
-			throw std::runtime_error("Error: epoll_ctl_add: " + std::string(strerror(errno)));
+		std::cout << High_Green << "Socket with fd " << fd << " has been created" << Reset << std::endl;
+    	Client *client = new Client(_config, _events, fd, _port, _host);
+    	_clients[fd] = client;
 	}
 }
 
@@ -116,47 +107,52 @@ void Server::addEventandClient(int fd)
 		La memoria del objeto Client se libera utilizando delete.
 		El descriptor de archivo se elimina del contenedor _clients.
 */
-void Server::deleteEventandClient(int fd)
+void Server::deleteClient(int fd)
 {
-	if (epoll_ctl(_events->epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
-		throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
-    _events->added.erase(fd);
-	for (std::vector<struct epoll_event>::iterator it = _events->log.begin(); it != _events->log.end(); it++)
-    {
-        if (it->data.fd == fd)
-        {
-            it = _events->log.erase(it);
-            break ;
-        }
-    }
 	delete _clients[fd];
 	_clients.erase(fd);
 	close(fd);
-	std::cout << "Event and client associated with fd " << fd << " has been removed." << std::endl;   
+	std::cout << Yellow << "Event and client associated with fd " << fd << " has been removed." << Reset << std::endl;   
 }
 
 /*
 	Maneja la solicitud de un cliente.
 		Verifica si el descriptor de archivo fd está en el contenedor _clients.
 		Si el cliente está presente, llama a getRequest() para procesar la solicitud.
+		Verifica si es un fd de un proceso cgi, y le atribuye el fd del cliente.
 		Si getRequest() devuelve un valor negativo, elimina el evento y el cliente, indicando que la conexión ha fallado o se ha cerrado.
 */
 void Server::handleRequest(int fd)
 {
 	if (_clients.find(fd) != _clients.end())
+	{
 		if (_clients[fd]->getRequest() < 0)
-			deleteEventandClient(fd);
+		{
+			deleteEvent(fd, _events);
+			deleteClient(fd);
+		}
+	}
 }
 
 /*
 	Maneja la respuesta para un cliente.
 		Verifica si el descriptor de archivo fd está en el contenedor _clients y si el cliente tiene un estado que requiere una respuesta.
+		También verifica si es un fd de un proceso cgi, y le atribuye el fd del cliente.
 		Si es así, llama a sendResponse() del cliente para enviar la respuesta.
 */
-void Server::handleResponse(int fd)
+void Server::handleResponse(int fd) //Con más de una configuración de server peta. Está accediendo a lugares que no puede.
 {
-	if (_clients.find(fd) != _clients.end() && _clients[fd]->getStatus())
-		_clients[fd]->sendResponse();
+	if (_clients.find(fd) != _clients.end())
+	{
+		if (_clients[fd]->_isReady)
+		{
+			if (_clients[fd]->sendResponse() < 0)
+			{
+				deleteEvent(fd, _events);
+				deleteClient(fd);
+			}
+		}
+	}
 }
 
 /*
@@ -174,15 +170,18 @@ void Server::handleEvents()
 {
 	if (_events->added.empty())
 		return;
-	_events->log.resize(_events->added.size());
-    if (epoll_wait(_events->epfd, _events->log.data(), _events->log.size(), -1) == -1)
+	if (_events->added.size() > _events->log.size())
+		_events->log.resize(_events->log.size() * 2);
+	_numEvents = epoll_wait(_events->epfd, _events->log.data(), _events->log.size(), -1);
+    if (_numEvents == -1)
 		throw std::runtime_error("Error: epoll_wait: " + std::string(strerror(errno)));
-	for (long unsigned i = 0; i < _events->log.size(); i++)
+	for (int i = 0; i < _numEvents; i++)
 	{
 		if (_events->log[i].events & EPOLLERR || _events->log[i].events & EPOLLHUP)
 		{
 			std::cout << Red << "Connection unexpectedly reset by peer" << Reset << std::endl;
-			deleteEventandClient(_events->log[i].data.fd);
+			deleteEvent(_events->log[i].data.fd, _events);
+			deleteClient(_events->log[i].data.fd);
 		}
 		else
 		{
