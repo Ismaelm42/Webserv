@@ -46,6 +46,10 @@ void Request::setClient(Client* client) {
     _client = client;  // Guarda el puntero al objeto Client
 }
 
+void Request::setBodyStr(std::string body){
+	_body_str = body;
+}
+
 int		Request::getErrorCode(){
     return (this->_error_code);
 }

@@ -37,13 +37,16 @@ void Cgi::setEnvironment()
 	envp[2] = "PATH_INFO=" + _request->getPath();
 	envp[3] = "PATH_TRANSLATED=" + _request->getPath();
 	envp[4] = "QUERY_STRING=" + _request->getQuery();
-	envp[5] = "CONTENT_LENGTH=" + _request->getBody().size();
+	envp[5] = "CONTENT_LENGTH=" + toStr(_request->getBody().size());
 	envp[6] = "CONTENT_TYPE=" + _request->getHeader("content-type");
 	envp[7] = "HTTP_USER_AGENT=" + _request->getHeader("user-agent");
 	envp[8] = "HTTP_COOKIE=" + _request->getHeader("cookie");
 	envp[9] = "SERVER_NAME=" + _request->getServerName();
 	envp[10] = "SERVER_PORT=" + toStr(_request->getPort());
 	envp[11] = "SERVER_PROTOCOL=HTTP/1.1";
+
+	std::cerr << "CONTENT_TYPE en setEnvironment= " << envp[6] << std::endl;
+	std::cerr << "CONTENT_LENGTH en setEnvironment= " << envp[5] << std::endl;
 
 	_envp = (char **)calloc(sizeof(char *), 13);
 	for (int i = 0; i < 12; i++)

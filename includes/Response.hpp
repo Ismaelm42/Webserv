@@ -62,5 +62,6 @@ class Response
 		int 				buildErrorPage(int code);
 		void				buildErrorMap();	
 		void 				getDefaultErrorBody(int code);
+		std::string 		removeBoundary(std::string &body, std::string &boundary);
 
 };

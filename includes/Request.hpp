@@ -33,7 +33,7 @@ class Request
 		void										reset();										// llamado de momento desde el response
 		void								 		printParsed();
 		void 										setClient(Client* client);
-		
+	 	void 										setBodyStr(std::string body);		
 		// ver si hacen falta los settters de los métodos, body, etc
 
 	private: 

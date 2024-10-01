@@ -289,11 +289,8 @@ void	Response::setHeaders()								// setea los headers de la respuesta
 	//////////////////////////////////////
 	_response_str.append("\r\n");
 
-
-
 	if (DEBUG)
 		std::cout << White << "setHeaders: " <<_response_str << White <<std::endl;
-	
 }
 
 std::string Response::getMatch(std::string path, std::vector<Location_config> locations)
@@ -449,6 +446,74 @@ static bool hasValidExtension(const std::string& path, const std::vector<std::pa
 	return false; // No se encontró una extensión válida
 }
 
+// std::string Response::removeBoundary(std::string &body, std::string &boundary)
+// {
+//     std::string buffer;
+//     std::string new_body;
+//     std::string filename;
+//     bool is_boundary = false;
+//     bool is_content = false;
+
+//     if (body.find("--" + boundary) != std::string::npos && body.find("--" + boundary + "--") != std::string::npos)
+//     {
+//         for (size_t i = 0; i < body.size(); i++)
+//         {
+//             buffer.clear();
+//             while(body[i] != '\n')
+//             {
+//                 buffer += body[i];
+//                 i++;
+//             }
+//             if (!buffer.compare(("--" + boundary + "--\r")))
+//             {
+//                 is_content = true;
+//                 is_boundary = false;
+//             }
+//             if (!buffer.compare(("--" + boundary + "\r")))
+//             {
+//                 is_boundary = true;
+//             }
+//             if (is_boundary)
+//             {
+//                 if (!buffer.compare(0, 31, "Content-Disposition: form-data;"))
+//                 {
+//                     size_t start = buffer.find("filename=\"");
+//                     if (start != std::string::npos)
+//                     {
+//                         size_t end = buffer.find("\"", start + 10);
+//                         if (end != std::string::npos)
+//                             filename = buffer.substr(start + 10, end);
+//                     }
+//                 }
+//                 else if (!buffer.compare(0, 1, "\r") && !filename.empty())
+//                 {
+//                     is_boundary = false;
+//                     is_content = true;
+//                 }
+
+//             }
+//             else if (is_content)
+//             {
+//                 if (!buffer.compare(("--" + boundary + "\r")))
+//                 {
+//                     is_boundary = true;
+//                 }
+//                 else if (!buffer.compare(("--" + boundary + "--\r")))
+//                 {
+//                     new_body.erase(new_body.end() - 1);
+//                     break ;
+//                 }
+//                 else
+//                     new_body += (buffer + "\n");
+//             }
+
+//         }
+//     }
+
+//     body.clear();
+//     return (new_body);
+// }
+
 /**
  * @brief Función para lanzar el CGI con las comporbaciones que estimemos oportunas
  * 
@@ -462,7 +527,6 @@ int Response::launchCgi()
 	std::cout << "Response body en launchCgi: " << _response_body_str << std::endl;
 	if (_code != 0 && _code != 200)	// si el código no es 0 ni 200 revisar el trazadod el código
 		return 1;
-	// _cgiFlag = false;
 	return 0;
 }
 
@@ -665,26 +729,27 @@ int Response::buildBody()
 		// std::ofstream file(_target.c_str(), std::ios::binary);
 		// if (file.fail())
 		//	 return (setReturnCode(404));
-		if (_request->getMultiformFlag()){							// si el request es multiform deberá ir enlazado a un archivo que en condiciones normales
-																	// sería el encargado de validar los datos y establecer los códigos de salida en caso de
-																	// éxito u error
-																	// pendiente de limpiar los boundaries ver como debería guardarlos para enlazarlo con el archivo del servidor		
-			std::string body = _request->getBody();
-			if (DEBUG)
-			{	
-				std::cout << "_target: " << _target << std::endl;
-				std::cout << "body en if: " << body << std::endl;
-			}
-			//body = removeBoundary(body, _request->getBoundary());
-			//file.write(body.c_str(), body.length());
-			return (setCode(204));
-		}
-		else
-		{
-			if (DEBUG)
-				std::cout << "body en else: " << _request->getBody() << std::endl;
-			//file.write(_request->getBody().c_str(), _request->getBody().length());
-		}
+		//////            Por las modificaciones del código no pasa por aquí   ////////////////
+		// if (_request->getMultiformFlag()){							// si el request es multiform deberá ir enlazado a un archivo que en condiciones normales
+		// 															// sería el encargado de validar los datos y establecer los códigos de salida en caso de
+		// 															// éxito u error
+		// 															// pendiente de limpiar los boundaries ver como debería guardarlos para enlazarlo con el archivo del servidor		
+		// 	std::string body = _request->getBody();
+		// 	if (DEBUG)
+		// 	{	
+		// 		std::cout << "_target: " << _target << std::endl;
+		// 		std::cout << "body en if: " << body << std::endl;
+		// 	}
+		// 	body = removeBoundary(body, _request->getBoundary());
+		// 	//file.write(body.c_str(), body.length());
+		// 	return (setCode(204));
+		// }
+		// else
+		// {
+		// 	if (DEBUG)
+		// 		std::cout << "body en else: " << _request->getBody() << std::endl;
+		// 	//file.write(_request->getBody().c_str(), _request->getBody().length());
+		// }
 	}
 	else if (_request->getMethod() == DELETE)
 	{

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
+	<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Formulario Multipart - Trash Metal</title>
     <style>
@@ -136,50 +136,30 @@
 		<header>
 	    	<h1>Sube tu archivo</h1>
 		</header>
-		<form id="miFormulario" action="../upload/test.py" method="post" enctype="multipart/form-data">			
-			<!-- <input id="nombre_archivo_id" class="nombre_archivo" type="text" name="nombre" placeholder="Nombre del archivo"> -->
-			<input id="nombre_archivo_id" class="nombre_archivo" type="text" name="nombre" placeholder="Nombre del archivo";>
-		
+		<form id="miFormulario" action="../cgi-bin/test.py" method="post" enctype="multipart/form-data">			
+		<!-- <form enctype="multipart/form-data" action = "../cgi-bin/test.py" method="post" > -->
+			<input id="nombre_archivo_id" class="nombre_archivo" type="text" name="nombre" placeholder="Nombre de usuario";>
 			<div class="elegir_file">
-
 				<label class="elegir_file_child_left custom-file-upload " for="file-upload" class="custom-file-upload">
 					Seleccionar archivo
-				</label> 
-				<input id="file-upload" type="file" name="archivo" onchange="document.getElementById('file-name').value = this.files[0].name">
-				
+				</label>
+				<input id="file-upload" type="file" name="filename" onchange="document.getElementById('file-name').value = this.files[0].name">				
+				<input class="elegir_file_child_right custom-file-upload "type="text" name="trutru" id="file-name" placeholder="Sin selección" readonly >
 
-				<input class="elegir_file_child_right custom-file-upload "type="text" id="file-name" placeholder="No se ha seleccionado ningún archivo" readonly >
+				<!-- <p>File: <input type="file" name="filename" id="fileid" class="form-control"> -->
+	            	<!-- <input type="submit" value="SEND" href="#"></p> -->
 			</div>
-			<!-- <input type="submit" value="Subir" onclick="document.getElementById('file-name').value = ''; document.getElementById('nombre_archivo_id').value = ''; "> -->
 			<input type="submit" value="Subir" onclick="enviarYLimpiar()">
-					
-			<!-- document.getElementById('nombre_archivo_id').value = ''; -->
-		</form>	
-			
-		<!-- <form action="../upload" method="post" enctype="multipart/form-data">
-			<input type="text" name="nombre" placeholder="Nombre del archivo">
-			<label for="file-upload" class="custom-file-upload">
-				Seleccionar archivo
-			</label> 
-			<input id="file-upload" type="file" name="archivo">
-	
-			<input type="submit" value="Subir">
-		</form> -->
-	    <!-- <form action="/upload" method="post" enctype="multipart/form-data">
-	        <input type="text" name="nombre" placeholder="Nombre del archivo">
-	        <input type="file" name="archivo">
-	        <input type="submit" value="Subir">
-    	</form> -->
+	    </form>
 	</div>
-
 	<script>
-	function enviarYLimpiar() {
-		console.log('enviarYLimpiar');
-		const form = document.getElementById('miFormulario');
-		setTimeout(function() {
-			form.reset();
-		}, 50);
-	}
-	</script>
+		function enviarYLimpiar() {
+			console.log('enviarYLimpiar');
+			const form = document.getElementById('miFormulario');
+			setTimeout(function() {
+				form.reset();
+			}, 50);
+		}
+		</script>
 </body>
 </html>
