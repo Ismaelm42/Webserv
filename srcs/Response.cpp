@@ -561,6 +561,11 @@ int Response::getTarget()
 	//	Pendiente de ver si es necesario hacerlo aqui o en el buildbody		//
 	//--------------------------------------------------------------------------//
 	
+	std::string body = _request->getBody();
+	std::cerr << body.size() << std::endl;
+	std::cerr << "location bodysize" << _location_config->body_size << std::endl;
+
+	//return 404;						////////////////    elimnardespues de las pruebas   ///////////////////////s
 	if (_request->getBody().length() > _location_config->body_size)	 // obtiene el tamaño del body del request y si el tamaño del body es mayor que el tamaño maximo permitido
 		return (setReturnCode(413));									// retorna 413 y lo setea como error para la gestión de errores		
 	
@@ -817,7 +822,7 @@ int Response::buildDirHtml()
         file_path = concatenatePaths(_target, structDirent->d_name,"");
         stat(file_path.c_str(), &file_stat);
 		file_path = removeRoot(file_path, root);
-		std::cout << Red << "file_path: " << file_path << White << std::endl;
+		// std::cout << Red << "file_path: " << file_path << White << std::endl;
         _response_body_str.append("<tr>\n");
         _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">\n");
         _response_body_str.append("<a href=\"");
@@ -839,7 +844,7 @@ int Response::buildDirHtml()
             _response_body_str.append(toStr(file_stat.st_size));
         _response_body_str.append("</td>\n");  
         _response_body_str.append("</tr>\n");
-		std::cout << Yellow << "file_path: " <<file_path << White << std::endl;
+		// std::cout << Yellow << "file_path: " <<file_path << White << std::endl;
     }   
     _response_body_str.append("</tbody>\n</table>\n");
 	_response_body_str.append("<div class='footer'>\n<p>Powered by Imoro-sa & Alfofern C++98 WebServer</p>\n</div>\n");
@@ -903,8 +908,8 @@ void Response::buildResponse()
             // Llamar a la construcción del error body
         }
         else
-            _code = 200;
-        _response_body_str.insert(_response_body_str.begin(), _response_body_str.begin(), _response_body_str.end());
+            _code = 200;		
+        //_response_body_str.insert(_response_body_str.begin(), _response_body_str.begin(), _response_body_str.end());
     }
 
 	setStatusline();													// construye la linea de estado de la respuesta	

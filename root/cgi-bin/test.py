@@ -1,27 +1,32 @@
 #!/usr/bin/python3
 
-import cgi, os
+import cgi
+import os
 
 form = cgi.FieldStorage()
 
 # Obtener el archivo subido
 fileitem = form['filename']
 
-#nombreArchivo = form.getvalue('filename') para el campo filename no vale esta llamada
-nombreArchivo = form.getvalue('trutru')  # .getvalue() es más seguro para obtener valores de formularios
-
 # Obtener el nombre del campo de texto
-nombre = form.getvalue('nombre')  # .getvalue() es más seguro para obtener valores de formularios
+nombre = form.getvalue('nombre')
 
 # Verificar si se ha subido un archivo
 if fileitem.filename:
-    open(os.getcwd() + '/root/upload/' + os.path.basename(fileitem.filename), 'wb').write(fileitem.file.read())
-    message = 'El archivo "' + nombreArchivo + '" ha sido subido a la carpeta upload'
+    # Obtener el nombre base y reemplazar espacios por guiones bajos
+    base_filename = os.path.basename(fileitem.filename)
+    safe_filename = base_filename.replace(' ', '_')  # Reemplazar espacios
+
+    # Guardar el archivo
+    upload_path = os.path.join(os.getcwd(), 'root', 'upload', safe_filename)
+    with open(upload_path, 'wb') as f:
+        f.write(fileitem.file.read())
+
+    message = f'El archivo "<a href=\"../upload/{safe_filename}\">{safe_filename}</a>" ha sido subido a la carpeta <a href="../upload">upload</a>.'
     icono = "👌"  # Icono OK
 else:
     message = '¡La subida ha fallado!'
     icono = "👎"  # Icono pulgar hacia abajo
-
 # Imprimir cabeceras HTTP y contenido HTML
 print("Content-Type: text/html;charset=utf-8")
 print("Content-type:text/html\r\n")

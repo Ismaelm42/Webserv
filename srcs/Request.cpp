@@ -316,12 +316,29 @@ bool Request::isValidUri()
 	return true;
 }
 
+std::string decode(const std::string& value) {
+    std::string decoded;
+    for (size_t i = 0; i < value.length(); ++i) {
+        if (value[i] == '%') {
+            if (i + 2 < value.length()) {
+                std::string hex = value.substr(i + 1, 2);
+                char c = (char)strtol(hex.c_str(), NULL, 16);  // Usar NULL en lugar de nullptr
+                decoded += c;
+                i += 2; // Saltar el siguiente par
+            }
+        } else {
+            decoded += value[i];
+        }
+    }
+    return decoded;
+}
+
 void	Request::fillRequest(char *dt, size_t bytesRead)
 {
 	if (DEBUG){
 		std::cout << "fillRequest" << std::endl;
 		std::cout << "bytesRead = " << bytesRead << std::endl;
-		std::cout << "dt = " << dt << std::endl;
+		//std::cout << "dt = " << dt << std::endl;
 	}
 	u_int8_t charRead;														// unsigned char  charRead para igualar a dt[i]   
 	std::string protocol = "HTTP/1.1";										// string HTTP para comparar con el protocolo HTTP/1.1 
@@ -381,6 +398,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				{
 					_fillStatus = get_Protocol;							  	// se pasa al siguiente estado get_Version
 					_path.append(_temp);									// hacemos un append en _path de lo que tengamos en temp		
+					_path = decode(_path);
 					_temp.clear();										  	// limpiamos temp
 					// if (DEBUG)
 					// 	std::cout << "_path = " << _path << std::endl;
@@ -690,8 +708,8 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 	if( _fillStatus == Parsed)												// si el estado es Parsed
 	{
 		_body_str.append((char*)_body.data(), _body.size());				// Se incluye el body en _body_str
-		if (DEBUG)	
-			printParsed();						// se imprime el path
+		//if (DEBUG)	
+		//	printParsed();						// se imprime el path
 	}																		// es más eficiente que hacer append de un char a un string
 }
 
