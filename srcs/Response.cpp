@@ -762,6 +762,7 @@ int Response::buildBody()
 			return (setReturnCode(404));
 		if (remove( _target.c_str() ) != 0 )
 			return (setReturnCode(500));
+		return (setCode(204));
 	}
 	_code = 200;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -778,32 +779,51 @@ std::string removeRoot(std::string target, std::string root)
 
 int Response::buildDirHtml()
 {
-	std::string root = _config->root;
-	std::cout << Yellow << "en buildDirHtml____________________" << White << std::endl;
-    struct dirent   *structDirent;
-    DIR             *dir;
-	_response_body_str = "";
+    std::string root = _config->root;
+    std::cout << Yellow << "en buildDirHtml____________________" << White << std::endl;
+    struct dirent *structDirent;
+    DIR *dir;
+    _response_body_str = "";
     dir = opendir(_target.c_str());
     if (dir == NULL)
-    {   
+    {
         std::cerr << "Error in opendir" << std::endl;
         return (1);
     }
     _response_body_str.append("<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset='UTF-8'>\n<meta name='viewport' content='width=device-width, initial-scale=1.0'>\n");
     _response_body_str.append(
-    "    <style>\n"
-  	"        .footer {\n"
-    "            text-align: center;\n"
-    "            font-size: 0.8rem;\n"
-    "            margin-top: 50px;\n"
-    "            color: #940f0f;\n"
-	"            text-shadow: #e8fd81ad 1px 0px 2px;\n"
-    "        }\n"
-    "    </style>\n"
+        "    <style>\n"
+        "        .footer {\n"
+        "            text-align: center;\n"
+        "            font-size: 0.8rem;\n"
+        "            margin-top: 60px;\n"
+        "            color: #940f0f;\n"
+        "            text-shadow: #e8fd81ad 1px 0px 2px;\n"
+        "        }\n"
+        "        .delete-button {\n"
+        "            background-color: red;\n"
+        "            color: white;\n"
+        "            padding: 10px;\n"
+        "            border: none;\n"
+        "            border-radius: 5px;\n"
+        "            cursor: pointer;\n"
+        "            font-size: 16px;\n"
+        "            margin-top: 20px;\n"
+        "            display: none;\n" /* Hidden initially */
+        "            float: right;\n"
+        "            margin-right: 10%;\n"
+        "        }\n"
+        "        .selected-row {\n"
+        "            background-color: rgba(255, 255, 255, 0.1); /* Aclarar el fondo */\n"
+        "            border: 1px solid #e8fd81;\n" /* Añadir borde para resaltar */ 
+        "        }\n"
+        "    </style>\n"
     );
-	_response_body_str.append("<title>Index of ");
+    _response_body_str.append("<title>Index of ");
     _response_body_str.append(_target);
     _response_body_str.append("</title>\n</head>\n<body style=\"background-color: black; color: red; font-family: Arial, sans-serif;\">\n");
+
+    // Añadir un div para el botón de eliminación
     _response_body_str.append("<h1 style=\"text-align: center;\">Index of " + _target + "</h1>\n");
     _response_body_str.append("<table style=\"width:80%; margin: auto; border-collapse: collapse; font-size: 15px;\">\n");
     _response_body_str.append("<hr style=\"border: 1px solid red; width:90%;margin-bottom: 0px;\">\n");
@@ -812,45 +832,298 @@ int Response::buildDirHtml()
     _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">Last Modification</th>\n");
     _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Size</th>\n");
     _response_body_str.append("</tr>\n</thead>\n<tbody>\n");
+
     struct stat file_stat;
     std::string file_path;
-	
-    while((structDirent = readdir(dir)) != NULL)
+    while ((structDirent = readdir(dir)) != NULL)
     {
-        if(strcmp(structDirent->d_name, ".") == 0)
+        if (strcmp(structDirent->d_name, ".") == 0)
             continue;
-        file_path = concatenatePaths(_target, structDirent->d_name,"");
+        file_path = concatenatePaths(_target, structDirent->d_name, "");
         stat(file_path.c_str(), &file_stat);
-		file_path = removeRoot(file_path, root);
-		// std::cout << Red << "file_path: " << file_path << White << std::endl;
-        _response_body_str.append("<tr>\n");
-        _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">\n");
-        _response_body_str.append("<a href=\"");
+        file_path = removeRoot(file_path, root);
+
+        bool isFile = !S_ISDIR(file_stat.st_mode); // Si no es un directorio, entonces es un archivo.
+
+        _response_body_str.append("<tr id=\"");
+        _response_body_str.append(structDirent->d_name);  // Usamos el nombre de archivo como ID
+        _response_body_str.append("\" onclick=\"selectFile('" + file_path + "', " + (isFile ? "true" : "false") + ")\">\n"); // Pasamos si es archivo o no
+        _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">\n<a href=\"");
         _response_body_str.append(file_path);
-        // _response_body_str.append(structDirent->d_name);
         if (S_ISDIR(file_stat.st_mode))
             _response_body_str.append("/");
         _response_body_str.append("\" style=\"color: red; text-decoration: none;\">");
         _response_body_str.append(structDirent->d_name);
         if (S_ISDIR(file_stat.st_mode))
             _response_body_str.append("/");
-        _response_body_str.append("</a>\n");
-        _response_body_str.append("</td>\n");
+        _response_body_str.append("</a></td>\n");
         _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
         _response_body_str.append(ctime(&file_stat.st_mtime));
         _response_body_str.append("</td>\n");
         _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
         if (!S_ISDIR(file_stat.st_mode))
             _response_body_str.append(toStr(file_stat.st_size));
-        _response_body_str.append("</td>\n");  
+        _response_body_str.append("</td>\n");
         _response_body_str.append("</tr>\n");
-		// std::cout << Yellow << "file_path: " <<file_path << White << std::endl;
-    }   
+    }
+
     _response_body_str.append("</tbody>\n</table>\n");
-	_response_body_str.append("<div class='footer'>\n<p>Powered by Imoro-sa & Alfofern C++98 WebServer</p>\n</div>\n");
+
+    // Botón de eliminación que aparecerá cuando un archivo sea seleccionado
+    _response_body_str.append("<div><button class='delete-button' id='delete-button' onclick='deleteSelectedFile()'>Delete</button></div>\n");
+
+    _response_body_str.append(
+        "<script>\n"
+        "    let selectedFile = '';\n"
+        "    let isFile = false;\n"
+        "    let previousSelectedRow = null;\n" 											// Variable para la fila previamente seleccionada
+        "    function selectFile(filePath, file) {\n" 
+        "        if (previousSelectedRow) {\n"
+        "            previousSelectedRow.classList.remove('selected-row');\n" 				// Eliminar la clase de la fila previamente seleccionada
+        "        }\n"												 						// Añadir la clase de resaltado		
+        "        let currentRow = document.getElementById(filePath.split('/').pop());\n" 	// Extraer el nombre de archivo para usar como ID
+        "        currentRow.classList.add('selected-row');\n" 								// Añadir la clase de resaltado
+        "        previousSelectedRow = currentRow;\n"	        						    // Actualizar la referencia a la fila previamente seleccionada
+        "        selectedFile = filePath;\n"
+        "        isFile = file;\n"
+        "        if (isFile) {\n"															// Mostrar o esconder el botón de eliminar basado en si es archivo o no
+        "            document.getElementById('delete-button').style.display = 'block';\n"
+        "        } else {\n"
+        "            document.getElementById('delete-button').style.display = 'none';\n"
+        "        }\n"
+        "    }\n"
+        "    function deleteSelectedFile() {\n"
+        "        if (selectedFile === '') {\n"
+        "            alert('No file selected!');\n"
+        "            return;\n"
+        "        }\n"
+        "        fetch(selectedFile, { method: 'DELETE' })\n"
+        "            .then(response => {\n"
+        "                if (response.ok) {\n"
+        "                    alert('File deleted successfully');\n"
+        "                    window.location.reload();\n"
+        "                } else {\n"
+        "                    alert('Error deleting file');\n"
+        "                }\n"
+        "            })\n"
+        "            .catch(error => {\n"
+        "                console.error('Error:', error);\n"
+        "                alert('Error deleting file');\n"
+        "            });\n"
+        "    }\n"
+        "</script>\n"
+    );
+    _response_body_str.append("<div class='footer'>\n<p>Powered by Imoro-sa & Alfofern C++98 WebServer</p>\n</div>\n");
     _response_body_str.append("</body>\n</html>\n");
     return (0);
 }
+
+
+// int Response::buildDirHtml()
+// {
+// 	std::string root = _config->root;
+// 	std::cout << Yellow << "en buildDirHtml____________________" << White << std::endl;
+//     struct dirent   *structDirent;
+//     DIR             *dir;
+// 	_response_body_str = "";
+//     dir = opendir(_target.c_str());
+//     if (dir == NULL)
+//     {   
+//         std::cerr << "Error in opendir" << std::endl;
+//         return (1);
+//     }
+//     _response_body_str.append("<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset='UTF-8'>\n<meta name='viewport' content='width=device-width, initial-scale=1.0'>\n");
+//     _response_body_str.append(
+//     "    <style>\n"
+//   	"        .footer {\n"
+//     "            text-align: center;\n"
+//     "            font-size: 0.8rem;\n"
+//     "            margin-top: 50px;\n"
+//     "            color: #940f0f;\n"
+// 	"            text-shadow: #e8fd81ad 1px 0px 2px;\n"
+//     "        }\n"
+//     "        .delete-button {\n"
+//     "            background-color: red;\n"
+//     "            color: white;\n"
+//     "            padding: 10px;\n"
+//     "            border: none;\n"
+// 	"            border-radius: 5px;\n"
+//     "            cursor: pointer;\n"
+//     "            font-size: 16px;\n"
+//     "            margin-top: 20px;\n"
+//     "            display: none;\n" /* Hidden initially */
+// 	"			 float: right;\n"
+//   	"			 margin-right: 10%;\n"
+//     "        }\n"
+//     "    </style>\n"
+//     );
+//     _response_body_str.append("<title>Index of ");
+//     _response_body_str.append(_target);
+//     _response_body_str.append("</title>\n</head>\n<body style=\"background-color: black; color: red; font-family: Arial, sans-serif;\">\n");
+    
+//     // Añadir un div para el botón de eliminación
+//     _response_body_str.append("<h1 style=\"text-align: center;\">Index of " + _target + "</h1>\n");
+//     _response_body_str.append("<table style=\"width:80%; margin: auto; border-collapse: collapse; font-size: 15px;\">\n");
+//     _response_body_str.append("<hr style=\"border: 1px solid red; width:90%;margin-bottom: 0px;\">\n");
+//     _response_body_str.append("<hr style=\"border: 1px solid #e8fd81; width:90%; margin-top:0px;\">\n");
+//     _response_body_str.append("<thead style=\"color: #e8fd81;\">\n<tr>\n<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Name</th>\n");
+//     _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">Last Modification</th>\n");
+//     _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Size</th>\n");
+//     _response_body_str.append("</tr>\n</thead>\n<tbody>\n");
+//     struct stat file_stat;
+//     std::string file_path;
+// 	while((structDirent = readdir(dir)) != NULL)
+// 	{
+// 	    if(strcmp(structDirent->d_name, ".") == 0)
+// 	        continue;
+// 	    file_path = concatenatePaths(_target, structDirent->d_name,"");
+// 	    stat(file_path.c_str(), &file_stat);
+// 	    file_path = removeRoot(file_path, root);
+
+// 	    bool isFile = !S_ISDIR(file_stat.st_mode); // Si no es un directorio, entonces es un archivo.
+
+// 	    _response_body_str.append("<tr id=\"");
+// 	    _response_body_str.append(structDirent->d_name);  // Usamos el nombre de archivo como ID
+// 	    _response_body_str.append("\" onclick=\"selectFile('" + file_path + "', " + (isFile ? "true" : "false") + ")\">\n"); // Pasamos si es archivo o no
+// 	    _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">\n<a href=\"");
+// 	    _response_body_str.append(file_path);
+// 	    if (S_ISDIR(file_stat.st_mode))
+// 	        _response_body_str.append("/");
+// 	    _response_body_str.append("\" style=\"color: red; text-decoration: none;\">");
+// 	    _response_body_str.append(structDirent->d_name);
+// 	    if (S_ISDIR(file_stat.st_mode))
+// 	        _response_body_str.append("/");
+// 	    _response_body_str.append("</a></td>\n");
+// 	    _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
+// 	    _response_body_str.append(ctime(&file_stat.st_mtime));
+// 	    _response_body_str.append("</td>\n");
+// 	    _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
+// 	    if (!S_ISDIR(file_stat.st_mode))
+// 	        _response_body_str.append(toStr(file_stat.st_size));
+// 	    _response_body_str.append("</td>\n");
+// 	    _response_body_str.append("</tr>\n");
+// 	}
+
+
+//     _response_body_str.append("</tbody>\n</table>\n");
+
+//     // Botón de eliminación que aparecerá cuando un archivo sea seleccionado
+//     _response_body_str.append("<button class='delete-button' id='delete-button' onclick='deleteSelectedFile()'>Delete</button>\n");
+
+//     _response_body_str.append(
+// 		"<script>\n"
+// 		"    let selectedFile = '';\n"
+// 		"    let isFile = false;\n"
+// 		"    function selectFile(filePath, file) {\n"
+// 		"        selectedFile = filePath;\n"
+// 		"        isFile = file;\n"
+// 		"        if (isFile) {\n"
+// 		"            document.getElementById('delete-button').style.display = 'block';\n"
+// 		"        } else {\n"
+// 		"            document.getElementById('delete-button').style.display = 'none';\n"
+// 		"        }\n"
+// 		"    }\n"
+// 		"    function deleteSelectedFile() {\n"
+// 		"        if (selectedFile === '') {\n"
+// 		"            alert('No file selected!');\n"
+// 		"            return;\n"
+// 		"        }\n"
+// 		"        fetch(selectedFile, { method: 'DELETE' })\n"
+// 		"            .then(response => {\n"
+// 		"                if (response.ok) {\n"
+// 		"                    alert('File deleted successfully');\n"
+// 		"                    window.location.reload();\n"
+// 		"                } else {\n"
+// 		"                    alert('Error deleting file');\n"
+// 		"                }\n"
+// 		"            })\n"
+// 		"            .catch(error => {\n"
+// 		"                console.error('Error:', error);\n"
+// 		"                alert('Error deleting file');\n"
+// 		"            });\n"
+// 		"    }\n"
+// 		"</script>\n");
+// 	_response_body_str.append("<div class='footer'>\n<p>Powered by Imoro-sa & Alfofern C++98 WebServer</p>\n</div>\n");
+//     _response_body_str.append("</body>\n</html>\n");
+//     return (0);
+// }
+
+
+// int Response::buildDirHtml()
+// {
+// 	std::string root = _config->root;
+// 	std::cout << Yellow << "en buildDirHtml____________________" << White << std::endl;
+//     struct dirent   *structDirent;
+//     DIR             *dir;
+// 	_response_body_str = "";
+//     dir = opendir(_target.c_str());
+//     if (dir == NULL)
+//     {   
+//         std::cerr << "Error in opendir" << std::endl;
+//         return (1);
+//     }
+//     _response_body_str.append("<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset='UTF-8'>\n<meta name='viewport' content='width=device-width, initial-scale=1.0'>\n");
+//     _response_body_str.append(
+//     "    <style>\n"
+//   	"        .footer {\n"
+//     "            text-align: center;\n"
+//     "            font-size: 0.8rem;\n"
+//     "            margin-top: 50px;\n"
+//     "            color: #940f0f;\n"
+// 	"            text-shadow: #e8fd81ad 1px 0px 2px;\n"
+//     "        }\n"
+//     "    </style>\n"
+//     );
+// 	_response_body_str.append("<title>Index of ");
+//     _response_body_str.append(_target);
+//     _response_body_str.append("</title>\n</head>\n<body style=\"background-color: black; color: red; font-family: Arial, sans-serif;\">\n");
+//     _response_body_str.append("<h1 style=\"text-align: center;\">Index of " + _target + "</h1>\n");
+//     _response_body_str.append("<table style=\"width:80%; margin: auto; border-collapse: collapse; font-size: 15px;\">\n");
+//     _response_body_str.append("<hr style=\"border: 1px solid red; width:90%;margin-bottom: 0px;\">\n");
+//     _response_body_str.append("<hr style=\"border: 1px solid #e8fd81; width:90%; margin-top:0px;\">\n");
+//     _response_body_str.append("<thead style=\"color: #e8fd81;\">\n<tr>\n<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Name</th>\n");
+//     _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">Last Modification</th>\n");
+//     _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Size</th>\n");
+//     _response_body_str.append("</tr>\n</thead>\n<tbody>\n");
+//     struct stat file_stat;
+//     std::string file_path;
+	
+//     while((structDirent = readdir(dir)) != NULL)
+//     {
+//         if(strcmp(structDirent->d_name, ".") == 0)
+//             continue;
+//         file_path = concatenatePaths(_target, structDirent->d_name,"");
+//         stat(file_path.c_str(), &file_stat);
+// 		file_path = removeRoot(file_path, root);
+// 		// std::cout << Red << "file_path: " << file_path << White << std::endl;
+//         _response_body_str.append("<tr>\n");
+//         _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">\n");
+//         _response_body_str.append("<a href=\"");
+//         _response_body_str.append(file_path);
+//         // _response_body_str.append(structDirent->d_name);
+//         if (S_ISDIR(file_stat.st_mode))
+//             _response_body_str.append("/");
+//         _response_body_str.append("\" style=\"color: red; text-decoration: none;\">");
+//         _response_body_str.append(structDirent->d_name);
+//         if (S_ISDIR(file_stat.st_mode))
+//             _response_body_str.append("/");
+//         _response_body_str.append("</a>\n");
+//         _response_body_str.append("</td>\n");
+//         _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
+//         _response_body_str.append(ctime(&file_stat.st_mtime));
+//         _response_body_str.append("</td>\n");
+//         _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
+//         if (!S_ISDIR(file_stat.st_mode))
+//             _response_body_str.append(toStr(file_stat.st_size));
+//         _response_body_str.append("</td>\n");  
+//         _response_body_str.append("</tr>\n");
+// 		// std::cout << Yellow << "file_path: " <<file_path << White << std::endl;
+//     }   
+//     _response_body_str.append("</tbody>\n</table>\n");
+// 	_response_body_str.append("<div class='footer'>\n<p>Powered by Imoro-sa & Alfofern C++98 WebServer</p>\n</div>\n");
+//     _response_body_str.append("</body>\n</html>\n");
+//     return (0);
+// }
 
 /**
  * @brief calcula el content lenght saltando los headers que pueda traer del cgi
