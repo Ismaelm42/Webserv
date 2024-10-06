@@ -36,19 +36,10 @@ URI_MAX_LENGTH
 	_query.size() + 
 	_fragment.size(); 
 
-	La cuestión es ver donde calcularlo, si merece la pena ser tan preciso y/o si podríamos sacar los valores del host y el puerto desde el archivo de confirguarción, del server o del cliente y pasarlo como parámetro o ver la manera de separar en funciones la lectura de la primera línea al completo, evaluar el valor desde el punto en el que se hace la llamada a esa función, guardando el resto de la petición y si todo es correcto continuar con el parseo del resto de la petición.+
+	La cuestión es ver donde calcularlo, si merece la pena ser tan preciso y/o si podríamos sacar los valores del host y el puerto desde el archivo de confirguarción, del server o del cliente y pasarlo como parámetro o ver la manera de separar en funciones la lectura de la primera línea al completo, evaluar el valor desde el punto en el que se hace la llamada a esa función, guardando el resto de la petición y si todo es correcto continuar con el parseo del resto de la petición.
 
 HOST
 	El header host almacenta tanto el propio host como el puerto (host:puerto) y asigna el valor propio del host a la variable _serverName, ver si es correcto o es mejor separarlo.
 
-
-Ver si merece la pena usar variables que se puedan constrastar con las variables de la confirguración
-para establecer los limites tanto del tamaño de las URI, del buffer de los headers y del body_lenght.
-
-
-De momento 15.09.24 la URI se compone del esquema, de la ip y el path:
-	URI Total: http://0.0.0.0:8081/index.html
-
-Se comprueba el tamaño siempre que pasemos al estado de obtener el protocolo.
-
-En este punto el host no lo puedo obtener de forma directa "PREGUNTAR A ISMAEL"
+PUNTERO A CLIENTE
+	sería interesante generar el request con un puntero al cliente para poder acecder a todos los datos	

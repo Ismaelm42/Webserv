@@ -105,33 +105,3 @@ print(f"""
 </body>
 </html>
 """)
-
-
-# #!/usr/bin/env python3
-
-# import cgi
-
-# # Obtener los datos del formulario
-# form = cgi.FieldStorage()
-# nombre = form.getvalue('nombre', 'Visitante')  # Valor predeterminado si no se proporciona
-# email = form.getvalue('email', 'No proporcionado')
-
-# # Generar la cabecera de la respuesta HTTP
-# print("Content-Type: text/html\n")
-
-# # Generar el contenido HTML de la respuesta
-# print(f"""
-# <!DOCTYPE html>
-# <html lang="es">
-# <head>
-#     <meta charset="UTF-8">
-#     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-#     <title>Formulario Recibido</title>
-# </head>
-# <body>
-#     <h1>Muchas gracias por su solicitud, {nombre}.</h1>
-#     <p>Guardamos su email <strong>{email}</strong> para futuras comunicaciones sobre las fiestas de Campillos y sus verbenas cercanas.</p>
-# </body>
-# </html>
-# """)
-	

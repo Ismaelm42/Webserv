@@ -107,9 +107,6 @@ Response& Response::operator=(const Response& other) {
 	return *this;
 }
 
-/*Response::Response(Request& req)										// constructor con request
-{
-}*/
 
 Response::~Response()													// destructor								
 {
@@ -226,7 +223,13 @@ int Response::getFile()
     // Comprobar si el archivo existe
     struct stat buffer;
     if (stat(_target.c_str(), &buffer) != 0) 	// Comprobar si el archivo existe
-        return (setReturnCode(404));			// No encontrado: el archivo no existe	
+    {
+		std::cout << "No se pudo acceder al archivo o directorio" << std::endl;
+		std::cout << "errno: " << errno << std::endl;
+		std::cout << "strerror: " << strerror(errno) << std::endl;	
+		std::cout << "target: " << _target << std::endl;
+	    return (setReturnCode(404));			// No encontrado: el archivo no existe	
+	}
     if (!(buffer.st_mode & S_IRUSR)) { 			// Comprobar permisos de usuario
         return (setReturnCode(403));			// Prohibido: no hay permisos de lectura
     }
@@ -446,74 +449,6 @@ static bool hasValidExtension(const std::string& path, const std::vector<std::pa
 	return false; // No se encontró una extensión válida
 }
 
-// std::string Response::removeBoundary(std::string &body, std::string &boundary)
-// {
-//     std::string buffer;
-//     std::string new_body;
-//     std::string filename;
-//     bool is_boundary = false;
-//     bool is_content = false;
-
-//     if (body.find("--" + boundary) != std::string::npos && body.find("--" + boundary + "--") != std::string::npos)
-//     {
-//         for (size_t i = 0; i < body.size(); i++)
-//         {
-//             buffer.clear();
-//             while(body[i] != '\n')
-//             {
-//                 buffer += body[i];
-//                 i++;
-//             }
-//             if (!buffer.compare(("--" + boundary + "--\r")))
-//             {
-//                 is_content = true;
-//                 is_boundary = false;
-//             }
-//             if (!buffer.compare(("--" + boundary + "\r")))
-//             {
-//                 is_boundary = true;
-//             }
-//             if (is_boundary)
-//             {
-//                 if (!buffer.compare(0, 31, "Content-Disposition: form-data;"))
-//                 {
-//                     size_t start = buffer.find("filename=\"");
-//                     if (start != std::string::npos)
-//                     {
-//                         size_t end = buffer.find("\"", start + 10);
-//                         if (end != std::string::npos)
-//                             filename = buffer.substr(start + 10, end);
-//                     }
-//                 }
-//                 else if (!buffer.compare(0, 1, "\r") && !filename.empty())
-//                 {
-//                     is_boundary = false;
-//                     is_content = true;
-//                 }
-
-//             }
-//             else if (is_content)
-//             {
-//                 if (!buffer.compare(("--" + boundary + "\r")))
-//                 {
-//                     is_boundary = true;
-//                 }
-//                 else if (!buffer.compare(("--" + boundary + "--\r")))
-//                 {
-//                     new_body.erase(new_body.end() - 1);
-//                     break ;
-//                 }
-//                 else
-//                     new_body += (buffer + "\n");
-//             }
-
-//         }
-//     }
-
-//     body.clear();
-//     return (new_body);
-// }
-
 /**
  * @brief Función para lanzar el CGI con las comporbaciones que estimemos oportunas
  * 
@@ -549,7 +484,6 @@ int Response::getTarget()
 	_location_config = find_location(*_config,locationMatch);
 	if (DEBUG)
 		std::cout << "_location_config:_______________	____________- "  << std::endl;
-	// printLocationConfig(_location_config);
 	
 	//--------------------------------------------------------------------------//
 	//	cofigurar target con las directivas de la location y el server	  	//
@@ -562,54 +496,18 @@ int Response::getTarget()
 	//--------------------------------------------------------------------------//
 	
 	std::string body = _request->getBody();
-	std::cerr << body.size() << std::endl;
-	std::cerr << "location bodysize" << _location_config->body_size << std::endl;
-
-	//return 404;						////////////////    elimnardespues de las pruebas   ///////////////////////s
-	if (_request->getBody().length() > _location_config->body_size)	 // obtiene el tamaño del body del request y si el tamaño del body es mayor que el tamaño maximo permitido
-		return (setReturnCode(413));									// retorna 413 y lo setea como error para la gestión de errores		
-	
-	//--------------------------------------------------------------------------//
-	//							 ** allowed methods	**							//
-	//--------------------------------------------------------------------------//
-	// 					Si hay allowed methods en location mira si 				//
-	//						el método del request es válido 					//
-	//--------------------------------------------------------------------------//
-	
+	if (_request->getBody().length() > _location_config->body_size)
+		return (setReturnCode(413));
 	if (!_location_config->methods.empty())
 	{	
 		if (isNotValidMethod())
 			return (501);
 	}
-	//--------------------------------------------------------------------------//
-	//								** index **									//
-	//--------------------------------------------------------------------------//
-	// 		SetIndex devuelve 0 si el index es válido o si no debe haber index   //
-	//		uso el size del target para saber si debemos seguir buscandolo		//							//
-	//--------------------------------------------------------------------------//
-
 	if (setIndex())							
 		return (413);				
-	else if(_target.size() == 0 )	// si el target es vacío lo asgina asginación temporal 
-	{
-			if (DEBUG)
-			{
-				std::cout << "en getTarget____________________" << std::endl;
-				std::cout << "locationMatch: " << locationMatch << std::endl;
-				std::cout << "_request->getPath(): "  << _request->getPath() << std::endl;
-				std::cout << Red << "__request->getBody(): " << _request->getBody() << std::endl; 
-			}
-			_target= concatenatePaths(_config->root, _request->getPath(), "");		// combina el root del server con el path del request
-			if (DEBUG)
-				std::cout << "target: " << _target << std::endl;
-	}
-	//--------------------------------------------------------------------------//
-	//								** return **								//
-	//--------------------------------------------------------------------------//
-	//		Comprueba si hay un return en la location y si lo hay lo setea		//
-	//		   Pendiente de configurar y ver como hay que devolverlo 			//
-	//--------------------------------------------------------------------------//
-	 if(_location_config->redir.first)
+	else if(_target.size() == 0 )
+		_target= concatenatePaths(_config->root, _request->getPath(), "");
+	if(_location_config->redir.first)
  	{
 		if (DEBUG)
 			std::cout << "en return____________________" << std::endl;
@@ -842,9 +740,7 @@ int Response::buildDirHtml()
         file_path = concatenatePaths(_target, structDirent->d_name, "");
         stat(file_path.c_str(), &file_stat);
         file_path = removeRoot(file_path, root);
-
         bool isFile = !S_ISDIR(file_stat.st_mode); // Si no es un directorio, entonces es un archivo.
-
         _response_body_str.append("<tr id=\"");
         _response_body_str.append(structDirent->d_name);  // Usamos el nombre de archivo como ID
         _response_body_str.append("\" onclick=\"selectFile('" + file_path + "', " + (isFile ? "true" : "false") + ")\">\n"); // Pasamos si es archivo o no
@@ -868,10 +764,7 @@ int Response::buildDirHtml()
     }
 
     _response_body_str.append("</tbody>\n</table>\n");
-
-    // Botón de eliminación que aparecerá cuando un archivo sea seleccionado
     _response_body_str.append("<div><button class='delete-button' id='delete-button' onclick='deleteSelectedFile()'>Delete</button></div>\n");
-
     _response_body_str.append(
         "<script>\n"
         "    let selectedFile = '';\n"
@@ -918,213 +811,6 @@ int Response::buildDirHtml()
     return (0);
 }
 
-
-// int Response::buildDirHtml()
-// {
-// 	std::string root = _config->root;
-// 	std::cout << Yellow << "en buildDirHtml____________________" << White << std::endl;
-//     struct dirent   *structDirent;
-//     DIR             *dir;
-// 	_response_body_str = "";
-//     dir = opendir(_target.c_str());
-//     if (dir == NULL)
-//     {   
-//         std::cerr << "Error in opendir" << std::endl;
-//         return (1);
-//     }
-//     _response_body_str.append("<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset='UTF-8'>\n<meta name='viewport' content='width=device-width, initial-scale=1.0'>\n");
-//     _response_body_str.append(
-//     "    <style>\n"
-//   	"        .footer {\n"
-//     "            text-align: center;\n"
-//     "            font-size: 0.8rem;\n"
-//     "            margin-top: 50px;\n"
-//     "            color: #940f0f;\n"
-// 	"            text-shadow: #e8fd81ad 1px 0px 2px;\n"
-//     "        }\n"
-//     "        .delete-button {\n"
-//     "            background-color: red;\n"
-//     "            color: white;\n"
-//     "            padding: 10px;\n"
-//     "            border: none;\n"
-// 	"            border-radius: 5px;\n"
-//     "            cursor: pointer;\n"
-//     "            font-size: 16px;\n"
-//     "            margin-top: 20px;\n"
-//     "            display: none;\n" /* Hidden initially */
-// 	"			 float: right;\n"
-//   	"			 margin-right: 10%;\n"
-//     "        }\n"
-//     "    </style>\n"
-//     );
-//     _response_body_str.append("<title>Index of ");
-//     _response_body_str.append(_target);
-//     _response_body_str.append("</title>\n</head>\n<body style=\"background-color: black; color: red; font-family: Arial, sans-serif;\">\n");
-    
-//     // Añadir un div para el botón de eliminación
-//     _response_body_str.append("<h1 style=\"text-align: center;\">Index of " + _target + "</h1>\n");
-//     _response_body_str.append("<table style=\"width:80%; margin: auto; border-collapse: collapse; font-size: 15px;\">\n");
-//     _response_body_str.append("<hr style=\"border: 1px solid red; width:90%;margin-bottom: 0px;\">\n");
-//     _response_body_str.append("<hr style=\"border: 1px solid #e8fd81; width:90%; margin-top:0px;\">\n");
-//     _response_body_str.append("<thead style=\"color: #e8fd81;\">\n<tr>\n<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Name</th>\n");
-//     _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">Last Modification</th>\n");
-//     _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Size</th>\n");
-//     _response_body_str.append("</tr>\n</thead>\n<tbody>\n");
-//     struct stat file_stat;
-//     std::string file_path;
-// 	while((structDirent = readdir(dir)) != NULL)
-// 	{
-// 	    if(strcmp(structDirent->d_name, ".") == 0)
-// 	        continue;
-// 	    file_path = concatenatePaths(_target, structDirent->d_name,"");
-// 	    stat(file_path.c_str(), &file_stat);
-// 	    file_path = removeRoot(file_path, root);
-
-// 	    bool isFile = !S_ISDIR(file_stat.st_mode); // Si no es un directorio, entonces es un archivo.
-
-// 	    _response_body_str.append("<tr id=\"");
-// 	    _response_body_str.append(structDirent->d_name);  // Usamos el nombre de archivo como ID
-// 	    _response_body_str.append("\" onclick=\"selectFile('" + file_path + "', " + (isFile ? "true" : "false") + ")\">\n"); // Pasamos si es archivo o no
-// 	    _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">\n<a href=\"");
-// 	    _response_body_str.append(file_path);
-// 	    if (S_ISDIR(file_stat.st_mode))
-// 	        _response_body_str.append("/");
-// 	    _response_body_str.append("\" style=\"color: red; text-decoration: none;\">");
-// 	    _response_body_str.append(structDirent->d_name);
-// 	    if (S_ISDIR(file_stat.st_mode))
-// 	        _response_body_str.append("/");
-// 	    _response_body_str.append("</a></td>\n");
-// 	    _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
-// 	    _response_body_str.append(ctime(&file_stat.st_mtime));
-// 	    _response_body_str.append("</td>\n");
-// 	    _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
-// 	    if (!S_ISDIR(file_stat.st_mode))
-// 	        _response_body_str.append(toStr(file_stat.st_size));
-// 	    _response_body_str.append("</td>\n");
-// 	    _response_body_str.append("</tr>\n");
-// 	}
-
-
-//     _response_body_str.append("</tbody>\n</table>\n");
-
-//     // Botón de eliminación que aparecerá cuando un archivo sea seleccionado
-//     _response_body_str.append("<button class='delete-button' id='delete-button' onclick='deleteSelectedFile()'>Delete</button>\n");
-
-//     _response_body_str.append(
-// 		"<script>\n"
-// 		"    let selectedFile = '';\n"
-// 		"    let isFile = false;\n"
-// 		"    function selectFile(filePath, file) {\n"
-// 		"        selectedFile = filePath;\n"
-// 		"        isFile = file;\n"
-// 		"        if (isFile) {\n"
-// 		"            document.getElementById('delete-button').style.display = 'block';\n"
-// 		"        } else {\n"
-// 		"            document.getElementById('delete-button').style.display = 'none';\n"
-// 		"        }\n"
-// 		"    }\n"
-// 		"    function deleteSelectedFile() {\n"
-// 		"        if (selectedFile === '') {\n"
-// 		"            alert('No file selected!');\n"
-// 		"            return;\n"
-// 		"        }\n"
-// 		"        fetch(selectedFile, { method: 'DELETE' })\n"
-// 		"            .then(response => {\n"
-// 		"                if (response.ok) {\n"
-// 		"                    alert('File deleted successfully');\n"
-// 		"                    window.location.reload();\n"
-// 		"                } else {\n"
-// 		"                    alert('Error deleting file');\n"
-// 		"                }\n"
-// 		"            })\n"
-// 		"            .catch(error => {\n"
-// 		"                console.error('Error:', error);\n"
-// 		"                alert('Error deleting file');\n"
-// 		"            });\n"
-// 		"    }\n"
-// 		"</script>\n");
-// 	_response_body_str.append("<div class='footer'>\n<p>Powered by Imoro-sa & Alfofern C++98 WebServer</p>\n</div>\n");
-//     _response_body_str.append("</body>\n</html>\n");
-//     return (0);
-// }
-
-
-// int Response::buildDirHtml()
-// {
-// 	std::string root = _config->root;
-// 	std::cout << Yellow << "en buildDirHtml____________________" << White << std::endl;
-//     struct dirent   *structDirent;
-//     DIR             *dir;
-// 	_response_body_str = "";
-//     dir = opendir(_target.c_str());
-//     if (dir == NULL)
-//     {   
-//         std::cerr << "Error in opendir" << std::endl;
-//         return (1);
-//     }
-//     _response_body_str.append("<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset='UTF-8'>\n<meta name='viewport' content='width=device-width, initial-scale=1.0'>\n");
-//     _response_body_str.append(
-//     "    <style>\n"
-//   	"        .footer {\n"
-//     "            text-align: center;\n"
-//     "            font-size: 0.8rem;\n"
-//     "            margin-top: 50px;\n"
-//     "            color: #940f0f;\n"
-// 	"            text-shadow: #e8fd81ad 1px 0px 2px;\n"
-//     "        }\n"
-//     "    </style>\n"
-//     );
-// 	_response_body_str.append("<title>Index of ");
-//     _response_body_str.append(_target);
-//     _response_body_str.append("</title>\n</head>\n<body style=\"background-color: black; color: red; font-family: Arial, sans-serif;\">\n");
-//     _response_body_str.append("<h1 style=\"text-align: center;\">Index of " + _target + "</h1>\n");
-//     _response_body_str.append("<table style=\"width:80%; margin: auto; border-collapse: collapse; font-size: 15px;\">\n");
-//     _response_body_str.append("<hr style=\"border: 1px solid red; width:90%;margin-bottom: 0px;\">\n");
-//     _response_body_str.append("<hr style=\"border: 1px solid #e8fd81; width:90%; margin-top:0px;\">\n");
-//     _response_body_str.append("<thead style=\"color: #e8fd81;\">\n<tr>\n<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Name</th>\n");
-//     _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">Last Modification</th>\n");
-//     _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Size</th>\n");
-//     _response_body_str.append("</tr>\n</thead>\n<tbody>\n");
-//     struct stat file_stat;
-//     std::string file_path;
-	
-//     while((structDirent = readdir(dir)) != NULL)
-//     {
-//         if(strcmp(structDirent->d_name, ".") == 0)
-//             continue;
-//         file_path = concatenatePaths(_target, structDirent->d_name,"");
-//         stat(file_path.c_str(), &file_stat);
-// 		file_path = removeRoot(file_path, root);
-// 		// std::cout << Red << "file_path: " << file_path << White << std::endl;
-//         _response_body_str.append("<tr>\n");
-//         _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">\n");
-//         _response_body_str.append("<a href=\"");
-//         _response_body_str.append(file_path);
-//         // _response_body_str.append(structDirent->d_name);
-//         if (S_ISDIR(file_stat.st_mode))
-//             _response_body_str.append("/");
-//         _response_body_str.append("\" style=\"color: red; text-decoration: none;\">");
-//         _response_body_str.append(structDirent->d_name);
-//         if (S_ISDIR(file_stat.st_mode))
-//             _response_body_str.append("/");
-//         _response_body_str.append("</a>\n");
-//         _response_body_str.append("</td>\n");
-//         _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
-//         _response_body_str.append(ctime(&file_stat.st_mtime));
-//         _response_body_str.append("</td>\n");
-//         _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
-//         if (!S_ISDIR(file_stat.st_mode))
-//             _response_body_str.append(toStr(file_stat.st_size));
-//         _response_body_str.append("</td>\n");  
-//         _response_body_str.append("</tr>\n");
-// 		// std::cout << Yellow << "file_path: " <<file_path << White << std::endl;
-//     }   
-//     _response_body_str.append("</tbody>\n</table>\n");
-// 	_response_body_str.append("<div class='footer'>\n<p>Powered by Imoro-sa & Alfofern C++98 WebServer</p>\n</div>\n");
-//     _response_body_str.append("</body>\n</html>\n");
-//     return (0);
-// }
-
 /**
  * @brief calcula el content lenght saltando los headers que pueda traer del cgi
  * 
@@ -1146,10 +832,9 @@ void Response::buildResponse()
 {	
 	if (DEBUG)
 		std::cout << "Building response is called" << std::endl;
-	if (isErrorCode() || buildBody())                                     		 // forma de comprobar si hay error en el request y si no lo hay error construye el body
-		buildErrorPage(_code);                                           	// si hay error construye el error body	
-	std::cout << "en build response codigo de error es: " << _code << std::endl;                                               // si hay error construye el error body	
-// -->		aquí debo incluir la construcción de las páginas de error con el código de error
+	if (isErrorCode() || buildBody())
+		buildErrorPage(_code);
+	std::cout << "en build response codigo de error es: " << _code << std::endl;
     std::cout<< "en build response hasIndexFlag: " << _hasIndexFlag << std::endl;
 	if	(_cgiFlag)
 	{
@@ -1168,31 +853,28 @@ void Response::buildResponse()
 		}
 		_response_str.append(_response_body_str);
 		_responseString = _response_str;
-		// _responseString = _response_body_str;
-		// std::cout << Blue << "Response body en buildResponse: " << _responseString << Reset << std::endl;
 		return ;                                                           // si es un cgi retorna
 	}
 	else if (_auto_index_flag)                                               // si es un auto index
-    {		
-        // if (buildDirHtml(_target, _body_vector,_response_body_str.size()))          // construye el index
-        if (buildDirHtml())          // construye el index	
+    {	
+		if (!isReadableDirectory(_target))
 		{
-            _code = 500;
-            // Llamar a la construcción del error body
-        }
+			std::cerr << Red << "No es leible" << std::endl;
+			buildErrorPage(403);
+		}
+		else if (buildDirHtml())
+			buildErrorPage(500);	
         else
             _code = 200;		
-        //_response_body_str.insert(_response_body_str.begin(), _response_body_str.begin(), _response_body_str.end());
-    }
-
-	setStatusline();													// construye la linea de estado de la respuesta	
-	setHeaders();														// setea los headers de la respuesta
-    if(_request->getMethod() == GET || _code != 200) 	// si el método del request no es HEAD y el método del request es GET o el código no es 200
-    {
-		_response_str.append(_response_body_str);										// agrega el body a la respuesta	
 	}
+	else if (isReadableDirectory(_target) && !_auto_index_flag)
+			buildErrorPage(403);
+	setStatusline();
+	setHeaders();
+    if(_request->getMethod() == GET || _code != 200)
+		_response_str.append(_response_body_str);
 	_responseString = _response_str;
-	
+
 	if (DEBUG)
 	{
 		//std::cout << "Response: " << _response_str << std::endl;
