@@ -31,7 +31,6 @@ Cgi::~Cgi()
 void Cgi::setEnvironment()
 {
 	std::string envp[13];
-
 	envp[0] = "REQUEST_METHOD=" + _request->getMethodStr(); 
 	envp[1] = "SCRIPT_NAME" + _request->getPath();
 	envp[2] = "PATH_INFO=" + _request->getPath();
@@ -44,10 +43,6 @@ void Cgi::setEnvironment()
 	envp[9] = "SERVER_NAME=" + _request->getServerName();
 	envp[10] = "SERVER_PORT=" + toStr(_request->getPort());
 	envp[11] = "SERVER_PROTOCOL=HTTP/1.1";
-
-	std::cerr << "CONTENT_TYPE en setEnvironment= " << envp[6] << std::endl;
-	std::cerr << "CONTENT_LENGTH en setEnvironment= " << envp[5] << std::endl;
-
 	_envp = (char **)calloc(sizeof(char *), 13);
 	for (int i = 0; i < 12; i++)
 		_envp[i] = strdup(envp[i].c_str());
@@ -75,7 +70,7 @@ void Cgi::setArguments()
 
 int Cgi::executeCgi(std::string &output, std::string &body)
 {
-    // Verificar si el archivo existe
+	// Verificar si el archivo existe
     if (int ret = checkFileOrDirectory(_path, "file") != 0)
         return ret;
 
@@ -142,54 +137,3 @@ int Cgi::executeCgi(std::string &output, std::string &body)
     output = buffer.str();									// Asigna a output la respuesta generada por el CGI
     return 200;
 }
-
-	///////////////////////                                 fin de las pruebas         ////////////////////////////////////////
-
-	// Código de Ismael para revertir 
-
-	// void Cgi::childProcess()
-	// {
-	// 	if (dup2(_pipeFd[0], STDIN_FILENO) < 0 || dup2(_pipeFd[1], STDOUT_FILENO) < 0)
-	// 		exit(-1);
-	// 	close(_pipeFd[0]);
-	// 	close(_pipeFd[1]);
-	// 	if (execve(_path.c_str(), _argv, _envp) < 0)
-	// 		exit(EXIT_FAILURE);
-	// }
-
-	/*
-		Faltaría comprobar que tenemos permisos para ejecutar el ejecutable, es decir,
-		/bin/bash o /usr/bin/python3 o el path que sea. Aunque en principio no
-		debería servir de mucho. Se podría escribir cualquier cosa y funcionaría.
-		Echarle un vistazo.
-	*/
-	// int Cgi::executeCgi(std::string &output,  std::string &body)
-	// {
-	// 	(void)body;
-	// 	if (int ret = checkFileOrDirectory(_path, "file") != 0)
-	// 		return ret;
-	// 	setEnvironment();
-	// 	setArguments();
-	// 	if (pipe(_pipeFd) == -1)
-	// 		return 500;
-	// 	_pid = fork();
-	// 	if (_pid == 0)
-	// 		childProcess();
-	// 	int status;
-	// 	waitpid(_pid, &status, 0);
-	// 	if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-	// 		if (WEXITSTATUS(status) == 255 || WEXITSTATUS(status) == 1)
-	// 			return 500;
-	// 	close(_pipeFd[1]);
-	// 	FILE *responsestream = fdopen(_pipeFd[0], "r");
-	// 	if (!responsestream)
-	// 		return 500;
-	//     while (fgets(line, sizeof(line), responsestream))
-	// 		buffer << line;
-	// 	if (ferror(responsestream))
-	// 		return 500;
-	// 	fclose(responsestream);
-	// 	close (_pipeFd[0]);
-	// 	output = buffer.str();
-	// 	return 0;
-	// }

@@ -1,53 +1,12 @@
-#!/bin/bash
-
-# Generar encabezado para salida de HTML
-echo "Content-Type: text/html"
-echo ""
-
-# Procesar método GET y POST
-if [ "$REQUEST_METHOD" == "GET" ]; then
-  DATA=$QUERY_STRING
-elif [ "$REQUEST_METHOD" == "POST" ]; then
-  read -n "$CONTENT_LENGTH" DATA
-fi
-
-# Procesar los parámetros
-num1=""
-num2=""
-
-if [ -n "$DATA" ]; then
-  DATA=$(echo "$DATA" | tr '&' '\n')
-  for param in $DATA; do
-    key=$(echo "$param" | cut -d '=' -f 1)
-    value=$(echo "$param" | cut -d '=' -f 2 | tr '+' ' ')
-
-    if [ "$key" == "num1" ]; then
-      num1=$value
-    elif [ "$key" == "num2" ]; then
-      num2=$value
-    fi
-  done
-fi
-
-# Validar que num1 y num2 sean números
-if ! [[ "$num1" =~ ^[0-9]+$ ]] || ! [[ "$num2" =~ ^[0-9]+$ ]]; then
-  result="Error: num1 y num2 deben ser números."
-else
-  # Sumar los números
-  sum=$(($num1 + $num2))
-  result="Total $num1 + $num2 = $sum"
-fi
-
-# Generar el HTML de respuesta
-cat <<EOL
 <!DOCTYPE html>
 <html>
   <head>
+    <html lang="es">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WeBSeRV - Suma de Números</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-        <style>
+    <style>
       body {
         font-family: 'Arial', sans-serif;
         background-color: #1a1a1a;
@@ -148,9 +107,9 @@ cat <<EOL
     </header>
     <nav>
       <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="../assets/forms.html">Forms</a></li>
-        <li><a href="../assets/cookies.html">Cookies</a></li>
+        <li><a href="./staticindex.html">Home</a></li>
+        <li><a href="./forms.html">Forms</a></li>
+        <li><a href="./cookies.html">Cookies</a></li>
         <li><a href="../upload">Uploads</a></li>
       </ul>
     </nav>
@@ -162,9 +121,6 @@ cat <<EOL
           <input type="number" name="num2" placeholder="Number 2" required>
           <input type="submit" value="Calculate">
         </form>
-        <div class="result">
-          $result
-        </div>
       </div>
     </section>
     <footer>
@@ -172,4 +128,3 @@ cat <<EOL
     </footer>
   </body>
 </html>
-EOL

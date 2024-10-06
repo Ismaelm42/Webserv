@@ -459,8 +459,7 @@ int Response::launchCgi()
 	_cgiFlag = true;
 	_response_body_str = "";
 	_client->initCgi(&_code, _response_body_str);
-	std::cout << "Response body en launchCgi: " << _response_body_str << std::endl;
-	if (_code != 0 && _code != 200)	// si el código no es 0 ni 200 revisar el trazadod el código
+	if (_code != 0 && _code != 200)
 		return 1;
 	return 0;
 }
@@ -678,7 +677,8 @@ std::string removeRoot(std::string target, std::string root)
 int Response::buildDirHtml()
 {
     std::string root = _config->root;
-    std::cout << Yellow << "en buildDirHtml____________________" << White << std::endl;
+    if (DEBUG)
+		std::cout << Yellow << "en buildDirHtml____________________" << White << std::endl;
     struct dirent *structDirent;
     DIR *dir;
     _response_body_str = "";
@@ -834,8 +834,8 @@ void Response::buildResponse()
 		std::cout << "Building response is called" << std::endl;
 	if (isErrorCode() || buildBody())
 		buildErrorPage(_code);
-	std::cout << "en build response codigo de error es: " << _code << std::endl;
-    std::cout<< "en build response hasIndexFlag: " << _hasIndexFlag << std::endl;
+	if (DEBUG)
+		std::cout << "en build response codigo de error es: " << _code << std::endl;
 	if	(_cgiFlag)
 	{
 		if (_code == 0 || _code == 200)
