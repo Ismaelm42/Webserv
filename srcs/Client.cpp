@@ -4,6 +4,8 @@
 Client::Client(Server_config *config, int fd, int port, std::string host)
 :_config(config), _fd(fd), _port(port), _isReady(false), _host(host)
 {
+	_bytesRead = 0;
+	_bytesSent = 0;
 	_request = new Request(this, _config);
 	_response = new Response(this, _config, _request);
 	_cgi = NULL;
