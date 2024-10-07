@@ -27,14 +27,12 @@ class Request
 		std::string									getcgiString();									// Retorna el output del cgi
 		void										saveHeader(std::string &, std::string &);       // se usa para almacenar los datos limpios sin espacios al final y al principio y con los nombres en minúsculas
 		void										fillRequest(char *data, size_t size);			// se usa para alimentar el parser con los datos recibidos
-		void										fillCgi(char *buffer);							// Almacena el output del script (CGI) en un string (_cgiString)
 		bool										isParsed();										// para comprobar desde fuera si esta parseado y se puede enviar la respuesta
 		bool										isKeepAlive();									// ver si es necesario para el funcionamiento del servidor
 		void										reset();										// llamado de momento desde el response
 		void								 		printParsed();
 		void 										setClient(Client* client);
 	 	void 										setBodyStr(std::string body);		
-		// ver si hacen falta los settters de los métodos, body, etc
 
 	private: 
 
@@ -59,52 +57,19 @@ class Request
 		std::string							_port;
 		std::string							_body_str;
 		/*				temporales				*/
-		std::string							_temp;			   // se usa para almacenar los datos recibidos limpios
-		std::string							_header_name_temp;		   // se usa para almacenar el nombre del header antes de pasarlo a setHeader
+		std::string							_temp;			   		// se usa para almacenar los datos recibidos limpios
+		std::string							_header_name_temp;		// se usa para almacenar el nombre del header antes de pasarlo a setHeader
 		/*				indices para el parseo				*/
-		int									 _ix;		  		// se usa para avanzar sobre el nombre del metodo, el tipo HTTP y la version con el string recibido
+		int									 _ix;		  			// se usa para avanzar sobre el nombre del metodo, el tipo HTTP y la version con el string recibido
 		/* 				flags				*/
-		bool								_headers_parsed;	  // se usa para indicar que se han recibido todos los campos de la solicitud
-		bool								_get_body_flag;			 // se usa para indicar que se está recibiendo el cuerpo de la solicitud ya sea con content-length o chunked
-		bool								_body_parsed;		// se usa para indicar que se ha recibido todo el cuerpo de la solicitud
-		bool								_chunked_body_flag;		  // se usa para indicar que se está recibiendo datos en formato chunked
+		bool								_headers_parsed;	  	// se usa para indicar que se han recibido todos los campos de la solicitud
+		bool								_get_body_flag;			// se usa para indicar que se está recibiendo el cuerpo de la solicitud ya sea con content-length o chunked
+		bool								_body_parsed;			// se usa para indicar que se ha recibido todo el cuerpo de la solicitud
+		bool								_chunked_body_flag;		// se usa para indicar que se está recibiendo datos en formato chunked
 		bool								_multiform_flag;
 		void		_initMethodStr(); 
 		void		_returnErr(int err, std::string msg,uint8_t charRead);
 		void		_handle_headers();
 		bool 		isValidUri();
-
 };
 
-/*
-
-Content-Type in HTML forms
-
-En una solicitud POST , que resulta del envio de un formulario html, el Content-Type de la solicitud es especificado como un atributo enctype del elemento <form> .
-html
-
-<form action="/" method="post" enctype="multipart/form-data">
-  <input type="text" name="description" value="some text" />
-  <input type="file" name="myFile" />
-  <button type="submit">Submit</button>
-</form>
-
-La solicitud se visualiza algo como esto (si tienes poco interes en los headers omite esto)
-
-POST /foo HTTP/1.1
-Content-Length: 68137
-Content-Type: multipart/form-data; boundary=---------------------------974767299852498929531610575
-
----------------------------974767299852498929531610575
-Content-Disposition: form-data; name="description"
-
-some text
----------------------------974767299852498929531610575
-Content-Disposition: form-data; name="myFile"; filename="foo.txt"
-Content-Type: text/plain
-
-(content of the uploaded file foo.txt)
----------------------------974767299852498929531610575
-
-
-*/
