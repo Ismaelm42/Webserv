@@ -12,7 +12,7 @@ class Cgi
 		char **_argv;
 		char **_envp;
 		int _pipeFd[2];
-		int _responsePipeFd[2]; // prueba de  ALfonso
+		int _responsePipeFd[2];
 	    char line[1024];
 		std::string _cmd;
 		std::string _path;
@@ -25,8 +25,5 @@ class Cgi
 		int checkCmdAndPath();
 		void setEnvironment();
 		void setArguments();
-		void childProcess();
-//		int executeCgi(std::string &output);
 		int executeCgi(std::string &output,  std::string &body);
-
 };

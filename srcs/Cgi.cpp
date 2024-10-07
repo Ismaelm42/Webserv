@@ -65,75 +65,63 @@ void Cgi::setArguments()
 	_argv[1] = NULL;
 }
 
-//Pruebas de Alfonso:
-// para revertir comentar todo hasta la línea "fin de las pruebas" comentada más abajo y descomentar la parte inferior
-
 int Cgi::executeCgi(std::string &output, std::string &body)
 {
-	// Verificar si el archivo existe
     if (int ret = checkFileOrDirectory(_path, "file") != 0)
         return ret;
-
-    setEnvironment();  // Configura las variables de entorno
-    setArguments();    // Configura los argumentos del script CGI
-
-    // Crear los pipes
-    if (pipe(_pipeFd) == -1)  								// Pipe para pasar el cuerpo de la solicitud (stdin)
+    setEnvironment();
+    setArguments();
+    if (pipe(_pipeFd) == -1)
         return 500;
-    if (pipe(_responsePipeFd) == -1)  						// Pipe para la salida del CGI (stdout)
+    if (pipe(_responsePipeFd) == -1)
         return 500;
     _pid = fork();
     if (_pid == -1)
-        return 500;  										// Error en el fork
-    if (_pid == 0) {  
-        
-        close(_pipeFd[1]); 									// Cerramos el extremo de escritura del primer pipe de la solicitud
-        if (dup2(_pipeFd[0], STDIN_FILENO) < 0) 			// Redirigimos stdin al extremo de lectura del pipe de solicitud
+        return 500;
+    if (_pid == 0)
+    {  
+        close(_pipeFd[1]);
+        if (dup2(_pipeFd[0], STDIN_FILENO) < 0)
             exit(EXIT_FAILURE);
-        close(_pipeFd[0]);  								// Cerramos el extremo de lectura del primer pipe después de duplicarlo      
-        close(_responsePipeFd[0]);							// Cerramos el extremo de lectura del segundo pipe de salida    
-        if (dup2(_responsePipeFd[1], STDOUT_FILENO) < 0) 	// Redirigimos stdout al extremo de escritura del pipe de salida
+        close(_pipeFd[0]);
+        close(_responsePipeFd[0]);
+        if (dup2(_responsePipeFd[1], STDOUT_FILENO) < 0)
             exit(EXIT_FAILURE);
-        close(_responsePipeFd[1]); 							// Cerramos el extremo de escritura después de duplicarlo      
-        if (execve(_path.c_str(), _argv, _envp) < 0)		// Ejecutar el script CGI
-            exit(EXIT_FAILURE);  							// Terminar el proceso hijo si execve falla
+        close(_responsePipeFd[1]);
+        if (execve(_path.c_str(), _argv, _envp) < 0)
+            exit(EXIT_FAILURE);
     }
-    // Proceso padre (servidor)
-    close(_pipeFd[0]);						    				// Cerramos el extremo de lectura del pipe de solicitud  
-    FILE* requestStream = fdopen(_pipeFd[1], "w");				// Escribir los datos del cuerpo de la solicitud en el primer pipe
-    if (requestStream == NULL)									// Verificar si se pudo abrir el stream del pipe
+    close(_pipeFd[0]);
+    FILE* requestStream = fdopen(_pipeFd[1], "w");
+    if (requestStream == NULL)
         return 500;							
-    size_t written = fwrite(body.c_str(), 1, body.size(), requestStream);    // Escribir los datos del body al CGI
-    
-	// En caso de problemas a la hora de pasar requests grandes o porblema con codificación de archivos habría que revisar este punto 
-	if (written < body.size()) {								// Comprobamos si se escribieron todos los datos
+    size_t written = fwrite(body.c_str(), 1, body.size(), requestStream);
+    if (written < body.size())
+    {
         fclose(requestStream);
         return 500;
     }
-    fclose(requestStream);     									// Cerramos el stream para que el hijo sepa que ya no hay más datos  
-    close(_responsePipeFd[1]);									// Cerramos el extremo de escritura del pipe de salida del CGI (ya no lo necesitamos)   
-    FILE *responseStream = fdopen(_responsePipeFd[0], "r");		// Leer la respuesta del CGI
-    if (!responseStream) {
-        std::cerr << "Error al abrir el stream de lectura: " << strerror(errno) << std::endl;
+    fclose(requestStream);
+    close(_responsePipeFd[1]);
+    FILE *responseStream = fdopen(_responsePipeFd[0], "r");
+    if (!responseStream)
         return 500;
-    }
     char line[2048];
-    std::stringstream buffer;								// Buffer para almacenar la respuesta
-    while (fgets(line, sizeof(line), responseStream)) {		// mete la respuesta línea por línea y almacenarla en un buffer	
-        buffer << line;										// Almacenar la línea en el buffer
-    }
-    if (ferror(responseStream)) {							// Verificar si hubo un error al leer la respuesta
+    std::stringstream buffer;
+    while (fgets(line, sizeof(line), responseStream))
+        buffer << line;
+    if (ferror(responseStream))
+    {
         fclose(responseStream);
         return 500;
     }
-    fclose(responseStream);  								// Cerramos el stream de lectura
-    close(_responsePipeFd[0]);  							// Cerramos el pipe de lectura   
-    int status;												// Variable para almacenar el estado de salida del hijo				
+    fclose(responseStream);
+    close(_responsePipeFd[0]);
+    int status;
     waitpid(_pid, &status, 0);
     if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
         return 500;
     }
-	
-    output = buffer.str();									// Asigna a output la respuesta generada por el CGI
+    output = buffer.str();
     return 200;
 }

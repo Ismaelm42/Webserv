@@ -55,8 +55,8 @@ struct Location_config
 	size_t body_size;
 	std::string location;
 	std::set<std::string> methods;
-	std::vector<std::string> index; 								// chequear este antes que el general
-	std::pair<int, std::string> redir;								// código de error nuevadirección
+	std::vector<std::string> index;
+	std::pair<int, std::string> redir;
 	std::vector<std::pair<std::string, std::string> > cgi;
 	Location_config() : autoindex(false) , body_size(0) {};
 };
@@ -65,19 +65,19 @@ struct Server_config
 {
 	size_t body_size;
 	std::string root;
-	std::vector<std::string> index;      							// sino hay en location se mira en general y si no 404
+	std::vector<std::string> index;
 	std::vector<std::string> server_names;
-	std::map<int, std::string> error_pages; 						// mapa con código de error y ruta al target marcado por confirguración
-	std::vector<Location_config> locations;							// chequear este antes que el general y si no 404
+	std::map<int, std::string> error_pages;
+	std::vector<Location_config> locations;
 	std::vector<std::pair<std::string, int> > host_port;
 	Server_config() : body_size(1000000) {};
 };
 
 struct Epoll_events
 {
-	int epfd;														// Epoll fd
-	std::vector<struct epoll_event> log;							// Notificaciones de Eventos
-	std::map<int, struct epoll_event> added;						// Configuración de Eventos
+	int epfd;
+	std::vector<struct epoll_event> log;
+	std::map<int, struct epoll_event> added;
 };
 
 template <typename T>
@@ -114,17 +114,6 @@ enum Methods
 	NONE
 };
 
-/**
- * @brief definir estado del parseo.
- * 
- * Pendiente de revisar para ver si es posible dividir en más estado y 
- * pendiente de corregir la función de error para ver si es necesario incluir los mensajes
- * o si lo dejamos como un debugger.
- * 
- *    ----- Pendiente de revisar la forma de lectura de las partes que se hacen comparando con cadenas
- *    ----- Sobre todo el protocolo ya que he dejado por defecto el 1.1 como único protocolo aceptado
- * 
- */
 enum fillStatusEnum				
 {
 	get_First,
@@ -155,4 +144,3 @@ enum fillStatusEnum
 	get_Body,
 	Parsed
 };
-

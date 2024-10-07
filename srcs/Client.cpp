@@ -27,10 +27,6 @@ void Client::buildResponse()
 	_isReady = true;
 }
 
-/*
-	Gestiona la request y si la lectura del socket no es posible cierra la conexión con el socket.
-	En desarrollo.
-*/
 int Client::getRequest()
 {
 	char buffer[10000];
