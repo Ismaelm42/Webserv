@@ -14,9 +14,8 @@ Request::Request(Client *client, Server_config *config)
 	_uri_size = 0;
 	_chunk_size = 0;
 	_method = NONE;
-	_ix = 0;										//	
-	//_ix = 0;
-	_fillStatus = get_First;					  // el estado inicial es get_First 
+	_ix = 0;										
+	_fillStatus = get_First;
 	_headers_parsed = false;
 	_get_body_flag = false;
 	_body_parsed = false;
@@ -148,7 +147,9 @@ void	Request::saveHeader(std::string &name, std::string &value){
 
 void Request::_returnErr(int err, std::string msg,uint8_t charRead = 0){
 	_error_code = err;
-	std::cout << "Error = " << err <<": "<< msg << ": " << charRead << std::endl;
+	_fillStatus = Parsed;
+	if (DEBUG)
+		std::cerr << Red << "Error = " << err <<": "<< msg << ": " << charRead << Reset << std::endl;
 }
 
 /**
@@ -180,26 +181,18 @@ bool	allowedURIChar(uint8_t ch){
  * @return false 
  */
 bool	checkPath(std::string path){
-	std::string tmp(path);							 // se copia el path en tmp
-	// if (DEBUG)
-	// {
-	// 	std::cout << "checkPath_______________________________________-" << std::endl;
-	// 	std::cout << "path = " << path << std::endl;
-	// }
-	char *res = strtok((char*)tmp.c_str(), "/");		// se usa strtok para separar el path por las / y se almacena en res la primera sección
-	int pos = 0;										// se inicializa pos a 0
-	while (res != NULL)								// mientras res no sea NULL  
+	std::string tmp(path);
+	char *res = strtok((char*)tmp.c_str(), "/");
+	int pos = 0;
+	while (res != NULL)
 	{
-		if (!strcmp(res, ".."))						// si res es igual a .. se decrementa pos
+		if (!strcmp(res, ".."))
 			pos--;
 		else
-			pos++;									 // si no, se incrementa pos
+			pos++;
 		if (pos < 0)
-		{
-			return (1);								// si pos es menor que 0 se devuelve 1
-		}
-		
-		res = strtok(NULL, "/");						// se sigue con la siguiente sección separada por / o el final de la cadena
+			return (1);
+		res = strtok(NULL, "/");
 	}
 	return (0);
 }
@@ -332,7 +325,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 	if (DEBUG){
 		std::cout << "fillRequest" << std::endl;
 		std::cout << "bytesRead = " << bytesRead << std::endl;
-		//std::cout << "dt = " << dt << std::endl;
+		std::cout << "dt = " << dt << std::endl;
 	}
 	u_int8_t charRead;														// unsigned char  charRead para igualar a dt[i]   
 	std::string protocol = "HTTP/1.1";										// string HTTP para comparar con el protocolo HTTP/1.1 
@@ -702,8 +695,8 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 	if( _fillStatus == Parsed)												// si el estado es Parsed
 	{
 		_body_str.append((char*)_body.data(), _body.size());				// Se incluye el body en _body_str
-		//if (DEBUG)	
-		//	printParsed();						// se imprime el path
+		if (DEBUG)	
+			printParsed();						// se imprime el path
 	}																		// es más eficiente que hacer append de un char a un string
 }
 
@@ -732,11 +725,10 @@ void	Request::reset(){
 	_multiform_flag = false;
 }
 
-
 /**
- * @brief compara si _state == parsing_done
+ * @brief check if _state == parsing_done
  * 
- * @return true si es igual, false si no lo es 
+ * @return false if they are different 
  */
 bool    Request::isParsed()
 {

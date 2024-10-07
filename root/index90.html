@@ -4,7 +4,7 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>WeBSeRV</title>
-		<link rel="icon" href="../favicon.ico" type="image/x-icon">
+		<link rel="icon" href="/favicon.ico" type="image/x-icon">
 		<style>
 	        body {
 	            font-family: 'Arial', sans-serif;
@@ -15,12 +15,13 @@
 	        }
 	        header {
 	            background-color: #000000;
-	            border-bottom: 5px solid #ff0000;
 	            padding: 20px 0;
 	            text-align: center;
+	            border-bottom: 5px solid white;
+
 	        }
 	        header h1 {
-	            color: #ff0000;
+	            color: #fff;
 	            font-size: 2.5em;
 	            font-weight: bold;
 	            text-transform: uppercase;
@@ -28,12 +29,15 @@
 	            margin: 0;
 				line-height: 1.5em;
 	        }
+			nav{
+	            border-bottom: 5px solid #ff0000;
+			}
 	        nav ul {
 	            list-style: none;
 	            padding: 0;
 	            display: flex;
 	            justify-content: center;
-	            background-color: #ff0000;
+	            background-color: #fff;
 	            margin: 0;
 				line-height: 2.5em;
 	        }
@@ -50,12 +54,12 @@
 	            letter-spacing: 2px;
 	        }
 	        nav ul li a:hover {
-	            color: #ffffff;
+	            color: #ff0000;
 	        }
 			footer {
 	            margin-top: 40px;
 	            font-size: 14px;
-	            color: #666;
+	            color: #ff0000;
 				text-align: center;
 	        }
 	        .footer-text {
@@ -66,8 +70,8 @@
 	            position: absolute;
 	            top: 100%;
 	            left: 0;
-	            background-color: #ff0000;
-	            padding: 0;
+	            background-color: #ff0000;	
+				padding: 0;
 	            list-style: none;
 	            margin: 0;
 	        }
@@ -92,9 +96,6 @@
 	        nav ul li ul li a {
 	            transition: color 0.3s ease;
 	        }
-			nav{
-	            border-bottom: 5px solid #ff0000;
-			}
 	        .content {
 	            display: flex;
 	            justify-content: center;
@@ -105,7 +106,7 @@
 	            margin: 20px;
 	            width: 250px;
 	            height: 250px;
-	            border: 5px solid #ff0000;
+	            border: 5px solid #fff;
 	            border-radius: 50%;
 	            overflow: hidden;
 	            display: flex;
@@ -119,7 +120,7 @@
 			h1 span{
 					font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
 					font-size: 1.2em;
-					color: red;
+					color: ff0000;
 					font-weight: bold;
 				}	
 	        @media (max-width: 768px) {
@@ -162,7 +163,19 @@
 				font-family: 'TrashMetal';
 				src: url('https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap');
 			}
+			#intro {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				background-color: black;
+				position: relative;
+				overflow: hidden;
+				width: 100%;
+	            height: 100%;
+			}
 	        #main-content {
+	            opacity: 0;
+	            transition: opacity 1s ease-in;
 				position: absolute;
 	            top: 0;
 	            left: 0;
@@ -170,6 +183,14 @@
 				width: 100%;
 	            height: 100%;	
 	        }
+	        #main-content.show {
+	            opacity: 1;
+	        }
+			@keyframes flicker {
+				0% { opacity: 1; }
+				50% { opacity: 0.8; }
+				100% { opacity: 1; }
+			}
 	        #intro {
 	            display: flex;
 	            justify-content: center;
@@ -181,33 +202,82 @@
 	            top: 0;
 	            left: 0;
 	            z-index: 10;
-	        } */
+	        }
+			#intro h1 {
+				font-family: 'TrashMetal', sans-serif;
+				font-size: 6vw;
+				color: white;
+				text-transform: uppercase;
+				letter-spacing: 0.2em;
+				animation: flicker 0.1s infinite;
+				position: relative;
+			}
+			@keyframes lightning {
+				0%, 100% { background-color: black; }
+				50% { background-color: white; }
+			}
+			@keyframes glitch {
+				0% { transform: translate(0, 0); }
+				20% { transform: translate(5px, -5px); }
+				40% { transform: translate(-5px, 5px); }
+				60% { transform: translate(5px, 5px); }
+				80% { transform: translate(-5px, -5px); }
+				100% { transform: translate(0, 0); }
+			}
+			#intro h1::before {
+				content: "Server 200 OK";
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				color: white;
+				font-size: 3rem;
+				letter-spacing: 0.1em;
+				animation: glitch 0.3s infinite alternate;
+				opacity: 0.1;
+			}
+			@keyframes fadeOut {
+				0% { opacity: 1; }
+				100% { opacity: 0; visibility: hidden; }
+			}
+			#intro.fade-out {
+				animation: fadeOut 1s forwards;
+			}
 		</style>
 	</head>
 	<body>
+		<div id="intro">	
+			<h1> <span>42- </span>WEBSERVER<span> - 42</span></h1>
+		</div>
 		<div id="main-content">
 		    <header>
 			<h1>- <span>42 - </span>WEBSERVER<span> - 42</span> -</h1>	
 			</header>
 			<nav>
 			    <ul>
-			        <li><a href="#">Home</a></li>
-			        <li><a href="/assets/forms.html">Forms</a></li>
-			        <li><a href="/assets/cookies.html">Cookies</a></li>
-			        <li><a href="/upload">Uploads</a></li>
+			        <li><a href="./assets/staticindex.html">Home</a></li>
+			        <li><a href="./assets/forms.html">Forms</a></li>
+			        <li><a href="./assets/cookies.html">Cookies</a></li>
+			        <li><a href="./upload">Uploads</a></li>
 			    </ul>
 			</nav>
 			<section class="content">
 			    <div class="image-container">
-			    	<img src="./img1.jpg" alt="Image 1">
+			    	<img src="./assets/img1.jpg" alt="Image 1">
 			    </div>
 			    <div class="image-container">
-					<img src="./img2.png" alt="Image 2">
+					<img src="./assets/img2.png" alt="Image 2">
 			    </div>
 			</section>
 			<footer>
 				<p class="footer-text">2024 Imoro-sa & Alfofern Webserv. All Rights Reserved.</p>
 			</footer>
-		</div>	
+		</div>
+		<script>
+		setTimeout(() => {
+			document.getElementById('intro').classList.add('fade-out');
+			document.getElementById('main-content').classList.add('show')
+		},2000);
+		</script>	
 	</body>
 </html>
