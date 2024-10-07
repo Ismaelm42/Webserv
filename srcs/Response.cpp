@@ -218,11 +218,57 @@ std::string concatenatePaths(std::string str1, std::string str2, std::string str
 	return (res);														// retorna el resultado	
 }
 
+bool isReadableDirectory(const std::string& path) {
+	
+	struct stat info;
+	// Verificar si la ruta es un directorio
+	if (stat(path.c_str(), &info) != 0) {
+		// No se pudo acceder al archivo o directorio
+		return false;
+	} else if (!(info.st_mode & S_IFDIR)) {
+		// No es un directorio
+		return false;
+	}
+	// Verificar si el directorio tiene permisos de lectura
+	if (access(path.c_str(), R_OK) != 0) {
+		// No tiene permisos de lectura
+		return false;
+	}
+	// Es un directorio y tiene permisos de lectura
+	return true;
+}
+
+int checkDirectoriesPath(const std::string& filepath) {
+
+    std::string trimmedFilepath = filepath;
+    if (trimmedFilepath.substr(0, 2) == "./") {
+        trimmedFilepath.erase(0, 2);
+    }
+    std::vector<std::string> parts;
+    std::stringstream ss(trimmedFilepath);
+    std::string item;
+    while (std::getline(ss, item, '/')) {
+        if (!item.empty()) {
+            parts.push_back(item);
+        }
+    }
+    std::string currentPath = "";
+    for (size_t i = 0; i < parts.size() - 1; ++i) {
+        currentPath += parts[i] + "/";
+        if (!isReadableDirectory(currentPath)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int Response::getFile()
 {
     // Comprobar si el archivo existe
     struct stat buffer;
-    if (stat(_target.c_str(), &buffer) != 0) 	// Comprobar si el archivo existe
+    if (checkDirectoriesPath(_target.c_str()))	// chequea los directorios del path
+	    return (setReturnCode(403));				
+	if (stat(_target.c_str(), &buffer) != 0) 	// Comprobar si el archivo existe
     {
 		std::cout << "No se pudo acceder al archivo o directorio" << std::endl;
 		std::cout << "errno: " << errno << std::endl;
@@ -246,24 +292,17 @@ int Response::getFile()
     return (0);
 }
 
-void	Response::setHeaders()								// setea los headers de la respuesta
+void	Response::setHeaders()
 {	
-	////////////////////////////////////
-	//	 **   Content-Type	**		  //
-	////////////////////////////////////
 	MimeType _mime;
 	_response_str.append("Content-Type: ");		
 	mime = "text/html";
-	if(_target.rfind(".", std::string::npos) != std::string::npos && _code == 200)	// si el target file tiene un punto, empezando por el final lo identifica como extension 
-		mime = _mime.getMimeType(_target.substr(_target.rfind(".", std::string::npos) + 1)); // obtiene el mime type de la extension del archivo
-	_response_str.append(mime);   // Corregido: remover el paréntesis extra
+	if(_target.rfind(".", std::string::npos) != std::string::npos && _code == 200)
+		mime = _mime.getMimeType(_target.substr(_target.rfind(".", std::string::npos) + 1));
+	_response_str.append(mime);
 	_response_str.append("\r\n");
 	if (DEBUG)
 	std::cout << White << "contentType: " <<_response_str << White;
-
-	////////////////////////////////////
-	//  ** Location - redirection **  //				OJO !!! REvisar redirecciones no funcionan sin la ultima barra en la location
-	////////////////////////////////////
 	if (_location.length())
 	{
 		if(_location[_location.length() - 1] != '/')		
@@ -272,10 +311,6 @@ void	Response::setHeaders()								// setea los headers de la respuesta
 			std::cout << "Location: " << _location << std::endl;
 		_response_str.append("Location: "+ _location +"\r\n");
 	}
-
-	//////////////////////////////////////
-	//   **   Content-Length	**		//
-	//////////////////////////////////////
 	std::stringstream ss;
 	ss << _response_body_str.length();
 	_response_str.append("Content-Length: " + ss.str() + "\r\n");
@@ -287,9 +322,6 @@ void	Response::setHeaders()								// setea los headers de la respuesta
 	// Pendiente de ver si es necesario devolver la cookie o si te pueden pasar 
 	// la petición de Set-Cookie y hubiera que incluirla en la respuesta
 
-	//////////////////////////////////////
-	//	**   End of headers	**   		//
-	//////////////////////////////////////
 	_response_str.append("\r\n");
 
 	if (DEBUG)
@@ -367,26 +399,6 @@ int Response::isNotValidMethod()
 		}
 	// }
 	return (setReturnCode(405));
-}
-
-bool isReadableDirectory(const std::string& path) {
-	
-	struct stat info;
-	// Verificar si la ruta es un directorio
-	if (stat(path.c_str(), &info) != 0) {
-		// No se pudo acceder al archivo o directorio
-		return false;
-	} else if (!(info.st_mode & S_IFDIR)) {
-		// No es un directorio
-		return false;
-	}
-	// Verificar si el directorio tiene permisos de lectura
-	if (access(path.c_str(), R_OK) != 0) {
-		// No tiene permisos de lectura
-		return false;
-	}
-	// Es un directorio y tiene permisos de lectura
-	return true;
 }
 
 int Response:: setIndex()			// el index puede se un directorio?
