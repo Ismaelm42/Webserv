@@ -59,8 +59,8 @@ void Response::buildErrorMap() {
 	httpStatusMap.insert(std::make_pair(511, std::make_pair("Network Authentication Required", "Es necesaria la autenticación de red para acceder al recurso.")));
 }
 
-Response::Response(Client *client, Server_config *config, Request *request, struct Epoll_events *events)
-:_client(client), _config(config), _request(request), _events(events), _cgiFlag(false), _auto_index_flag(0)												// constructor
+Response::Response(Client *client, Server_config *config, Request *request)
+:_client(client), _config(config), _request(request), _cgiFlag(false), _auto_index_flag(0)												// constructor
 {
 	if (DEBUG)
 		std::cout << "Response constructor" << std::endl;

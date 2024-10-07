@@ -27,14 +27,14 @@
 #include <vector>
 #include <dirent.h> 
 
-	#define	Black	"\e[0;30m"
-	#define	Red		"\e[0;31m"
-	#define	Green	"\e[0;32m"
-	#define	Yellow	"\e[0;33m"
-	#define	Blue	"\e[0;34m"
-	#define	Purple	"\e[0;35m"
-	#define	Cyan	"\e[0;36m"
-	#define	White	"\e[0;37m"
+#define	Black	"\e[0;30m"
+#define	Red		"\e[0;31m"
+#define	Green	"\e[0;32m"
+#define	Yellow	"\e[0;33m"
+#define	Blue	"\e[0;34m"
+#define	Purple	"\e[0;35m"
+#define	Cyan	"\e[0;36m"
+#define	White	"\e[0;37m"
 
 #define High_Black	"\e[0;90m"
 #define	High_Red	"\e[0;91m"
@@ -78,26 +78,6 @@ struct Epoll_events
 	std::vector<struct epoll_event> log;							// Notificaciones de Eventos
 	std::map<int, struct epoll_event> added;						// Configuración de Eventos
 };
-
-inline void addEvent(int fd, struct Epoll_events *events)
-{
-	if (fd > 0)
-	{
-		struct epoll_event newEvent;
-		newEvent.events = EPOLLIN | EPOLLOUT;
-		newEvent.data.fd = fd;
-		events->added[fd] = newEvent;
-		if (epoll_ctl(events->epfd, EPOLL_CTL_ADD, fd, &events->added[fd]) == -1)
-			throw std::runtime_error("Error: epoll_ctl_add: " + std::string(strerror(errno)));
-	}
-}
-
-inline void deleteEvent(int fd, struct Epoll_events *events)
-{
-	if (epoll_ctl(events->epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
-		throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
-    events->added.erase(fd);
-}
 
 template <typename T>
 std::string toStr(const T toConvert)

@@ -72,7 +72,7 @@ void Webserv::run()
 	{
 		server = *it;
 		fd = server->acceptConnections();
-		addEvent(fd, _events);
+		server->addEvent(fd);
 		server->addClient(fd);
 		server->handleEvents();
 		it = (++it == _servers.end()) ? _servers.begin() : it;
