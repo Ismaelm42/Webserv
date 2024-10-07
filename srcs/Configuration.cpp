@@ -224,7 +224,7 @@ void Configuration::setCgi()
 	if (second.rfind(";") != second.size() - 1)
 		throw std::runtime_error(logError("Error: syntax error in \"cgi\" directive"));
 	second.erase(second.size() - 1);
-	checkFileOrDirectory(second, "file");
+	// checkFileOrDirectory(second, "file");
 	_itConfig->locations.back().cgi.push_back(std::make_pair(first, second));
 }
 
@@ -248,7 +248,7 @@ void Configuration::handleLocations()
 		if (_tokens.end() - _tokens.begin() != 3)
 			throw std::runtime_error(logError("Error: invalid number of arguments in \"location\" directive"));
 		*(_itToken) = _itConfig->root + *(_itToken);
-		checkFileOrDirectory(*(_itToken), "dir");
+		// checkFileOrDirectory(*(_itToken), "dir");
 		if (*(_itToken + 1) != "{")
 			throw std::runtime_error(logError("Error: unexpected \"" + *(_itToken + 1) + "\". open curly brace missing in \"location\" directive"));
 		Location_config config;
@@ -269,7 +269,11 @@ void Configuration::handleLocations()
 	else if (_tokens[0] == "cgi")
 		setCgi();
 	else if (_tokens[0] == "}" && (_itToken) == _tokens.end())
+	{
 		_inLocationBlock = false;
+		if (_itConfig->locations.back().body_size == 0)
+			_itConfig->locations.back().body_size = _itConfig->body_size;
+	}
 	else
 		throw std::runtime_error(logError("Error: unexpected \"" + _tokens[0] + "\" in \"location\" directive"));
 }
@@ -350,7 +354,7 @@ void Configuration::setRootDirectory()
 	_itToken->erase(_itToken->size() - 1);
 	while (_itToken->rfind("/") == _itToken->size() - 1)
 		_itToken->erase(_itToken->size() - 1);
-	checkFileOrDirectory(*_itToken, "dir");
+	// checkFileOrDirectory(*_itToken, "dir");
 	_itConfig->root = *_itToken;
 }
 
@@ -408,7 +412,7 @@ void Configuration::setErrorPages()
 	if (file.find('/') != 0)
 		file = "/" + file;
 	file = _itConfig->root + file;
-	checkFileOrDirectory(file, "file");
+	// checkFileOrDirectory(file, "file");
 	for (; _itToken != _tokens.end() - 1; _itToken++)
 	{
 		std::string code = *_itToken;
@@ -579,11 +583,8 @@ void Configuration::parsing()
 		handleConfigLine();
 		_tokens.clear();
 	}
-	if (DEBUG)
-	{
 		printServerConfig();
 		std::cout << std::endl << std::endl;
-	}
 }
 
 /*

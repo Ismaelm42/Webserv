@@ -76,6 +76,26 @@ int Server::acceptConnections()
 	return client;
 }
 
+void Server::addEvent(int fd)
+{
+	if (fd > 0)
+	{
+		struct epoll_event newEvent;
+		newEvent.events = EPOLLIN | EPOLLOUT;
+		newEvent.data.fd = fd;
+		_events->added[fd] = newEvent;
+		if (epoll_ctl(_events->epfd, EPOLL_CTL_ADD, fd, &_events->added[fd]) == -1)
+			throw std::runtime_error("Error: epoll_ctl_add: " + std::string(strerror(errno)));
+	}
+}
+
+void Server::deleteEvent(int fd)
+{
+	if (epoll_ctl(_events->epfd, EPOLL_CTL_DEL, fd, NULL) == -1)
+		throw std::runtime_error("Error: epoll_ctl_delete: " + std::string(strerror(errno)));
+    _events->added.erase(fd);
+}
+
 /*
 	Registra un nuevo evento en el epoll y añade un nuevo cliente a la lista de clientes.
 		Si accept devuelve por un fd válido y no -1 se asigna un nuevo cliente con ese fd y se crea un nuevo cliente.
@@ -92,7 +112,7 @@ void Server::addClient(int fd)
 	if (fd > 0 && _clients.find(fd) == _clients.end())
 	{
 		std::cout << High_Green << "Socket with fd " << fd << " has been created" << Reset << std::endl;
-    	Client *client = new Client(_config, _events, fd, _port, _host);
+    	Client *client = new Client(_config, fd, _port, _host);
     	_clients[fd] = client;
 	}
 }
@@ -126,9 +146,9 @@ void Server::handleRequest(int fd)
 {
 	if (_clients.find(fd) != _clients.end())
 	{
-		if (_clients[fd]->getRequest() < 0)
+		if (!_clients[fd]->_isReady && _clients[fd]->getRequest() < 0)
 		{
-			deleteEvent(fd, _events);
+			deleteEvent(fd);
 			deleteClient(fd);
 		}
 	}
@@ -140,17 +160,14 @@ void Server::handleRequest(int fd)
 		También verifica si es un fd de un proceso cgi, y le atribuye el fd del cliente.
 		Si es así, llama a sendResponse() del cliente para enviar la respuesta.
 */
-void Server::handleResponse(int fd) //Con más de una configuración de server peta. Está accediendo a lugares que no puede.
+void Server::handleResponse(int fd)
 {
 	if (_clients.find(fd) != _clients.end())
 	{
-		if (_clients[fd]->_isReady)
+		if (_clients[fd]->_isReady && _clients[fd]->sendResponse() < 0)
 		{
-			if (_clients[fd]->sendResponse() < 0)
-			{
-				deleteEvent(fd, _events);
-				deleteClient(fd);
-			}
+			deleteEvent(fd);
+			deleteClient(fd);
 		}
 	}
 }
@@ -180,7 +197,7 @@ void Server::handleEvents()
 		if (_events->log[i].events & EPOLLERR || _events->log[i].events & EPOLLHUP)
 		{
 			std::cout << Red << "Connection unexpectedly reset by peer" << Reset << std::endl;
-			deleteEvent(_events->log[i].data.fd, _events);
+			deleteEvent(_events->log[i].data.fd);
 			deleteClient(_events->log[i].data.fd);
 		}
 		else

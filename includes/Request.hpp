@@ -9,7 +9,7 @@ class Client;
 class Request
 {
 	public:
-		Request(Client *client, Server_config *config, struct Epoll_events *events);
+		Request(Client *client, Server_config *config);
 		~Request();
 		Methods										&getMethod();									// se usa para obtener el método de la solicitud, valor de la enumeración 
 		std::string									getMethodStr();									// se usa para obtener el método en formato string
@@ -40,7 +40,6 @@ class Request
 
 		Client 								*_client;				// Puntero al Client de este request
 		Server_config 						*_config;				// Puntero a la estructura Config
-		struct Epoll_events					*_events;				// Puntero a la estructura Epoll_Events
 		Methods								_method;				// se usa para almacenar el método a comparar con el metodo recibido basado en la primera letra
 		std::map<u_int8_t, std::string>		_methods_str;			// se usa para comparar el metodo recibido alacendo strings  de los métodos recibidos 
 		std::string							_cgiString;				// Para almacenar el output del script del CGI

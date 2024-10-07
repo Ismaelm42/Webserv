@@ -1,7 +1,7 @@
 #include "../includes/lib.hpp"
 
-Request::Request(Client *client, Server_config *config, struct Epoll_events *events)
-:_client(client), _config(config), _events(events)
+Request::Request(Client *client, Server_config *config)
+:_client(client), _config(config)
 {
 	if (DEBUG)
 		std::cout << "Request constructor" << std::endl;
@@ -26,7 +26,6 @@ Request::Request(Client *client, Server_config *config, struct Epoll_events *eve
 	_header_name_temp = "";
 	_multiform_flag = false;
 	_boundary = "";
-	(void)_events;
 }
 
 Request::~Request()

@@ -12,7 +12,7 @@ class Request;
 class Response
 {
     public:
-		Response(Client *client, Server_config *config, Request *_request, struct Epoll_events *_events);
+		Response(Client *client, Server_config *config, Request *_request);
         //Response();														// constructor		
 	//	Response(Client *c);												// constructor con cliente
 		//Response(Request&);												// constructor con request	
@@ -39,7 +39,6 @@ class Response
 		Client*					_client;												// cliente
 		Server_config* 			_config;												// request
 		Request*				_request;
-		struct Epoll_events 	*_events;
 		bool 					_cgiFlag;
 		std::map<int, std::pair<std::string, std::string> > httpStatusMap;
 		std::string 			getStatusDescription(int statusCode);
@@ -62,6 +61,4 @@ class Response
 		int 				buildErrorPage(int code);
 		void				buildErrorMap();	
 		void 				getDefaultErrorBody(int code);
-		std::string 		removeBoundary(std::string &body, std::string &boundary);
-
 };
