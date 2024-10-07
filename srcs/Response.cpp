@@ -99,16 +99,14 @@ Response& Response::operator=(const Response& other) {
 	if (this != &other) {  // Evitar autoasignación
 		if (DEBUG)
 			std::cout << "Response assignment operator" << std::endl;
-		
-		_responseString = other._responseString;  // Copiar la cadena de respuesta
-		_code = other._code;					  // Copiar el código de respuesta
-		_client = other._client;				  // Copiar el puntero (copia superficial)
+		_responseString = other._responseString;
+		_code = other._code;
+		_client = other._client;
 	}
 	return *this;
 }
 
-
-Response::~Response()													// destructor								
+Response::~Response()
 {
 	if(DEBUG)
 		std::cout << "Response destructor" << std::endl;
