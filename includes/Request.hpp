@@ -27,7 +27,6 @@ class Request
 		std::string									getcgiString();									// Retorna el output del cgi
 		void										saveHeader(std::string &, std::string &);       // se usa para almacenar los datos limpios sin espacios al final y al principio y con los nombres en minúsculas
 		void										fillRequest(char *data, size_t size);			// se usa para alimentar el parser con los datos recibidos
-		void										fillCgi(char *buffer);							// Almacena el output del script (CGI) en un string (_cgiString)
 		bool										isParsed();										// para comprobar desde fuera si esta parseado y se puede enviar la respuesta
 		bool										isKeepAlive();									// ver si es necesario para el funcionamiento del servidor
 		void										reset();										// llamado de momento desde el response
@@ -42,7 +41,6 @@ class Request
 		Server_config 						*_config;				// Puntero a la estructura Config
 		Methods								_method;				// se usa para almacenar el método a comparar con el metodo recibido basado en la primera letra
 		std::map<u_int8_t, std::string>		_methods_str;			// se usa para comparar el metodo recibido alacendo strings  de los métodos recibidos 
-		std::string							_cgiString;				// Para almacenar el output del script del CGI
 		std::string							_path;				    // se usa para almacenar la ruta del recurso solicitado
 		std::string							_query;					// se usa para almacenar la query de la solicitud /ver como gestionar los params
 		std::string							_fragment;

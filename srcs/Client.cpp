@@ -21,7 +21,7 @@ Client::~Client()
 
 void Client::buildResponse()
 {
-	std::cout << Cyan << "Message received from fd " << _fd << "\taddress " << _host << ":" << _port << Reset << std::endl;
+	std::cout << Log << Cyan << "Message received from socket " << _fd << " " << _host << ":" << _port << Reset << std::endl;
 	_response->buildResponse();
 	_res = _response->getResString();
 	_isReady = true;
@@ -40,7 +40,7 @@ int Client::getRequest()
 	_bytesRead = read(_fd, buffer, 10000);
 	if (_bytesRead == 0 || _bytesRead < 0)
 	{
-		std::cout << Red << "Connection closed on fd " << _fd << "\taddress " << _host << ":" << _port << Reset << std::endl;
+		std::cout << Log << Red << "Connection closed on socket " << _fd << " " << _host << ":" << _port << Reset << std::endl;
 		return -1;
 	}
 	_request->fillRequest(buffer, _bytesRead);
@@ -55,14 +55,15 @@ int Client::sendResponse()
 	if (bytes <= 0)
 	{
 		if (bytes < 0)
-			std::cout << Red << "Error sending data on fd " << _fd << "\taddress " << _host << ":" << _port << Reset << std::endl;
+			std::cout << Log << Red << "Error sending data on socket " << _fd << " " << _host << ":" << _port << Reset << std::endl;
 		else
-			std::cout << Red << "Connection closed on fd " << _fd << "\taddress " << _host << ":" << _port << Reset << std::endl;
+			std::cout << Log << Red << "Connection closed on socket " << _fd << " " << _host << ":" << _port << Reset << std::endl;
 		return -1;
 	}
 	_bytesSent += bytes;
 	if (_bytesSent == static_cast<ssize_t>(_res.size()))
 	{
+		std::cout << Log << High_Cyan << "Response sent to socket " << _fd << " " << _host << ":" << _port << Reset << std::endl;
 		resetClient();
 		_isReady = false;
 	}

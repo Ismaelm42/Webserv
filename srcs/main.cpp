@@ -9,7 +9,7 @@ void	handleSignal(int signal)
 {
 	static_cast<void>(signal);
 	globalSigint = 1;
-	std::cout << Red << "\nServer shutdown" << Reset << std::endl;
+	std::cout << "\n" << Log << Red << "Server shutdown" << Reset << std::endl;
 }
 
 int main(int argc, char **argv)

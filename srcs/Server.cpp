@@ -38,7 +38,7 @@ Server::Server(std::string host, int port, struct Epoll_events *events, Server_c
 
     if (listen(_socket, 50) < 0)
         throw std::runtime_error("Error: listen: " + std::string(strerror(errno)));
-    std::cout << High_Green << "Server listenning on " << _host << ":" << _port << Reset << std::endl;
+    std::cout << Log << Green << "Listenning on " << _host << ":" << _port << Reset << std::endl;
 }
 /*
 	Destructor de la clase Server.
@@ -111,7 +111,7 @@ void Server::addClient(int fd)
 {
 	if (fd > 0 && _clients.find(fd) == _clients.end())
 	{
-		std::cout << High_Green << "Socket with fd " << fd << " has been created" << Reset << std::endl;
+		std::cout << Log << Green << "Client associated with socket " << fd << " has been created" << Reset << std::endl;
     	Client *client = new Client(_config, fd, _port, _host);
     	_clients[fd] = client;
 	}
@@ -132,7 +132,7 @@ void Server::deleteClient(int fd)
 	delete _clients[fd];
 	_clients.erase(fd);
 	close(fd);
-	std::cout << Yellow << "Event and client associated with fd " << fd << " has been removed." << Reset << std::endl;   
+	std::cout << Log << Red << "Client associated with socket " << fd << " has been removed." << Reset << std::endl;   
 }
 
 /*
@@ -196,7 +196,7 @@ void Server::handleEvents()
 	{
 		if (_events->log[i].events & EPOLLERR || _events->log[i].events & EPOLLHUP)
 		{
-			std::cout << Red << "Connection unexpectedly reset by peer" << Reset << std::endl;
+			std::cout << Log << Red << "Connection unexpectedly reset by peer" << Reset << std::endl;
 			deleteEvent(_events->log[i].data.fd);
 			deleteClient(_events->log[i].data.fd);
 		}
