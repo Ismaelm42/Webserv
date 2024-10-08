@@ -57,6 +57,8 @@ struct Location_config
 	std::vector<std::string> index; 								// chequear este antes que el general
 	std::pair<int, std::string> redir;								// código de error nuevadirección
 	std::vector<std::pair<std::string, std::string> > cgi;
+	std::string auth_basic;
+	std::string auth_basic_user_file;
 	Location_config() : autoindex(false) , body_size(0) {};
 };
 

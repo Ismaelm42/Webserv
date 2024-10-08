@@ -228,6 +228,40 @@ void Configuration::setCgi()
 	_itConfig->locations.back().cgi.push_back(std::make_pair(first, second));
 }
 
+void Configuration::setAuthBasic()
+{
+	std::string str = *(_itToken);
+	if (str == "off;")
+		_itConfig->locations.back().auth_basic = "off";
+	else
+	{
+		str.append(" ");
+		std::cout << "str: " << str << std::endl;
+		str.append(*(_itToken + 1));
+		std::cout << "str + 1: " << str << std::endl;
+		if (str.find(";") != str.size() - 1)
+		 	throw std::runtime_error(logError("Error: syntax error in \"auth_basic\" directive"));
+		str.erase(str.size() - 1);
+		if (str[str.size() - 1] == '\"')
+			str.erase(str.size() - 1);
+		if (str[0] == '\"')
+			str.erase(0, 1);
+		_itConfig->locations.back().auth_basic = str;
+	}
+}
+
+void Configuration::setAuthBasicUserFile()
+{
+	std::string str = *(_itToken);
+	if (str.find(";") != str.size() - 1)
+		throw std::runtime_error(logError("Error: syntax error in \"auth_basic_user_file\" directive"));
+	str.erase(str.size() - 1);
+	checkFileOrDirectory(str, "file");
+	_itConfig->locations.back().auth_basic_user_file = str;
+	std::cout << "auth_basic_user_file: " << _itConfig->locations.back().auth_basic_user_file << std::endl;
+	std::cout << "auth_basic: " << _itConfig->locations.back().auth_basic << std::endl;
+}
+
 /*
 	Procesa las directivas dentro de un bloque de ubicación en la configuración.
 		Primero, verifica que la directiva "root" esté configurada antes de definir ubicaciones. Si no 
@@ -268,6 +302,10 @@ void Configuration::handleLocations()
 		setIndexFiles(_itConfig->locations.back().location, _itConfig->locations.back().index);
 	else if (_tokens[0] == "cgi")
 		setCgi();
+	else if (_tokens[0] == "auth_basic" && _tokens[0] != "auth_basic_")
+		setAuthBasic();
+	else if (_tokens[0] == "auth_basic_user_file")
+		setAuthBasicUserFile();
 	else if (_tokens[0] == "}" && (_itToken) == _tokens.end())
 	{
 		_inLocationBlock = false;
