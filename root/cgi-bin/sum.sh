@@ -1,17 +1,14 @@
 #!/bin/bash
 
-# Generar encabezado para salida de HTML
 echo "Content-Type: text/html"
 echo ""
 
-# Procesar método GET y POST
 if [ "$REQUEST_METHOD" == "GET" ]; then
   DATA=$QUERY_STRING
 elif [ "$REQUEST_METHOD" == "POST" ]; then
   read -n "$CONTENT_LENGTH" DATA
 fi
 
-# Procesar los parámetros
 num1=""
 num2=""
 
@@ -29,23 +26,20 @@ if [ -n "$DATA" ]; then
   done
 fi
 
-# Validar que num1 y num2 sean números
 if ! [[ "$num1" =~ ^[0-9]+$ ]] || ! [[ "$num2" =~ ^[0-9]+$ ]]; then
   result="Error: num1 y num2 deben ser números."
 else
-  # Sumar los números
   sum=$(($num1 + $num2))
   result="Total $num1 + $num2 = $sum"
 fi
 
-# Generar el HTML de respuesta
 cat <<EOL
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeBSeRV - Suma de Números</title>
+    <title>Sum numbers</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
         <style>
       body {

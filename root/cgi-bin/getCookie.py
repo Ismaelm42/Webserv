@@ -6,11 +6,9 @@ from http.cookies import SimpleCookie
 print("Content-Type: text/html")
 print()
 
-# Leer el nombre de la cookie del formulario
 form = cgi.FieldStorage()
 key = form.getvalue("key")
 
-# Obtener las cookies enviadas por el navegador
 if "HTTP_COOKIE" in os.environ:
     cookies = SimpleCookie(os.environ["HTTP_COOKIE"])
     if key and key in cookies:
@@ -21,11 +19,11 @@ if "HTTP_COOKIE" in os.environ:
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Formulario Recibido</title>
+            <title>Form Received</title>
             <style>
                 body {{
-                    background-color: #111;  /* Fondo negro */
-                    color: #ff0000;  /* Texto rojo */
+                    background-color: #111;
+                    color: #ff0000;
                     font-family: 'Arial Black', sans-serif;
                     text-align: center;
                     margin: 0;
@@ -47,7 +45,7 @@ if "HTTP_COOKIE" in os.environ:
                     color: #fff;
                 }}
                 strong {{
-                    color: #ff0000;  /* Resaltar el email en rojo */
+                    color: #ff0000;
                 }}
                 header {{
                     background: #222;
@@ -65,7 +63,7 @@ if "HTTP_COOKIE" in os.environ:
                     color: #fff;
                     font-size: 0.9rem;
                 }}
-                .verbenas {{
+                .webserv-party {{
                     margin-top: 30px;
                     font-size: 1.2rem;
                     text-shadow: 2px 2px 4px #ff0000;
@@ -78,10 +76,10 @@ if "HTTP_COOKIE" in os.environ:
         </head>
         <body>
             <header>
-                <h1>¡Se ha encontrado la cookie: {key}!</h1>
+                <h1>The cookie has been found: {key}!</h1>
             </header>
             <main>
-                <p>El valor es: {value}.</p>
+                <p>The cookie value is: {value}.</p>
                 <div class="icon-cookie">🍪</div>
             </main>
         </body>
@@ -94,11 +92,11 @@ if "HTTP_COOKIE" in os.environ:
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Formulario Recibido</title>
+            <title>Form Received</title>
             <style>
                 body {{
-                    background-color: #111;  /* Fondo negro */
-                    color: #ff0000;  /* Texto rojo */
+                    background-color: #111;
+                    color: #ff0000;
                     font-family: 'Arial Black', sans-serif;
                     text-align: center;
                     margin: 0;
@@ -120,7 +118,7 @@ if "HTTP_COOKIE" in os.environ:
                     color: #fff;
                 }}
                 strong {{
-                    color: #ff0000;  /* Resaltar el email en rojo */
+                    color: #ff0000;
                 }}
                 header {{
                     background: #222;
@@ -138,7 +136,7 @@ if "HTTP_COOKIE" in os.environ:
                     color: #fff;
                     font-size: 0.9rem;
                 }}
-                .verbenas {{
+                .webserv-party {{
                     margin-top: 30px;
                     font-size: 1.2rem;
                     text-shadow: 2px 2px 4px #ff0000;
@@ -151,10 +149,10 @@ if "HTTP_COOKIE" in os.environ:
         </head>
         <body>
             <header>
-                <h1>¡El nombre estaba vacío!</h1>
+                <h1>The name was empty!</h1>
             </header>
             <main>
-				<p>Por favor, introduce un nombre de cookie.</p>
+				<p>Please enter a cookie name.</p>
                 <div class="icon-cookie">🤷‍♂️</div>
             </main>
         </body>
@@ -167,11 +165,11 @@ if "HTTP_COOKIE" in os.environ:
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Formulario Recibido</title>
+            <title>Form Received</title>
             <style>
                 body {{
-                    background-color: #111;  /* Fondo negro */
-                    color: #ff0000;  /* Texto rojo */
+                    background-color: #111;
+                    color: #ff0000;
                     font-family: 'Arial Black', sans-serif;
                     text-align: center;
                     margin: 0;
@@ -193,7 +191,7 @@ if "HTTP_COOKIE" in os.environ:
                     color: #fff;
                 }}
                 strong {{
-                    color: #ff0000;  /* Resaltar el email en rojo */
+                    color: #ff0000;
                 }}
                 header {{
                     background: #222;
@@ -211,7 +209,7 @@ if "HTTP_COOKIE" in os.environ:
                     color: #fff;
                     font-size: 0.9rem;
                 }}
-                .verbenas {{
+                .webserv-party {{
                     margin-top: 30px;
                     font-size: 1.2rem;
                     text-shadow: 2px 2px 4px #ff0000;
@@ -224,7 +222,7 @@ if "HTTP_COOKIE" in os.environ:
         </head>
         <body>
             <header>
-                <h1>¡ No se ha encontrado la cookie: {key}!</h1>
+                <h1>Cookie not found: {key}!</h1>
             </header>
             <main>
                 <div class="icon-cookie">🤷‍♂️</div>

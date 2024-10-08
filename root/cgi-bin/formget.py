@@ -5,8 +5,8 @@ import cgi
 
 # Obtener los datos del formulario
 form = cgi.FieldStorage()
-nombre = form.getvalue('nombre', 'Visitante')  # Valor predeterminado si no se proporciona
-email = form.getvalue('email', 'No proporcionado')
+name = form.getvalue('name', 'Visitor')  # Valor predeterminado si no se proporciona
+email = form.getvalue('email', 'No mail')
 
 # Generar la cabecera de la respuesta HTTP
 # print("HTTP/1.1 200 OK") # DE emomento no sé si bloque o si podemos hacerlo aquí 
@@ -18,7 +18,7 @@ print(f"""
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulario Recibido</title>
+    <title>Form Received</title>
     <style>
     * {{
         box-sizing: border-box;
@@ -77,12 +77,12 @@ print(f"""
         color: #fff;
         font-size: 0.9rem;
     }}
-    .verbenas {{
+    .webserv-party {{
         margin-top: 30px;
         font-size: 1.2rem;
         text-shadow: 2px 2px 4px #ff0000;
     }}
-    .icon-metal {{
+    .icon-party {{
         margin-top: 20px;
         font-size: 3rem;
     }}
@@ -90,18 +90,18 @@ print(f"""
 </head>
 <body>
     <header>
-        <h1>¡Gracias por tu solicitud, {nombre}!</h1>
+        <h1>Thanks for your request, {name}!</h1>
     </header>
     <main>
-        <p>Guardamos tu email <strong>{email}</strong> para futuras comunicaciones sobre las fiestas de Campillos y sus verbenas cercanas.</p>
-        <div class="verbenas">
-            <p>Las verbenas están a la vuelta de la esquina, ¡prepara tu mejor atuendo metalero y que empiece la fiesta!</p>
+        <p>We've saved your email <strong>{email}</strong>, so get ready to receive crucial notifications (and maybe an unexpected meme or two) from the 42 community.</p>
+        <div class="webserv-party">
+            <p>In the meantime, keep the code flowing, the bugs squashed, and the caffeine levels dangerously high!</p>
+            <p>42 - Where coding magic blends with the madness of debugging. See you on the next push!</p>    </footer>
         </div>
-        <div class="icon-metal">🤘</div>
+        <div class="icon-party">💻🤘</div>
     </main>
     <footer>
-        <p>Campillos, Málaga - ¡Donde las verbenas y el metal se encuentran!</p>
-    </footer>
+        <p>Well, duh! This message was obviously whipped up by AI. What else did you expect?! 🤖</p>
 </body>
 </html>
 """)
