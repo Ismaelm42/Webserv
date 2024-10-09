@@ -33,6 +33,17 @@ class Request
 		void								 		printParsed();
 		void 										setClient(Client* client);
 	 	void 										setBodyStr(std::string body);		
+		std::string									&getUsername();	
+		void 										setUsername (std::string username);
+		void 										setPassword (std::string Password);
+		void 										setUserStatus(int status);
+		std::string 								&getPassword();
+		int											&getUserStatus();
+		std::string 								&get_basic();
+		std::string 								&get_basic_path();
+		void 										set_basic(std::string basic);
+		void 										set_basic_path(std::string basic_path);
+		
 
 	private: 
 
@@ -70,5 +81,9 @@ class Request
 		void		_returnErr(int err, std::string msg,uint8_t charRead);
 		void		_handle_headers();
 		bool 		isValidUri();
-};
-
+		std::string _username;
+		std::string _password;
+		int			_user_status;
+		std::string _basic;
+		std::string _basic_path;
+};	

@@ -107,6 +107,15 @@ inline int checkFileOrDirectory(std::string &path, const std::string type)
 	return 0;
 }
 
+const std::string base64_chars = 
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "0123456789+/";
+
+static inline bool is_base64(unsigned char c) {
+    return (isalnum(c) || (c == '+') || (c == '/'));
+}
+
 enum Methods
 {
 	GET,

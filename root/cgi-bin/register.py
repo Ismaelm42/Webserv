@@ -18,6 +18,7 @@ username = form.getvalue('username')
 password = form.getvalue('password')
 email = form.getvalue('email')
 
+
 # Definir la fecha de creación y validez	
 creation_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 validity_date = (datetime.datetime.now() + datetime.timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")

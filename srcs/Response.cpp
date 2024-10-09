@@ -307,9 +307,12 @@ void	Response::setHeaders()
 	//   **   Cookies			**		//
 	//////////////////////////////////////
 
-	// Pendiente de ver si es necesario devolver la cookie o si te pueden pasar 
-	// la petición de Set-Cookie y hubiera que incluirla en la respuesta
-
+	if (_request->getHeader("authorization") != "")
+	{
+		_response_str.append("WWW-Authenticate: Basic realm=\"");
+		_response_str.append(_config->locations.back().auth_basic);
+		_response_str.append("\"\r\n");
+	}	
 	_response_str.append("\r\n");
 
 	if (DEBUG)
@@ -501,6 +504,18 @@ int Response::getTarget()
 		if (isNotValidMethod())
 			return (501);
 	}
+	//Asigna al _request el valor de la directiva auth_basic y auth_basic_user_file
+	_request->set_basic(_location_config->auth_basic);
+	_request->set_basic_path(_location_config->auth_basic_user_file);
+	std::cout <<Yellow << "Auth: " << _request->get_basic()  << std::endl;
+	std::cout << "Auth: " << _request->get_basic_path() << Reset << std::endl;
+	if (_location_config->auth_basic.length() > 0 && _request->getUsername().empty())
+	{
+		if (DEBUG)
+			std::cout << "auth_basic: " << _location_config->auth_basic << std::endl;
+		return (setReturnCode(401));
+	}
+	//////////////////////////////////////////////////////////////////////////
 	if (setIndex())							
 		return (413);				
 	else if(_target.size() == 0 )
@@ -594,9 +609,6 @@ int Response::buildBody()
 {
 	if (DEBUG)
 		std::cout << "en buildBody____________________" << std::endl;
-	// 					Confirmacion con parámetros del server
-	// ***********   client_max_body_size			***********
-	
 	if (_request->getBody().length() > _config->body_size)	   						// obtiene el tamaño del body del request y si el tamaño del body es mayor que el tamaño maximo permitido
 		return (setReturnCode(413));							 	// retorna 413 y lo setea como error para la gestión de errores	   
 	if (getTarget())
@@ -613,7 +625,6 @@ int Response::buildBody()
 		if (getFile())													// lee el archivo					
 			return (1);
 	}
-	//////////////////////////////////////////	Pendiente de retomar coon los cgi ///////////////////////////////
 	else if (_request->getMethod() == POST)
 	{
 		if (DEBUG)
@@ -621,34 +632,6 @@ int Response::buildBody()
 			std::cout <<" El método es post----------------------->>" << std::endl;
 			std::cout << "_target: " << _target << std::endl;
 		}
-		// if (isValidTargetFile()){								// Comentado para permitir la creación de archivos
-		// 	std::cout << "isValidTargetFile" << std::endl;			// si el archivo es válido me detecta lacarpeta /upload como archivo
-		// 	return (setCode(204));									// y retorna 204 Ismael, habría que cambiar la llamada en el htl y enlazarlo von un archivo cgi...
-		// }
-		// std::ofstream file(_target.c_str(), std::ios::binary);
-		// if (file.fail())
-		//	 return (setReturnCode(404));
-		//////			Por las modificaciones del código no pasa por aquí   ////////////////
-		// if (_request->getMultiformFlag()){							// si el request es multiform deberá ir enlazado a un archivo que en condiciones normales
-		// 															// sería el encargado de validar los datos y establecer los códigos de salida en caso de
-		// 															// éxito u error
-		// 															// pendiente de limpiar los boundaries ver como debería guardarlos para enlazarlo con el archivo del servidor		
-		// 	std::string body = _request->getBody();
-		// 	if (DEBUG)
-		// 	{	
-		// 		std::cout << "_target: " << _target << std::endl;
-		// 		std::cout << "body en if: " << body << std::endl;
-		// 	}
-		// 	body = removeBoundary(body, _request->getBoundary());
-		// 	//file.write(body.c_str(), body.length());
-		// 	return (setCode(204));
-		// }
-		// else
-		// {
-		// 	if (DEBUG)
-		// 		std::cout << "body en else: " << _request->getBody() << std::endl;
-		// 	//file.write(_request->getBody().c_str(), _request->getBody().length());
-		// }
 	}
 	else if (_request->getMethod() == DELETE)
 	{
@@ -659,7 +642,6 @@ int Response::buildBody()
 		return (setCode(204));
 	}
 	_code = 200;
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	return (0);
 }
 
@@ -889,3 +871,4 @@ std::string Response::getResString()
 		std::cout << Red << "Response en getResString: " << _responseString << Reset <<std::endl;	
 	return _responseString;
 }
+
