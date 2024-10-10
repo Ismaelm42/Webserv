@@ -505,11 +505,20 @@ int Response::getTarget()
 			return (501);
 	}
 	//Asigna al _request el valor de la directiva auth_basic y auth_basic_user_file
+	// ver como restringir el acceso a las páginas private
 	_request->set_basic(_location_config->auth_basic);
 	_request->set_basic_path(_location_config->auth_basic_user_file);
 	std::cout <<Yellow << "Auth: " << _request->get_basic()  << std::endl;
 	std::cout << "Auth: " << _request->get_basic_path() << Reset << std::endl;
-	if (_location_config->auth_basic.length() > 0 && _request->getUsername().empty())
+	if (_request->getPath().find("login.html") != std::string::npos ||
+    _request->getPath().find("login.py") != std::string::npos ||
+    _request->getPath().find("register.html") != std::string::npos ||
+    _request->getPath().find("register.py") != std::string::npos) 
+	{
+		std::cout << "en login o register" << std::endl;
+		std::cout << "userStatus: " << _request->getUserStatus() << std::endl;
+	}
+ 	else if (_location_config->auth_basic.length() > 0 && _request->getUserStatus() == 0)
 	{
 		if (DEBUG)
 			std::cout << "auth_basic: " << _location_config->auth_basic << std::endl;

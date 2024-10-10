@@ -19,7 +19,7 @@ def create_session_cookie():
     cookie["session"]["expires"] = time.strftime("%a, %d-%b-%Y %T GMT", time.gmtime(time.time() + 3600))
     return cookie
 
-# Leer las variables del entorno
+# Leer las variables del entorno será util si se vuelven a pasar las cookies
 env = os.environ
 username = env.get("REMOTE_USER", "")
 password = env.get("REMOTE_PASS", "")
@@ -27,6 +27,9 @@ password = env.get("REMOTE_PASS", "")
 form = cgi.FieldStorage()
 username = form.getvalue('username') 
 password = form.getvalue('password')
+
+realm = os.getenv("REALM", "Unknown")
+auth_file = os.getenv("AUTH_BASIC_USER_FILE", "Unknown")
 
 if authenticate(username, password):
     # Crear la cookie de sesión
@@ -36,7 +39,22 @@ if authenticate(username, password):
     print(cookie.output())  # Esto escribe las cabeceras de la cookie
     print("Content-Type: text/html")
     print()
-    print("<html><body>Login successful!</body></html>")
+    print(f"""
+		<!DOCTYPE html>
+		<html lang="es">
+        <h1>Name: {nombre}</h1>
+    </header>
+    <main>
+        <p>Password:  <strong>{password}</strong></p>
+	    <p><strong>Username:</strong> {username}</p>
+	    <p><strong>Password:</strong> {password}</p>
+	    <p><strong>Realm:</strong> {realm}</p>
+	    <p><strong>Auth Basic User File:</strong> {auth_file}</p>
+	</main>
+
+</body>
+</html>
+""")
 else:
     print("Content-Type: text/html")
     print()

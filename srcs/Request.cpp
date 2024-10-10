@@ -262,6 +262,37 @@ std::string base64_decode(const std::string &input) {
     return decoded;
 }
 
+bool authenticate(const std::string& username, const std::string& password, const std::string& auth_file) {
+    std::ifstream file(auth_file.c_str());
+    
+    if (!file.is_open()) {
+        std::cerr << "Error: No se pudo abrir el archivo de autenticación." << std::endl;
+        return false;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string file_username, file_password, email, creation_date, validity_date;
+
+        // Leer los campos del archivo separados por ';'
+        std::getline(ss, file_username, ';');
+        std::getline(ss, file_password, ';');
+        std::getline(ss, email, ';');
+        std::getline(ss, creation_date, ';');
+        std::getline(ss, validity_date, ';');
+
+        // Comprobar si el username y password coinciden
+        if (file_username == username && file_password == password) {
+            file.close();
+            return true;  // Autenticación exitosa
+        }
+    }
+
+    file.close();
+    return false;  // Fallo de autenticación
+}
+
 /**
  * @brief Analiza los headers y gestiona varios flags determina si:
  * si hay un host se asigna el valor del header a _server_name
@@ -318,7 +349,8 @@ void	Request::_handle_headers(){
 			{
 				_username =decoded.substr(0, pos);
 				_password =decoded.substr(pos + 1);
-				_user_status = 1;
+				if	(authenticate(_username, _password, _config->locations.back().auth_basic_user_file))
+					_user_status = 1;
 			}
 		}
 
@@ -327,6 +359,36 @@ void	Request::_handle_headers(){
 			std::cout <<Yellow << "Auth: " << _username << std::endl;
 			std::cout <<Yellow << "Auth: " << _password << std::endl;
 			std::cout <<Yellow << "Auth: " << _user_status << Reset << std::endl;
+	}
+	if (_headers.count("cookie"))
+	{
+		std::cout << Yellow << "cookie Buscando" << Reset << std::endl;
+		std::string cookieHeader = _headers["cookie"];
+		std::cout << Yellow << "cookieHeader: " << cookieHeader << Reset << std::endl;
+		if (!cookieHeader.empty()) {
+		    // Divide el encabezado Cookie en pares nombre=valor
+		    std::stringstream ss(cookieHeader);
+		    std::string token;
+		    while (std::getline(ss, token, ';')) {
+		        // Elimina los espacios en blanco al principio y al final del token
+		        token.erase(0, token.find_first_not_of(' '));
+		        token.erase(token.find_last_not_of(' ') + 1);
+
+		        // Divide el token en nombre y valor
+		        size_t pos = token.find('=');
+		        std::string name = token.substr(0, pos);
+		        std::string value = token.substr(pos + 1);
+
+		        // Comprueba si hay un archivo con el nombre de la cookie en ./root/tmp_sessions
+		        std::string filePath = "./root/tmp_sessions/" + value + ".session";
+				std::cout << Yellow << "cookie Buscando: " << value << Reset << std::endl;
+
+		        if (access(filePath.c_str(), F_OK) == 0) {
+					std::cout << Yellow << "cookie found" << Reset << std::endl;
+					_user_status = 1;
+		        }
+		    }
+		}
 	}
 }
 
