@@ -26,6 +26,8 @@ class Configuration
 		void setIndexFiles(std::string path, std::vector<std::string> &container);
 		void setErrorPages();
 		void setMaxBodySize(size_t &body_size);
+		void setAuthBasic();
+		void setAuthBasicUserFile();
 		void endServerBlock();
 		void checkServerBlockErrors();
 		void handleConfigLine();

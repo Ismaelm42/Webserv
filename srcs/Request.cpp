@@ -23,6 +23,11 @@ Request::Request(Client *client, Server_config *config)
 	_header_name_temp = "";
 	_multiform_flag = false;
 	_boundary = "";
+	_username ="";
+	_password ="";
+	_user_status = 0;
+	_basic = "";
+	_basic_path = "";
 }
 
 void	Request::_initMethodStr()
@@ -120,7 +125,9 @@ void	Request::saveHeader(std::string &name, std::string &value)
 void Request::_returnErr(int err, std::string msg, uint8_t charRead = 0)
 {
 	_error_code = err;
-	std::cout << "Error = " << err <<": "<< msg << ": " << charRead << std::endl;
+	_fillStatus = Parsed;
+	if (DEBUG)
+		std::cerr << Red << "Error = " << err <<": "<< msg << ": " << charRead << Reset << std::endl;
 }
 
 bool	allowedURIChar(uint8_t ch)
@@ -167,6 +174,79 @@ bool	isValidChar(uint8_t ch)
 	return (false);
 }
 
+// Función para codificar una cadena en Base64 (compatible con C++98)
+std::string base64_encode(const std::string &input) {
+    std::string encoded;
+    int val = 0;
+    int valb = -6;
+    for (std::size_t i = 0; i < input.size(); ++i) {
+        unsigned char c = input[i];
+        val = (val << 8) + c;
+        valb += 8;
+        while (valb >= 0) {
+            encoded.push_back(base64_chars[(val >> valb) & 0x3F]);
+            valb -= 6;
+        }
+    }
+    if (valb > -6) 
+        encoded.push_back(base64_chars[((val << 8) >> (valb + 8)) & 0x3F]);
+    while (encoded.size() % 4) 
+        encoded.push_back('=');
+    return encoded;
+}
+
+std::string base64_decode(const std::string &input) {
+    std::vector<int> T(256, -1);
+    for (int i = 0; i < 64; i++) 
+        T[base64_chars[i]] = i;
+
+    std::string decoded;
+    int val = 0;
+    int valb = -8;
+    for (std::size_t i = 0; i < input.size(); ++i) {
+        unsigned char c = input[i];
+        if (T[c] == -1) break;
+        val = (val << 6) + T[c];
+        valb += 6;
+        if (valb >= 0) {
+            decoded.push_back(char((val >> valb) & 0xFF));
+            valb -= 8;
+        }
+    }
+    return decoded;
+}
+
+bool authenticate(const std::string& username, const std::string& password, const std::string& auth_file) {
+    std::ifstream file(auth_file.c_str());
+    
+    if (!file.is_open()) {
+        std::cerr << "Error: No se pudo abrir el archivo de autenticación." << std::endl;
+        return false;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string file_username, file_password, email, creation_date, validity_date;
+
+        // Leer los campos del archivo separados por ';'
+        std::getline(ss, file_username, ';');
+        std::getline(ss, file_password, ';');
+        std::getline(ss, email, ';');
+        std::getline(ss, creation_date, ';');
+        std::getline(ss, validity_date, ';');
+
+        // Comprobar si el username y password coinciden
+        if (file_username == username && file_password == password) {
+            file.close();
+            return true;  // Autenticación exitosa
+        }
+    }
+
+    file.close();
+    return false;  // Fallo de autenticación
+}
+
 void	Request::_handle_headers(){
 	
 	if (_headers.count("host"))
@@ -192,10 +272,61 @@ void	Request::_handle_headers(){
 	{
 		size_t pos = _headers["content-type"].find("boundary=");
 		if (pos != std::string::npos)
-			this->_boundary = _headers["content-type"].substr(pos + 9);
+			this->_boundary = _headers["content-type"].substr(pos + 9);		// se puede quitar el segundo argumento pero mejor revisar en caso de problemas
 		this->_multiform_flag = true;
-		std::cout << "_multiform_flag: " << _multiform_flag << std::endl;
-		std::cout << "Boundary: " << _boundary << std::endl;
+	}
+	if (_headers.count("authorization"))
+	{
+		std::string auth = _headers["authorization"];
+		if (auth.find("Basic") != std::string::npos)
+		{
+			std::string encoded = auth.substr(6);
+			std::string decoded = base64_decode(encoded);
+			size_t pos = decoded.find(":");
+			if (pos != std::string::npos)
+			{
+				_username =decoded.substr(0, pos);
+				_password =decoded.substr(pos + 1);
+				if	(authenticate(_username, _password, _config->locations.back().auth_basic_user_file))
+					_user_status = 1;
+			}
+		}
+
+			// std::cout <<Yellow << "Auth: " << _config->locations.back().auth_basic << Reset << std::endl;
+			// std::cout <<Yellow << "Auth: " << _config->locations.back().auth_basic_user_file << std::endl;
+			std::cout <<Yellow << "Auth: " << _username << std::endl;
+			std::cout <<Yellow << "Auth: " << _password << std::endl;
+			std::cout <<Yellow << "Auth: " << _user_status << Reset << std::endl;
+	}
+	if (_headers.count("cookie"))
+	{
+		std::cout << Yellow << "cookie Buscando" << Reset << std::endl;
+		std::string cookieHeader = _headers["cookie"];
+		std::cout << Yellow << "cookieHeader: " << cookieHeader << Reset << std::endl;
+		if (!cookieHeader.empty()) {
+		    // Divide el encabezado Cookie en pares nombre=valor
+		    std::stringstream ss(cookieHeader);
+		    std::string token;
+		    while (std::getline(ss, token, ';')) {
+		        // Elimina los espacios en blanco al principio y al final del token
+		        token.erase(0, token.find_first_not_of(' '));
+		        token.erase(token.find_last_not_of(' ') + 1);
+
+		        // Divide el token en nombre y valor
+		        size_t pos = token.find('=');
+		        std::string name = token.substr(0, pos);
+		        std::string value = token.substr(pos + 1);
+
+		        // Comprueba si hay un archivo con el nombre de la cookie en ./root/tmp_sessions
+		        std::string filePath = "./root/tmp_sessions/" + value + ".session";
+				std::cout << Yellow << "cookie Buscando: " << value << Reset << std::endl;
+
+		        if (access(filePath.c_str(), F_OK) == 0) {
+					std::cout << Yellow << "cookie found" << Reset << std::endl;
+					_user_status = 1;
+		        }
+		    }
+		}
 	}
 }
 
@@ -604,6 +735,11 @@ void	Request::reset()
 	_body_parsed = false;
 	_chunked_body_flag = false;
 	_multiform_flag = false;
+	_username ="";
+	_password ="";
+	_user_status = 0;
+	_basic = "";
+	_basic_path = "";
 }
 
 bool    Request::isParsed()
@@ -611,4 +747,57 @@ bool    Request::isParsed()
 	if (_fillStatus == 	Parsed)
 	    return (true);
 	return (false);
+}
+
+void	Request::setUsername (std::string username){
+	_username = username;
+}
+
+void	Request::setPassword (std::string Password){
+	_password = Password;
+}
+
+void	Request::setUserStatus(int status){
+	_user_status = status;
+}
+
+std::string &Request::getUsername()
+{
+	// hardcode para pruebas
+	// _username = "Alfonso";
+	// _password = "1234";
+	// _user_status = 1;
+
+	// fin de hardcode	
+
+	return _username;
+}
+
+std::string	&Request::getPassword()
+{
+	return _password;
+}
+
+int	&Request::getUserStatus()
+{
+	return _user_status;
+}
+
+std::string	&Request::get_basic()
+{
+	return _basic;
+}
+
+std::string	&Request::get_basic_path()
+{
+	return _basic_path;
+}
+
+void	Request::set_basic(std::string basic)
+{
+	_basic = basic;
+}
+void	Request::set_basic_path(std::string basic_path)
+{
+	_basic_path = basic_path;
 }

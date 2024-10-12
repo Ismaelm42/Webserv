@@ -58,6 +58,8 @@ struct Location_config
 	std::vector<std::string> index;
 	std::pair<int, std::string> redir;
 	std::vector<std::pair<std::string, std::string> > cgi;
+	std::string auth_basic;
+	std::string auth_basic_user_file;
 	Location_config() : autoindex(false) , body_size(0) {};
 };
 
@@ -104,6 +106,15 @@ inline int checkFileOrDirectory(std::string &path, const std::string type)
 	if ((type == "dir" && !S_ISDIR(stat_buffer.st_mode)) || (type == "file" && S_ISDIR(stat_buffer.st_mode)))
 		return 400;
 	return 0;
+}
+
+const std::string base64_chars = 
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "0123456789+/";
+
+static inline bool is_base64(unsigned char c) {
+    return (isalnum(c) || (c == '+') || (c == '/'));
 }
 
 enum Methods

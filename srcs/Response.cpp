@@ -77,7 +77,35 @@ void Response::reset()
 	_mime =  "";
 	_auto_index_flag = 0;
 	_hasIndexFlag = 0;
+	// _request = NULL;
+	// _config = NULL;
+}	// resetea la respuesta
+
+Response::Response(const Response& other) {
+	if (DEBUG)
+		std::cout << "Response copy constructor" << std::endl;
+		
+	_responseString = other._responseString;  // Copiar la cadena de respuesta
+	_code = other._code;					  // Copiar el código de respuesta
+	_client = other._client;				  // Copiar el puntero (copia superficial)
 }
+
+Response& Response::operator=(const Response& other) {
+	if (this != &other) {  // Evitar autoasignación
+		if (DEBUG)
+			std::cout << "Response assignment operator" << std::endl;
+		_responseString = other._responseString;
+		_code = other._code;
+		_client = other._client;
+	}
+	return *this;
+}
+
+Response::~Response()
+{
+	if(DEBUG)
+		std::cout << "Response destructor" << std::endl;
+};
 
 int Response::getCode() const
 {
@@ -232,6 +260,17 @@ void	Response::setHeaders()
 	std::stringstream ss;
 	ss << _response_body_str.length();
 	_response_str.append("Content-Length: " + ss.str() + "\r\n");
+
+	//////////////////////////////////////
+	//   **   Cookies			**		//
+	//////////////////////////////////////
+
+	if (_request->getHeader("authorization") != "")
+	{
+		_response_str.append("WWW-Authenticate: Basic realm=\"");
+		_response_str.append(_config->locations.back().auth_basic);
+		_response_str.append("\"\r\n");
+	}	
 	_response_str.append("\r\n");
 }
 
@@ -330,32 +369,94 @@ int Response::getTarget()
 	std::string locationMatch = "";
 	locationMatch = getMatch(_request->getPath(), _config->locations);
 	if (!locationMatch.empty())
+	{ 
+	_location_config = find_location(*_config,locationMatch);
+	if (DEBUG)
+		std::cout << "_location_config:_______________	____________- "  << std::endl;
+	
+	//--------------------------------------------------------------------------//
+	//	cofigurar target con las directivas de la location y el server	  	//
+	//--------------------------------------------------------------------------//
+	
+	//--------------------------------------------------------------------------//
+	//						 **	client_max_body_size **							//
+	//--------------------------------------------------------------------------//
+	//	Pendiente de ver si es necesario hacerlo aqui o en el buildbody		//
+	//--------------------------------------------------------------------------//
+	
+	std::string body = _request->getBody();
+	if (_request->getBody().length() > _location_config->body_size)
+		return (setReturnCode(413));
+	if (!_location_config->methods.empty())
+	{	
+		if (isNotValidMethod())
+			return (501);
+	}
+	//Asigna al _request el valor de la directiva auth_basic y auth_basic_user_file
+	// ver como restringir el acceso a las páginas private
+	_request->set_basic(_location_config->auth_basic);
+	_request->set_basic_path(_location_config->auth_basic_user_file);
+	std::cout <<Yellow << "Auth: " << _request->get_basic()  << std::endl;
+	std::cout << "Auth: " << _request->get_basic_path() << Reset << std::endl;
+	if (_request->getPath().find("login.html") != std::string::npos ||
+    _request->getPath().find("login.py") != std::string::npos ||
+    _request->getPath().find("register.html") != std::string::npos ||
+    _request->getPath().find("register.py") != std::string::npos) 
 	{
-		_location_config = find_location(*_config,locationMatch);
-		std::string body = _request->getBody();
-		if (_request->getBody().length() > _location_config->body_size)
-			return (setReturnCode(413));
-		if (!_location_config->methods.empty())
-			if (isNotValidMethod())
-				return (501);
-		if (setIndex())
-			return (413);
-		else if (_target.size() == 0)
-			_target= concatenatePaths(_config->root, _request->getPath(), "");
-		if (_location_config->redir.first)
- 		{
-			_location = _location_config->redir.second;
-			_response_body_str = "";
-			_target = "";
-			return (setReturnCode(_location_config->redir.first));
-		}
-		if (!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
-			return(launchCgi());
-		if (!_hasIndexFlag && _location_config->autoindex && isReadableDirectory(_target))
-		{
-			_auto_index_flag = 1;
-			return (0);
-		}
+		std::cout << "en login o register" << std::endl;
+		std::cout << "userStatus: " << _request->getUserStatus() << std::endl;
+	}
+ 	else if (_location_config->auth_basic.length() > 0 && _request->getUserStatus() == 0)
+	{
+		if (DEBUG)
+			std::cout << "auth_basic: " << _location_config->auth_basic << std::endl;
+		return (setReturnCode(401));
+	}
+	//////////////////////////////////////////////////////////////////////////
+	if (setIndex())							
+		return (413);				
+	else if(_target.size() == 0 )
+		_target= concatenatePaths(_config->root, _request->getPath(), "");
+	if(_location_config->redir.first)
+ 	{
+		if (DEBUG)
+			std::cout << "en return____________________" << std::endl;
+		_location = _location_config->redir.second;
+		_response_body_str = ""; // prueba para ver si funcionar la redirección con el header Location
+		_target = "";
+		return (setReturnCode(_location_config->redir.first));
+	}
+
+	//--------------------------------------------------------------------------//
+	//								** cgi **									//
+	//--------------------------------------------------------------------------//
+	if (!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
+		return(launchCgi());
+	//--------------------------------------------------------------------------//
+	//								** autoindex **								//
+	//--------------------------------------------------------------------------//
+	//		Comprueba si el target es un directorio y si no tiene autoindex		//
+	//--------------------------------------------------------------------------//
+	// comprobar si el target es un directorio, si no tiene un index válidd 
+	// y si no tiene autoindex
+
+	if (DEBUG)
+	{
+		std::cout << Yellow;
+		std::cout << "autoindex: " << _location_config->autoindex << std::endl;
+		std::cout << "target: " << _target << std::endl;
+		std::cout << "isReadableDirectory: " << isReadableDirectory(_target) << std::endl;
+		std::cout << "hasIndexFlag: " << _hasIndexFlag << std::endl;
+		std::cout << White;
+	}
+
+	if (!_hasIndexFlag && _location_config->autoindex && isReadableDirectory(_target))
+	{
+		if (DEBUG)
+			std::cout << Red << "isReadableDirectory: " << _target << White << std::endl;
+		_auto_index_flag = 1;
+		return (0);
+	}
 	}
 	else
 		_target= concatenatePaths(_config->root, _request->getPath(), "");
@@ -364,7 +465,6 @@ int Response::getTarget()
 
 void Response::getDefaultErrorBody(int code)
 {
-	std::cout << "en getDefaultErrorBody________________-" << std::endl;
 	_response_body_str = err_first_sec_title 
 					+ toStr(code) + " " + statusString(code)
 					+ err_sec_sec_error + toStr(code)
@@ -598,7 +698,7 @@ void Response::buildResponse()
 			buildErrorPage(403);
 	setStatusline();
 	setHeaders();
-    if(_request->getMethod() == GET || _code != 200)
+	if(_request->getMethod() == GET || _code != 200)
 		_response_str.append(_response_body_str);
 	_responseString = _response_str;
 }
@@ -607,3 +707,4 @@ std::string Response::getResString()
 {
 	return _responseString;
 }
+

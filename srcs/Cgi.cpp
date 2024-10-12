@@ -30,7 +30,7 @@ Cgi::~Cgi()
 
 void Cgi::setEnvironment()
 {
-	std::string envp[13];
+	std::string envp[18];
 	envp[0] = "REQUEST_METHOD=" + _request->getMethodStr(); 
 	envp[1] = "SCRIPT_NAME" + _request->getPath();
 	envp[2] = "PATH_INFO=" + _request->getPath();
@@ -43,10 +43,16 @@ void Cgi::setEnvironment()
 	envp[9] = "SERVER_NAME=" + _request->getServerName();
 	envp[10] = "SERVER_PORT=" + toStr(_request->getPort());
 	envp[11] = "SERVER_PROTOCOL=HTTP/1.1";
-	_envp = (char **)calloc(sizeof(char *), 13);
-	for (int i = 0; i < 12; i++)
+	envp[12] = "AUTH_TYPE=Basic";
+	envp[13] = "REMOTE_USER=" + _request->getUsername();
+	envp[14] = "REMOTE_PASS=" + _request->getPassword();
+	envp[15] = "REALM=" + _request->get_basic();
+	envp[16] = "AUTH_BASIC_USER_FILE=" + _request->get_basic_path();
+
+	_envp = (char **)calloc(sizeof(char *), 18);
+	for (int i = 0; i < 17; i++)
 		_envp[i] = strdup(envp[i].c_str());
-	_envp[12] = NULL; 
+	_envp[17] = NULL; 
 }
 
 int Cgi::checkCmdAndPath()
