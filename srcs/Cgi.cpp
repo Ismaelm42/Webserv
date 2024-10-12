@@ -1,7 +1,7 @@
 #include "../includes/lib.hpp"
 
-Cgi::Cgi(int fd, Request *request, Server_config *config)
-:_fd(fd), _request(request), _config(config)
+Cgi::Cgi(Request *request, Server_config *config)
+: _request(request), _config(config)
 {
 	_envp = NULL;
 	_argv = NULL;

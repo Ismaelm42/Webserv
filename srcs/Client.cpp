@@ -68,7 +68,7 @@ int Client::sendResponse()
 
 void Client::initCgi(int *code, std::string &output)
 {
-	_cgi = new Cgi(_fd, _request, _config);
+	_cgi = new Cgi(_request, _config);
 	*code = _cgi->executeCgi(output, _request->getBody());
 }
 

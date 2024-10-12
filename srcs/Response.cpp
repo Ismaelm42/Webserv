@@ -330,6 +330,11 @@ int Response::launchCgi()
 	return 0;
 }
 
+bool endsWith(const std::string& str, const std::string& suffix) {
+    if (str.size() < suffix.size()) return false;
+    return str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
 int Response::getTarget()
 {
 	_location_config = NULL;
@@ -378,6 +383,10 @@ int Response::getTarget()
 	}
 	if (!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
 		return(launchCgi());
+	std::cout << Yellow << "target: " << _target <<Reset<< std::endl;
+	if ((endsWith(_target, ".py") || endsWith(_target, ".sh"))) {
+    	return (setReturnCode(403));
+	}
 	if (!_hasIndexFlag && _location_config->autoindex && isReadableDirectory(_target))
 	{
 		if (DEBUG)
