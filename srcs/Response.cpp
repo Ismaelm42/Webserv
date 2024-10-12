@@ -374,8 +374,6 @@ int Response::getTarget()
 		_target= concatenatePaths(_config->root, _request->getPath(), "");
 	if(_location_config->redir.first)
  	{
-		if (DEBUG)
-			std::cout << "en return____________________" << std::endl;
 		_location = _location_config->redir.second;
 		_response_body_str = "";
 		_target = "";
@@ -383,14 +381,11 @@ int Response::getTarget()
 	}
 	if (!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
 		return(launchCgi());
-	std::cout << Yellow << "target: " << _target <<Reset<< std::endl;
 	if ((endsWith(_target, ".py") || endsWith(_target, ".sh"))) {
     	return (setReturnCode(403));
 	}
 	if (!_hasIndexFlag && _location_config->autoindex && isReadableDirectory(_target))
 	{
-		if (DEBUG)
-			std::cout << Red << "isReadableDirectory: " << _target << White << std::endl;
 		_auto_index_flag = 1;
 		return (0);
 	}
