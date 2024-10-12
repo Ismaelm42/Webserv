@@ -174,7 +174,6 @@ bool	isValidChar(uint8_t ch)
 	return (false);
 }
 
-// Función para codificar una cadena en Base64 (compatible con C++98)
 std::string base64_encode(const std::string &input) {
     std::string encoded;
     int val = 0;
@@ -228,23 +227,18 @@ bool authenticate(const std::string& username, const std::string& password, cons
     while (std::getline(file, line)) {
         std::stringstream ss(line);
         std::string file_username, file_password, email, creation_date, validity_date;
-
-        // Leer los campos del archivo separados por ';'
         std::getline(ss, file_username, ';');
         std::getline(ss, file_password, ';');
         std::getline(ss, email, ';');
         std::getline(ss, creation_date, ';');
         std::getline(ss, validity_date, ';');
-
-        // Comprobar si el username y password coinciden
         if (file_username == username && file_password == password) {
             file.close();
-            return true;  // Autenticación exitosa
+            return true;
         }
     }
-
     file.close();
-    return false;  // Fallo de autenticación
+    return false;
 }
 
 void	Request::_handle_headers(){
@@ -272,7 +266,7 @@ void	Request::_handle_headers(){
 	{
 		size_t pos = _headers["content-type"].find("boundary=");
 		if (pos != std::string::npos)
-			this->_boundary = _headers["content-type"].substr(pos + 9);		// se puede quitar el segundo argumento pero mejor revisar en caso de problemas
+			this->_boundary = _headers["content-type"].substr(pos + 9);
 		this->_multiform_flag = true;
 	}
 	if (_headers.count("authorization"))
@@ -291,38 +285,21 @@ void	Request::_handle_headers(){
 					_user_status = 1;
 			}
 		}
-
-			// std::cout <<Yellow << "Auth: " << _config->locations.back().auth_basic << Reset << std::endl;
-			// std::cout <<Yellow << "Auth: " << _config->locations.back().auth_basic_user_file << std::endl;
-			std::cout <<Yellow << "Auth: " << _username << std::endl;
-			std::cout <<Yellow << "Auth: " << _password << std::endl;
-			std::cout <<Yellow << "Auth: " << _user_status << Reset << std::endl;
 	}
 	if (_headers.count("cookie"))
 	{
-		std::cout << Yellow << "cookie Buscando" << Reset << std::endl;
 		std::string cookieHeader = _headers["cookie"];
-		std::cout << Yellow << "cookieHeader: " << cookieHeader << Reset << std::endl;
 		if (!cookieHeader.empty()) {
-		    // Divide el encabezado Cookie en pares nombre=valor
 		    std::stringstream ss(cookieHeader);
 		    std::string token;
 		    while (std::getline(ss, token, ';')) {
-		        // Elimina los espacios en blanco al principio y al final del token
 		        token.erase(0, token.find_first_not_of(' '));
 		        token.erase(token.find_last_not_of(' ') + 1);
-
-		        // Divide el token en nombre y valor
 		        size_t pos = token.find('=');
 		        std::string name = token.substr(0, pos);
 		        std::string value = token.substr(pos + 1);
-
-		        // Comprueba si hay un archivo con el nombre de la cookie en ./root/tmp_sessions
 		        std::string filePath = "./root/tmp_sessions/" + value + ".session";
-				std::cout << Yellow << "cookie Buscando: " << value << Reset << std::endl;
-
 		        if (access(filePath.c_str(), F_OK) == 0) {
-					std::cout << Yellow << "cookie found" << Reset << std::endl;
 					_user_status = 1;
 		        }
 		    }
@@ -693,11 +670,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 			case Chunk_End_LF:
 			{
 				if (charRead != '\n')
-				{
-					_error_code = 400;
-					std::cout << "Bad charRead (Chunk_End_LF)" << std::endl;
-					return ;
-				}
+					return (_returnErr(400, "Bad charRead (Chunk_End_LF)", charRead));
 				_body_parsed = true;
 				_fillStatus = Parsed;
 				continue ;
@@ -761,15 +734,7 @@ void	Request::setUserStatus(int status){
 	_user_status = status;
 }
 
-std::string &Request::getUsername()
-{
-	// hardcode para pruebas
-	// _username = "Alfonso";
-	// _password = "1234";
-	// _user_status = 1;
-
-	// fin de hardcode	
-
+std::string &Request::getUsername(){
 	return _username;
 }
 

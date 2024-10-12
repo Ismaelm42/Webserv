@@ -159,7 +159,6 @@ void Configuration::setCgi()
 	if (second.rfind(";") != second.size() - 1)
 		throw std::runtime_error(logError("Error: syntax error in \"cgi\" directive"));
 	second.erase(second.size() - 1);
-	// checkFileOrDirectory(second, "file");
 	_itConfig->locations.back().cgi.push_back(std::make_pair(first, second));
 }
 
@@ -171,9 +170,7 @@ void Configuration::setAuthBasic()
 	else
 	{
 		str.append(" ");
-		std::cout << "str: " << str << std::endl;
 		str.append(*(_itToken + 1));
-		std::cout << "str + 1: " << str << std::endl;
 		if (str.find(";") != str.size() - 1)
 		 	throw std::runtime_error(logError("Error: syntax error in \"auth_basic\" directive"));
 		str.erase(str.size() - 1);
@@ -193,20 +190,8 @@ void Configuration::setAuthBasicUserFile()
 	str.erase(str.size() - 1);
 	checkFileOrDirectory(str, "file");
 	_itConfig->locations.back().auth_basic_user_file = str;
-	std::cout << "auth_basic_user_file: " << _itConfig->locations.back().auth_basic_user_file << std::endl;
-	std::cout << "auth_basic: " << _itConfig->locations.back().auth_basic << std::endl;
 }
 
-/*
-	Procesa las directivas dentro de un bloque de ubicación en la configuración.
-		Primero, verifica que la directiva "root" esté configurada antes de definir ubicaciones. Si no 
-		estamos dentro de un bloque de ubicación, valida que la directiva "location" tenga exactamente 
-		tres argumentos y que la ubicación especificada sea un directorio válido. Luego, añade la 
-		configuración de la ubicación y establece en true que estamos dentro de un bloque de ubicación. Si ya 
-		estamos en un bloque de ubicación, maneja directivas específicas como "allow_methods", 
-		"autoindex", y "return". Si se encuentra un cierre de bloque "}" y no hay más tokens, sale del 
-		bloque de ubicación. Lanza excepciones en caso de errores de sintaxis o configuraciones inesperadas.
-*/
 void Configuration::handleLocations()
 {
 	if (_itConfig->root == "")
@@ -217,7 +202,6 @@ void Configuration::handleLocations()
 		if (_tokens.end() - _tokens.begin() != 3)
 			throw std::runtime_error(logError("Error: invalid number of arguments in \"location\" directive"));
 		*(_itToken) = _itConfig->root + *(_itToken);
-		// checkFileOrDirectory(*(_itToken), "dir");
 		if (*(_itToken + 1) != "{")
 			throw std::runtime_error(logError("Error: unexpected \"" + *(_itToken + 1) + "\". open curly brace missing in \"location\" directive"));
 		Location_config config;
@@ -308,7 +292,6 @@ void Configuration::setRootDirectory()
 	_itToken->erase(_itToken->size() - 1);
 	while (_itToken->rfind("/") == _itToken->size() - 1)
 		_itToken->erase(_itToken->size() - 1);
-	// checkFileOrDirectory(*_itToken, "dir");
 	_itConfig->root = *_itToken;
 }
 
@@ -330,7 +313,6 @@ void Configuration::setIndexFiles(std::string path, std::vector<std::string> &co
 		if (_itToken->find('/') != 0 && path[path.size() - 1] != '/')
 			*_itToken = "/" + *_itToken;
 		*_itToken = path + *_itToken;
-		// checkFileOrDirectory(*_itToken, "file");
 		container.push_back(*_itToken);
 	}
 }
@@ -349,7 +331,6 @@ void Configuration::setErrorPages()
 	if (file.find('/') != 0)
 		file = "/" + file;
 	file = _itConfig->root + file;
-	// checkFileOrDirectory(file, "file");
 	for (; _itToken != _tokens.end() - 1; _itToken++)
 	{
 		std::string code = *_itToken;
