@@ -254,11 +254,14 @@
 			<h1>- <span>42 - </span>WEBSERVER<span> - 42</span> -</h1>	
 			</header>
 			<nav>
-				<nav>
-					<ul>
-						<li>|</li>
-					</ul>
-				</nav>
+			    <ul>
+			        <li><a href="./assets/staticindex.html">Home</a></li>
+			        <li><a href="./assets/forms.html">Forms</a></li>
+			        <li><a href="./assets/cookies.html">Cookies</a></li>
+			        <li><a href="./upload">Uploads</a></li>
+					<li><a href="./assets/login.html">login</a></li>
+					<li><a href="./private/privateindex.html">Private</a></li>
+			    </ul>
 			</nav>
 			<section class="content">
 			    <div class="image-container">
@@ -279,15 +282,4 @@
 		},2000);
 		</script>	
 	</body>
-	<script>
-		document.addEventListener("DOMContentLoaded", function() {
-		    var links = document.querySelectorAll("a[href]");
-		    links.forEach(function(link) {
-		        link.addEventListener("click", function(event) {
-		            event.preventDefault();
-		            alert("Sample screen: Links are disabled");
-		        });
-		    });
-		});
-	</script>
 </html>

@@ -356,7 +356,8 @@ int Response::getTarget()
 		std::cout << "en login o register" << std::endl;
 		std::cout << "userStatus: " << _request->getUserStatus() << std::endl;
 	}
- 	else if (_location_config->auth_basic.length() > 0 && _request->getUserStatus() == 0)
+ 	else if (_location_config->auth_basic.length() > 0 && _request->getUserStatus() == 0
+		&& _location_config->auth_basic != "off")
 	{
 		if (DEBUG)
 			std::cout << "auth_basic: " << _location_config->auth_basic << std::endl;
