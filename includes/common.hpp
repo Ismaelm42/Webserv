@@ -203,6 +203,12 @@ enum fillStatusEnum
 "	            margin: 0;\n" \
 "				line-height: 1.5em;\n" \
 "	        }\n" \
+"			h1 span {\n" \
+"				font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;\n" \
+"				font-size: 1.2em;\n" \
+"				color: red;\n" \
+"				font-weight: bold;\n" \
+"			}\n" \
 "	        nav ul {\n" \
 "	            list-style: none;\n" \
 "	            padding: 0;\n" \
@@ -313,7 +319,7 @@ enum fillStatusEnum
 "					<li><a href=\"../assets/forms.html\">Forms</a></li>\n" \
 "					<li><a href=\"../assets/cookies.html\">Cookies</a></li>\n" \
 "					<li><a href=\"#\">Uploads</a></li>\n" \
-"					<li><a href=\"../assets/.html\">Login</a></li>\n" \
+"					<li><a href=\"../assets/login.html\">Login</a></li>\n" \
 "					<li><a href=\"../private/privateindex.html\">Private</a></li>\n" \
 "				</ul>\n" \
 "			</nav>\n" \
