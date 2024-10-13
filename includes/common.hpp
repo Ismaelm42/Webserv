@@ -113,7 +113,7 @@ const std::string base64_chars =
     "abcdefghijklmnopqrstuvwxyz"
     "0123456789+/";
 
-static inline bool is_base64(unsigned char c) {
+static inline bool is_base64(unsigned char c){
     return (isalnum(c) || (c == '+') || (c == '/'));
 }
 
@@ -155,3 +155,223 @@ enum fillStatusEnum
 	get_Body,
 	Parsed
 };
+
+#define HTML_ST "<!DOCTYPE html>\n" \
+"<html>\n" \
+"	<head>\n" \
+"		<meta charset=\"UTF-8\">\n" \
+"		<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" \
+"		<title>WeBSeRV</title>\n" \
+"		<link rel=\"icon\" href=\"../favicon.ico\" type=\"image/x-icon\">\n" \
+"		<style>\n" \
+"	        body {\n" \
+"	            font-family: 'Arial', sans-serif;\n" \
+"	            background-color: #1a1a1a;\n" \
+"	            color: #e0e0e0;\n" \
+"	            margin: 0;\n" \
+"	            padding: 0;\n" \
+"	        }\n" \
+"            .delete-button {\n" \
+"                background-color: red;\n" \
+"                color: white;\n" \
+"                padding: 10px;\n" \
+"                border: none;\n" \
+"                border-radius: 5px;\n" \
+"                cursor: pointer;\n" \
+"                font-size: 16px;\n" \
+"                margin-top: 20px;\n" \
+"                display: none;\n" \
+"                float: right;\n" \
+"                margin-right: 10%;\n" \
+"            }\n" \
+"            .selected-row {\n" \
+"                background-color: rgba(255, 255, 255, 0.1);\n" \
+"                border: 1px solid #e8fd81;\n" \
+"            }\n" \
+"	        header {\n" \
+"	            background-color: #000000;\n" \
+"	            border-bottom: 5px solid #ff0000;\n" \
+"	            padding: 20px 0;\n" \
+"	            text-align: center;\n" \
+"	        }\n" \
+"	        header h1 {\n" \
+"	            color: #ff0000;\n" \
+"	            font-size: 2.5em;\n" \
+"	            font-weight: bold;\n" \
+"	            text-transform: uppercase;\n" \
+"	            letter-spacing: 5px;\n" \
+"	            margin: 0;\n" \
+"				line-height: 1.5em;\n" \
+"	        }\n" \
+"	        nav ul {\n" \
+"	            list-style: none;\n" \
+"	            padding: 0;\n" \
+"	            display: flex;\n" \
+"	            justify-content: center;\n" \
+"	            background-color: #ff0000;\n" \
+"	            margin: 0;\n" \
+"				line-height: 2.5em;\n" \
+"	        }\n" \
+"	        nav ul li {\n" \
+"	            position: relative;\n" \
+"	            margin: 0 15px;\n" \
+"	        }\n" \
+"	        nav ul li a {\n" \
+"	            color: #1a1a1a;\n" \
+"	            text-decoration: none;\n" \
+"	            font-size: 1.2em;\n" \
+"	            text-transform: uppercase;\n" \
+"	            font-weight: bold;\n" \
+"	            letter-spacing: 2px;\n" \
+"	        }\n" \
+"	        nav ul li a:hover {\n" \
+"	            color: #ffffff;\n" \
+"	        }\n" \
+"			footer {\n" \
+"	            position: fixed;\n" \
+"	            width: 100%;\n" \
+"	            font-size: 14px;\n" \
+"	            color: #666;\n" \
+"	            text-align: center;\n" \
+"	        }\n" \
+"	        .footer-text {\n" \
+"	            margin: 0;\n" \
+"	        }\n" \
+"	        nav ul li ul {\n" \
+"	            display: none;\n" \
+"	            position: absolute;\n" \
+"	            top: 100%;\n" \
+"	            left: 0;\n" \
+"	            background-color: #ff0000;\n" \
+"	            padding: 0;\n" \
+"	            list-style: none;\n" \
+"	            margin: 0;\n" \
+"	        }\n" \
+"	        nav ul li ul li {\n" \
+"	            width: 150px;\n" \
+"	            margin: 0;\n" \
+"	        }\n" \
+"	        nav ul li ul li a {\n" \
+"	            color: #1a1a1a;\n" \
+"	            text-transform: none;\n" \
+"	            font-size: 1em;\n" \
+"	            letter-spacing: 1px;\n" \
+"	            padding: 10px;\n" \
+"	            display: block;\n" \
+"	        }\n" \
+"	        nav ul li ul li a:hover {\n" \
+"	            color: #ffffff;\n" \
+"	        }\n" \
+"	        nav ul li:hover ul {\n" \
+"	            display: block;\n" \
+"	        }\n" \
+"	        nav ul li ul li a {\n" \
+"	            transition: color 0.3s ease;\n" \
+"	        }\n" \
+"			nav {\n" \
+"	            border-bottom: 5px solid #ff0000;\n" \
+"			}\n" \
+"	        #main-content {\n" \
+"				position: absolute;\n" \
+"	            top: 0;\n" \
+"	            left: 0;\n" \
+"	            z-index: 5;\n" \
+"				width: 100%;\n" \
+"	            height: 100%;\n" \
+"	        }\n" \
+"            table {\n" \
+"                width: 80%;\n" \
+"                margin: 20px auto;\n" \
+"                border-collapse: collapse;\n" \
+"                font-size: 15px;\n" \
+"            }\n" \
+"            table tr:hover {\n" \
+"                background-color: rgba(255, 0, 0, 0.8); /* Cambia este valor según el color deseado */\n" \
+"            }\n" \
+"            th, td {\n" \
+"                padding: 10px;\n" \
+"                text-align: left;\n" \
+"                border: 1px solid #e8fd81;\n" \
+"            }\n" \
+"            th {\n" \
+"                background-color: #333;\n" \
+"                color: #e8fd81;\n" \
+"            }\n" \
+"            tr:nth-child(even) {\n" \
+"                background-color: rgba(255, 255, 255, 0.1);\n" \
+"            }\n" \
+"		</style>\n" \
+"	</head>\n" \
+"	<body>\n" \
+"		<div id=\"main-content\">\n" \
+"		    <header>\n" \
+"				<h1>- <span>42 - </span>WEBSERVER<span> - 42</span> -</h1>\n" \
+"			</header>\n" \
+"			<nav>\n" \
+"			    <ul>\n" \
+"			        <li><a href=\"../assets/staticindex.html\">Home</a></li>\n" \
+"					<li><a href=\"../assets/forms.html\">Forms</a></li>\n" \
+"					<li><a href=\"../assets/cookies.html\">Cookies</a></li>\n" \
+"					<li><a href=\"#\">Uploads</a></li>\n" \
+"					<li><a href=\"../assets/.html\">Login</a></li>\n" \
+"					<li><a href=\"../private/privateindex.html\">Private</a></li>\n" \
+"				</ul>\n" \
+"			</nav>\n" \
+"            <table>\n" \
+"                <thead>\n" \
+"                    <tr>\n" \
+"                        <th>File Name</th>\n" \
+"                        <th>Last Modification</th>\n" \
+"                        <th>File Size</th>\n" \
+"                    </tr>\n" \
+"                </thead>\n" \
+"                <tbody>\n" \
+
+#define HTML_EN "                </tbody>\n" \
+"            </table>\n" \
+"			<div><button class='delete-button' id='delete-button' onclick='deleteSelectedFile()'>Delete</button></div>\n" \
+"			<script>\n" \
+"			    let selectedFile = '';\n" \
+"			    let isFile = false;\n" \
+"			    let previousSelectedRow = null;\n" \
+"			    function selectFile(filePath, file) {\n" \
+"			        if (previousSelectedRow) {\n" \
+"			            previousSelectedRow.classList.remove('selected-row');\n" \
+"			        }\n" \
+"			        let currentRow = document.getElementById(filePath.split('/').pop());\n" \
+"			        currentRow.classList.add('selected-row');\n" \
+"			        previousSelectedRow = currentRow;\n" \
+"			        selectedFile = filePath;\n" \
+"			        isFile = file;\n" \
+"			        if (isFile) {\n" \
+"			            document.getElementById('delete-button').style.display = 'block';\n" \
+"			        } else {\n" \
+"			            document.getElementById('delete-button').style.display = 'none';\n" \
+"			        }\n" \
+"			    }\n" \
+"			    function deleteSelectedFile() {\n" \
+"			        if (selectedFile === '') {\n" \
+"			            alert('No file selected!');\n" \
+"			            return;\n" \
+"			        }\n" \
+"			        fetch(selectedFile, { method: 'DELETE' })\n" \
+"			            .then(response => {\n" \
+"			                if (response.ok) {\n" \
+"			                    alert(selectedFile.split('/').pop() + ' deleted successfully');\n" \
+"			                    window.location.reload();\n" \
+"			                } else {\n" \
+"			                    alert(selectedFile.split('/').pop() + 'Error deleting file');\n" \
+"			                }\n" \
+"			            })\n" \
+"			            .catch(error => {\n" \
+"			                console.error('Error:', error);\n" \
+"			                alert('Error deleting' + selectedFile.split('/').pop());\n" \
+"			            });\n" \
+"			    }\n" \
+"			</script>\n" \
+"			<footer>\n" \
+"				<p class=\"footer-text\">2024 Imoro-sa & Alfofern Webserv. All Rights Reserved.</p>\n" \
+"			</footer>\n" \
+"		</div>\n" \
+"	</body>\n" \
+"</html>\n"

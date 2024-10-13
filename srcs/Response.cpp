@@ -330,7 +330,8 @@ int Response::launchCgi()
 	return 0;
 }
 
-bool endsWith(const std::string& str, const std::string& suffix) {
+bool endsWith(const std::string& str, const std::string& suffix)
+{
     if (str.size() < suffix.size()) return false;
     return str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
@@ -466,47 +467,7 @@ int Response::buildDirHtml()
         std::cerr << "Error in opendir" << std::endl;
         return (1);
     }
-    _response_body_str.append("<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset='UTF-8'>\n<meta name='viewport' content='width=device-width, initial-scale=1.0'>\n");
-    _response_body_str.append(
-        "    <style>\n"
-        "        .footer {\n"
-        "            text-align: center;\n"
-        "            font-size: 0.8rem;\n"
-        "            margin-top: 60px;\n"
-        "            color: #940f0f;\n"
-        "            text-shadow: #e8fd81ad 1px 0px 2px;\n"
-        "        }\n"
-        "        .delete-button {\n"
-        "            background-color: red;\n"
-        "            color: white;\n"
-        "            padding: 10px;\n"
-        "            border: none;\n"
-        "            border-radius: 5px;\n"
-        "            cursor: pointer;\n"
-        "            font-size: 16px;\n"
-        "            margin-top: 20px;\n"
-        "            display: none;\n"
-        "            float: right;\n"
-        "            margin-right: 10%;\n"
-        "        }\n"
-        "        .selected-row {\n"
-        "            background-color: rgba(255, 255, 255, 0.1);\n"
-        "            border: 1px solid #e8fd81;\n"
-        "        }\n"
-        "    </style>\n"
-    );
-    _response_body_str.append("<title>Index of ");
-    _response_body_str.append(_target);
-    _response_body_str.append("</title>\n</head>\n<body style=\"background-color: black; color: red; font-family: Arial, sans-serif;\">\n");
-	_response_body_str.append("<h1 style=\"text-align: center;\">Index of " + _target + "</h1>\n");
-    _response_body_str.append("<table style=\"width:80%; margin: auto; border-collapse: collapse; font-size: 15px;\">\n");
-    _response_body_str.append("<hr style=\"border: 1px solid red; width:90%;margin-bottom: 0px;\">\n");
-    _response_body_str.append("<hr style=\"border: 1px solid #e8fd81; width:90%; margin-top:0px;\">\n");
-    _response_body_str.append("<thead style=\"color: #e8fd81;\">\n<tr>\n<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Name</th>\n");
-    _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">Last Modification</th>\n");
-    _response_body_str.append("<th style=\"text-align:left; padding: 10px; border-bottom: 1px solid red;\">File Size</th>\n");
-    _response_body_str.append("</tr>\n</thead>\n<tbody>\n");
-
+    _response_body_str.append(HTML_ST);
     struct stat file_stat;
     std::string file_path;
     while ((structDirent = readdir(dir)) != NULL)
@@ -520,69 +481,26 @@ int Response::buildDirHtml()
         _response_body_str.append("<tr id=\"");
         _response_body_str.append(structDirent->d_name);
         _response_body_str.append("\" onclick=\"selectFile('" + file_path + "', " + (isFile ? "true" : "false") + ")\">\n");
-        _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">\n<a href=\"");
+        _response_body_str.append("<td style=\"padding: 10px;\">\n<a href=\"");
         _response_body_str.append(file_path);
         if (S_ISDIR(file_stat.st_mode))
             _response_body_str.append("/");
-        _response_body_str.append("\" style=\"color: red; text-decoration: none;\">");
+        _response_body_str.append("\" style=\"color: yellow; text-decoration: none;\">");
         _response_body_str.append(structDirent->d_name);
         if (S_ISDIR(file_stat.st_mode))
             _response_body_str.append("/");
         _response_body_str.append("</a></td>\n");
-        _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
+        _response_body_str.append("<td style=\"padding: 10px;\">");
         _response_body_str.append(ctime(&file_stat.st_mtime));
         _response_body_str.append("</td>\n");
-        _response_body_str.append("<td style=\"padding: 10px; border-bottom: 1px solid red;\">");
+        _response_body_str.append("<td style=\"padding: 10px;\">");
         if (!S_ISDIR(file_stat.st_mode))
             _response_body_str.append(toStr(file_stat.st_size));
         _response_body_str.append("</td>\n");
         _response_body_str.append("</tr>\n");
     }
-    _response_body_str.append("</tbody>\n</table>\n");
-    _response_body_str.append("<div><button class='delete-button' id='delete-button' onclick='deleteSelectedFile()'>Delete</button></div>\n");
-    _response_body_str.append(
-        "<script>\n"
-        "    let selectedFile = '';\n"
-        "    let isFile = false;\n"
-        "    let previousSelectedRow = null;\n"
-        "    function selectFile(filePath, file) {\n"
-        "        if (previousSelectedRow) {\n"
-        "            previousSelectedRow.classList.remove('selected-row');\n"
-        "        }\n"
-        "        let currentRow = document.getElementById(filePath.split('/').pop());\n"
-        "        currentRow.classList.add('selected-row');\n"
-        "        previousSelectedRow = currentRow;\n"
-        "        selectedFile = filePath;\n"
-        "        isFile = file;\n"
-        "        if (isFile) {\n"
-        "            document.getElementById('delete-button').style.display = 'block';\n"
-        "        } else {\n"
-        "            document.getElementById('delete-button').style.display = 'none';\n"
-        "        }\n"
-        "    }\n"
-        "    function deleteSelectedFile() {\n"
-        "        if (selectedFile === '') {\n"
-        "            alert('No file selected!');\n"
-        "            return;\n"
-        "        }\n"
-        "        fetch(selectedFile, { method: 'DELETE' })\n"
-        "            .then(response => {\n"
-        "                if (response.ok) {\n"
-        "                    alert('File deleted successfully');\n"
-        "                    window.location.reload();\n"
-        "                } else {\n"
-        "                    alert('Error deleting file');\n"
-        "                }\n"
-        "            })\n"
-        "            .catch(error => {\n"
-        "                console.error('Error:', error);\n"
-        "                alert('Error deleting file');\n"
-        "            });\n"
-        "    }\n"
-        "</script>\n"
-    );
-    _response_body_str.append("<div class='footer'>\n<p>Powered by Imoro-sa & Alfofern C++98 WebServer</p>\n</div>\n");
-    _response_body_str.append("</body>\n</html>\n");
+    _response_body_str.append(HTML_EN);
+	closedir(dir);
     return (0);
 }
 

@@ -1,152 +1,256 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cookies!</title>
-	<!-- <base href="/"> -->
+    <title>WeBSeRV</title>
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
     <style>
-		*{
-			margin: 0;
-			padding: 0;
-			box-sizing: border-box;
-		}
         body {
-            background-color: #000;  /* Fondo negro */
-            color: #ff0000;          /* Texto rojo */
-            font-family: 'Courier New', monospace;
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #000000;
+            border-bottom: 5px solid #ff0000;
+            padding: 20px 0;
             text-align: center;
-            padding-top: 1vh;
-			min-width: 400px;
         }
-		.container{
-			min-width: 60%;
-			max-width: 80%;
-			margin: 0 auto;
-			min-width: 400px;	
-		}
-        h1 {
-            color: #ff0000;          /* Letras grandes rojas */
-            font-size: 6vw;
+        header h1 {
+            color: #ff0000;
+            font-size: 2.5em;
+            font-weight: bold;
             text-transform: uppercase;
-			text-shadow: #ffff00 1px 1px 10px;
-			margin-bottom: -3rem;
-			text-align: center;
-			min-width: 400px;
-
+            letter-spacing: 5px;
+            margin: 0;
+            line-height: 1.5em;
         }
-        .title {
-			min-width: 40%;
-			max-width: 50%;	
-			min-width: 400px;
-			margin:0 auto;
-			margin-bottom: 1rem;
+        h3 {
+            color: #ff0000;
+            font-size: 2vw;
+            text-transform: uppercase;
+            text-shadow: #ffff00 1px 1px 10px;
+            margin-bottom: -3rem;
+            text-align: center;
+            min-width: 400px;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            background-color: #ff0000;
+            margin: 0;
+            line-height: 2.5em;
+        }
+        nav ul li {
+            position: relative;
+            margin: 0 15px;
+        }
+        nav ul li a {
+            color: #1a1a1a;
+            text-decoration: none;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        nav ul li a:hover {
+            color: #ffffff;
+        }
+        footer {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+        .footer-text {
+            margin: 0;
+        }
+        nav ul li ul {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #ff0000;
+            padding: 0;
+            list-style: none;
+            margin: 0;
+        }
+        nav ul li ul li {
+            width: 150px;
+            margin: 0;
+        }
+        nav ul li ul li a {
+            color: #1a1a1a;
+            text-transform: none;
+            font-size: 1em;
+            letter-spacing: 1px;
+            padding: 10px;
+            display: block;
+        }
+        nav ul li ul li a:hover {
+            color: #ffffff;
+        }
+        nav ul li:hover ul {
+            display: block;
+        }
+        nav ul li ul li a {
+            transition: color 0.3s ease;
+        }
+        nav {
+            border-bottom: 5px solid #ff0000;
+        }
+        .content {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 50px 0;
+        }
+        h1 span {
+            font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+            font-size: 1.2em;
+            color: red;
+            font-weight: bold;
+        }
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+            nav ul li a {
+                font-size: 1em;
+            }
+        }
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.5em;
+            }
+            nav ul {
+                flex-direction: column;
+                text-align: center;
+            }
+            nav ul li {
+                margin: 10px 0;
+            }
+        }
+        .container {
+            min-width: 60%;
+            max-width: 80%;
+            margin: 0 auto;
+            padding: 20px;
         }
         .cookies {
             margin-top: 2rem;
-			min-width: 40%;
-			max-width: 50%;	
-			margin:0 auto;
+            margin: 0 auto;
             margin-top: 0.5rem;
             font-size: 1rem;
-            color: #ff0000;      
-			font-weight:bold;
-			margin-bottom: 0px;
-			min-width: 400px;
+            color: #ff0000;
+            font-weight: bold;
+            margin-bottom: 0px;
         }
-        img {
-			max-width: 20%;	
-			rotate: 25deg;
-            height: auto;
-			filter: drop-shadow(0 0 1rem #fff000);
-			margin-bottom:-3rem;
-        }
-		.setCookie{
-            margin-top: 2rem;
-		}
-		.getCookie{
-            margin-top: 2rem;
-		}
-		.cookieButtom {	
-            margin-top: 1rem;
-            background-color: #ff0000;
-            color: #000;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-            font-size: 0.8em;
-            box-shadow: 0px 0px 5px #ff0000;
-            display: inline-block;
-			align-self: center;
-			width: 90%;
-			border-radius: 10px;
-        }
-		.cookieButtom:hover {
-            color: #cc0000;
-            background-color: #333;
-            box-shadow: 0px 0px 10px #ff0000;			
-        }
-		form {
+        .setCookie, .getCookie {
             background-color: #111;
             border: 2px solid #ff0000;
             padding: 20px;
             display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: space-between;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
             box-shadow: 0px 0px 10px #ff0000;
-			border-radius: 10px;
-
+            border-radius: 10px;
+            margin-bottom: 20px;
         }
         input[type="text"] {
             background-color: #333;
             border: 1px solid #ff0000;
             color: #ff0000;
-			margin-top: 1em;
+            margin-top: 1em;
             padding: 10px;
             width: 90%;
-			align-self: center;
+            align-self: center;
             font-size: 1em;
-			border-radius: 10px;
+            border-radius: 10px;
+            margin-bottom: 1em; /* Añadir margen inferior para separación uniforme */
         }
-		input[type="submit"] {
-			background-color: #ff0000;
-			color: #000;
-			padding: 10px 20px;
-			border: none;
-			cursor: pointer;
-			font-size: 0.9em;
-			font-weight: bold;
-			box-shadow: 0px 0px 5px #ff0000;
-			display: inline-block;
-			align-self: center;
-			width: 90%;
-			border-radius: 10px;
-		}
+        input[type="submit"] {
+            background-color: #ff0000;
+            color: #000;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            box-shadow: 0px 0px 5px #ff0000;
+            display: inline-block;
+            align-self: center;
+            width: 90%;
+            border-radius: 10px;
+            margin-top: 1em; /* Añadir margen superior para separación uniforme */
+        }
+        input[type="submit"]:hover {
+            color: #cc0000;
+            background-color: #333;
+            box-shadow: 0px 0px 10px #ff0000;			
+        }
+        .img {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .img img {
+            width: auto; /* Mantiene el tamaño original */
+            height: auto; /* Mantiene el tamaño original */
+            max-width: 80%; /* Se adapta a la pantalla */
+            filter: drop-shadow(0 0 1rem #fff000);
+        }
+        .img h2 {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-	<div class="container">
-		<div class="title">
-			<h1> Cookies </h1>
-		</div>
-				<div class="img">
-	    	<a href="/assets/forms.html"><img src="/assets/triki.png" alt="The Cookie Monster"></a>
-		</div>
-		<div class ="cookies setCookie">
-			<h2> Set Cookie: </h2>
-		    <form action = "../cgi-bin/setCookie.py" method = "get"><br />  
-				<input type = "text" name = "key" placeholder="Cookie name:"><br />
-		        <input type = "text" name = "value" placeholder="Cookie value:"/><br />  
-		        <input class="cookieButtom" type = "submit" value = "Save cookie" /><br />
-	    	</form>
-		</div>
-		<div class ="cookies getCookie">
-		    <h2> Get Cookie: </h2>
-		    <form action = "../cgi-bin/getCookie.py" method = "get"><br />  
-		        <input type = "text" name = "key" placeholder="Cookie name:"><br />
-		        <input class="cookieButtom" type = "submit" value = "Check out" /> <br />
-		    </form>
-		</div>
+    <div id="main-content">
+        <header>
+            <h1>- <span>42 - </span>WEBSERVER<span> - 42</span> -</h1>
+        </header>
+        <nav>
+            <ul>
+                <li><a href="./staticindex.html">Home</a></li>
+                <li><a href="./forms.html">Forms</a></li>
+                <li><a href="#">Cookies</a></li>
+                <li><a href="../upload">Uploads</a></li>
+                <li><a href="./login.html">Login</a></li>
+                <li><a href="../private/privateindex.html">Private</a></li>
+            </ul>		
+        </nav>
+        <section class="content container">
+            <div class ="cookies setCookie">
+                <h2> Set Cookie: </h2>
+                <form action="../cgi-bin/setCookie.py" method="get">  
+                    <input type="text" name="key" placeholder="Cookie name:"><br />
+                    <input type="text" name="value" placeholder="Cookie value:"><br />  
+                    <input type="submit" value="Save cookie" /><br />
+                </form>
+            </div>
+            <div class="img">
+                <img src="/assets/triki.png" alt="The Cookie Monster">
+                <h3>The Cookie Monster</h3>
+            </div>
+            <div class ="cookies getCookie">
+                <h2> Get Cookie: </h2>
+                <form action="../cgi-bin/getCookie.py" method="get">  
+                    <input type="text" name="key" placeholder="Cookie name:"><br />
+                    <input type="submit" value="Check out" /><br />
+                </form>
+            </div>
+        </section>
+        <footer>
+            <p class="footer-text">2024 Imoro-sa & Alfofern Webserv. All Rights Reserved.</p>
+        </footer>
+    </div>	
 </body>
-</html> 
+</html>
