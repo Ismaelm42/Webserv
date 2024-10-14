@@ -3,8 +3,8 @@
 import cgi
 
 form = cgi.FieldStorage()
-name = form.getvalue('name', 'Visitante')
-email = form.getvalue('email', 'No proporcionado')
+name = form.getvalue('name', 'Visitor')
+email = form.getvalue('email', 'No email provided')
 
 print("Content-Type: text/html")
 print()
