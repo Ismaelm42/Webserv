@@ -209,6 +209,8 @@ void Configuration::handleLocations()
 		_itConfig->locations.back().location = *(_itToken);
 		_inLocationBlock = true;
 	}
+	else if (_tokens[0] == "root")
+		setLocationRootDirectory();
 	else if (_tokens[0] == "allow_methods")
 		setAllowedMethods();
 	else if (_tokens[0] == "autoindex")
@@ -315,6 +317,22 @@ void Configuration::setIndexFiles(std::string path, std::vector<std::string> &co
 		*_itToken = path + *_itToken;
 		container.push_back(*_itToken);
 	}
+}
+
+void Configuration::setLocationRootDirectory()
+{
+	size_t cPos = _itToken->find(";");
+	if (_itToken == _tokens.end() || cPos == 0)
+		throw std::runtime_error(logError("Error: invalid number of arguments in \"root\" directive"));
+	if (_itToken != _tokens.end() - 1)
+		throw std::runtime_error(logError("Error: too many arguments in \"root\" directive"));
+	if (cPos != _itToken->size() - 1)
+		throw std::runtime_error(logError("Error: syntax error in \"root\" directive"));
+	_itToken->erase(_itToken->size() - 1);
+	while (_itToken->rfind("/") == _itToken->size() - 1)
+		_itToken->erase(_itToken->size() - 1);
+	_itConfig->locations.back().root = *_itToken;
+	std::cout << Red << "root: " << _itConfig->locations.back().root << Reset << std::endl;
 }
 
 void Configuration::setErrorPages()

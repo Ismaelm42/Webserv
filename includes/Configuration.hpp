@@ -23,6 +23,7 @@ class Configuration
 		void setListen();
 		void setServerName();
 		void setRootDirectory();
+		void setLocationRootDirectory();
 		void setIndexFiles(std::string path, std::vector<std::string> &container);
 		void setErrorPages();
 		void setMaxBodySize(size_t &body_size);
