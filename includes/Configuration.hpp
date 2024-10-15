@@ -17,6 +17,7 @@ class Configuration
 		void initServerBlock();
 		void setAllowedMethods();
 		void setAutoindex();
+		void setLocationRoot();
 		void setRedir();
 		void setCgi();
 		void handleLocations();

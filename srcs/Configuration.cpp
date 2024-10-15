@@ -119,6 +119,17 @@ void Configuration::setAutoindex()
 		_itConfig->locations.back().autoindex = true;
 }
 
+void Configuration::setLocationRoot()
+{
+	if (_tokens.end() - _tokens.begin() != 2)
+		throw std::runtime_error(logError("Error: invalid number of arguments in \"root\" directive"));
+	std::string str = *_itToken;
+	if (str.find(";") != str.size() - 1)
+		throw std::runtime_error(logError("Error: syntax error in \"root\" directive"));
+	str.erase(str.size() - 1);
+	//Queda por hacer
+}
+
 void Configuration::setRedir()
 {
 	if (_tokens.end() - _tokens.begin() != 2 && _tokens.end() - _tokens.begin() != 3)
@@ -213,6 +224,8 @@ void Configuration::handleLocations()
 		setAllowedMethods();
 	else if (_tokens[0] == "autoindex")
 		setAutoindex();
+	else if (_tokens[0] == "root")
+		setLocationRoot();
 	else if (_tokens[0] == "client_max_body_size")
 		setMaxBodySize(_itConfig->locations.back().body_size);
 	else if (_tokens[0] == "return" && !_itConfig->locations.back().redir.first)
