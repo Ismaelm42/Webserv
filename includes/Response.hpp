@@ -51,4 +51,5 @@ class Response
 		int 														buildErrorPage(int code);
 		void														buildErrorMap();
 		void 														getDefaultErrorBody(int code);
+		std::string 												_locationMatch;
 };

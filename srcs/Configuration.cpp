@@ -332,7 +332,6 @@ void Configuration::setLocationRootDirectory()
 	while (_itToken->rfind("/") == _itToken->size() - 1)
 		_itToken->erase(_itToken->size() - 1);
 	_itConfig->locations.back().root = *_itToken;
-	std::cout << Red << "root: " << _itConfig->locations.back().root << Reset << std::endl;
 }
 
 void Configuration::setErrorPages()

@@ -64,6 +64,7 @@ Response::Response(Client *client, Server_config *config, Request *request)
 	_responseString = "";
 		_code = _request->getErrorCode();
 	_hasIndexFlag = 0;
+	_locationMatch = "";
 }
 
 void Response::reset()
@@ -77,6 +78,7 @@ void Response::reset()
 	_mime =  "";
 	_auto_index_flag = 0;
 	_hasIndexFlag = 0;
+	_locationMatch = "";
 }	
 
 int Response::getCode() const
@@ -164,11 +166,9 @@ std::string concatenatePaths(std::string str1, std::string str2, std::string str
 bool isReadableDirectory(const std::string& path)
 {
 	struct stat info;
-	(void)path;
-	std::string path2 = "tmp/www/pouic/toto/pouet";
-	if (stat(path2.c_str(), &info) != 0)
+	if (stat(path.c_str(), &info) != 0)
 	{
-		std::cout << "path en isReadableDirectory: " << path2 << std::endl;
+		std::cout << "path en isReadableDirectory: " << path << std::endl;
 		std::cerr << "&info stat() error" << std::endl;
 		return false;
 	}
@@ -177,7 +177,7 @@ bool isReadableDirectory(const std::string& path)
 		std::cerr << "S_IFDIR stat() error" << std::endl;
 		return false;
 	}
-	if (access(path2.c_str(), R_OK) != 0){
+	if (access(path.c_str(), R_OK) != 0){
 			std::cerr << "Access R_OK stat() error" << std::endl;
 		return false;
 	}
@@ -209,26 +209,35 @@ int Response::getFile()
 {
     struct stat buffer;
 	std::cout << "target en getfile: " << _target << std::endl;
-	
-	if (!_target.empty() && _target[0] == '/')
+		if (!_target.empty() && _target[0] == '/')
 		_target.erase(0, 1);
 	// if (!_target.empty() && _target[0] == '/')
 	// 	_target = '.' + _target;
-	if (!_target.empty() && _target[(_target.size() - 1)] != '/')
-		_target += '/';
+	// if (!_target.empty() && _target[(_target.size() - 1)] != '/')
+	// 	_target += '/';
 	std::cout << "target en getfile: " << _target << std::endl;
-	if (checkDirectoriesPath(_target.c_str())){
-		std::cout << Red << "Error: " << _target << ": permission denied" << Reset << std::endl;   
+	if (checkDirectoriesPath(_target.c_str()))
+	{
+		std::cout << "en checkDirectoriesPath linea 221" << std::endl;
 		return (setReturnCode(403));
 	}
 	if (stat(_target.c_str(), &buffer) != 0)
+	{
+		std::cout << "en checkDirectoriesPath linea 226" << std::endl;
 		return (setReturnCode(404));
-    if (!(buffer.st_mode & S_IRUSR))
+	}
+	if (!(buffer.st_mode & S_IRUSR))
+	{
+		std::cout << "en checkDirectoriesPath linea 231" << std::endl;
 		return (setReturnCode(403));
-    std::ifstream file(_target.c_str());
+	}
+	std::ifstream file(_target.c_str());
     if (!file.is_open())
-        return (setReturnCode(404));
-    std::ostringstream ss;
+    {
+		std::cout << "en checkDirectoriesPath linea 237" << std::endl;
+	    return (setReturnCode(404));
+	}
+	std::ostringstream ss;
     ss << file.rdbuf();
     if (file.rdstate() & std::ifstream::failbit || file.rdstate() & std::ifstream::badbit)
         return (setReturnCode(500));
@@ -265,7 +274,6 @@ void	Response::setHeaders()
 
 std::string Response::getMatch(std::string path, std::vector<Location_config> locations)
 {
-	std::string locationMatch = "";
 	std::string longestMatch = "";
 	size_t longestMatchLength = 0;
 	std::string combinedPath = concatenatePaths(_config->root, path, "");
@@ -279,8 +287,9 @@ std::string Response::getMatch(std::string path, std::vector<Location_config> lo
 		}
 	}
 	if (longestMatchLength > 0)
-		locationMatch = longestMatch;
-	return locationMatch;
+		_locationMatch = longestMatch;
+	std::cout <<Red<< "locationMatch: " << _locationMatch << Reset << std::endl;
+	return _locationMatch;
 }
 
 static Location_config* find_location(Server_config &server, const std::string &location_value)
@@ -371,15 +380,14 @@ std::string removelocationMatch(std::string path, std::string locationMatch)
 int Response::getTarget()
 {
 	_location_config = NULL;
-	std::string locationMatch = "";
-	locationMatch = getMatch(_request->getPath(), _config->locations);
-	if (!locationMatch.empty())
+	_locationMatch = getMatch(_request->getPath(), _config->locations);
+	if (!_locationMatch.empty())
 	{ 
-		_location_config = find_location(*_config,locationMatch);
-		std::cout << Green << "locationMatch: " << locationMatch << Reset << std::endl;
+		_location_config = find_location(*_config,_locationMatch);
+		std::cout << Green << "_locationMatch: " << _locationMatch << Reset << std::endl;
 		if (_location_config->root.size() > 0)
 		{
-			std::string finalPath = removelocationMatch(concatenatePaths(_config->root, _request->getPath(), ""), locationMatch);
+			std::string finalPath = removelocationMatch(concatenatePaths(_config->root, _request->getPath(), ""), _locationMatch);
 			_target= concatenatePaths(_location_config->root, finalPath, "");
 		}
 		std::cout << "concatenatePath (_target): " << _target << std::endl;
@@ -421,13 +429,18 @@ int Response::getTarget()
 		}
 		if (!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
 			return(launchCgi());
+//		Se podríanpermitir en algunas locations como upload, pero por segurida mejor no permitir que suban scipts y los lancen
+//		En caso de escalar el proyecto sería recomendable incluir un mapa de extensiones permitidas por location o restringidas fuera de cgi.
+//		if ((endsWith(_target, ".py") || endsWith(_target, ".sh")) && (!endsWith(_locationMatch, "upload"))) {
 		if ((endsWith(_target, ".py") || endsWith(_target, ".sh"))) {
 			return (setReturnCode(403));
 		}
-		std::cout << "en getTarget_________________________________________________________________" << std::endl;
-		std::cout << "_target : " << _target << std::endl;
-		std::cout << "isReadableDirectory(_target) : " << isReadableDirectory(_target) << std::endl;
-		
+		std::cout << "en getTarget línea 413" << std::endl;
+		// VEr si es necesario incluir un apartado para tratar a los directorios
+		// incluido para evitar problemas con la primera barra
+		if (!_target.empty() && _target[0] == '/')
+			_target.erase(0, 1);
+		///////////////////////////////	
 		if (!_hasIndexFlag && _location_config->autoindex && isReadableDirectory(_target))
 		{
 			_auto_index_flag = 1;
@@ -489,6 +502,7 @@ int Response::buildBody()
 		return (setCode(204));
 	}
 	_code = 200;
+	std::cout << "en BUILDBODY linea 497" << std::endl;
 	return (0);
 }
 
@@ -503,10 +517,24 @@ std::string removeRoot(std::string target, std::string root)
 int Response::buildDirHtml()
 {
     std::string root = _config->root;
+	if (_location_config->root.size() > 0)
+		root = _location_config->root;
+	std::string cleanLocation = removeRoot(_locationMatch, _config->root);
+	if(DEBUG)
+	{
+		std::cout << Green << "En buildDirhtml _target: " << _target << std::endl;
+		std::cout << Green << "En buildDirhtml _locationMatch: " << _locationMatch << std::endl;
+		std::cout << Green << "En buildDirhtml _location_config->root: " << _location_config->root<< std::endl;
+		std::cout << Green << "En buildDirhtml _config->root: " << _config->root << std::endl;
+		std::cout << Green << "En buildDirhtml cleanLocation: " << cleanLocation << std::endl;
+	}
     struct dirent *structDirent;
     DIR *dir;
     _response_body_str = "";
 	std::cout << "target en buildDirHtml línea 509: " << _target << std::endl;
+
+	if (root.size() > 0 && root[0]== '/')
+		root.erase(0, 1);
 	if(_target[0] == '/')
 		_target.erase(0, 1);
     dir = opendir(_target.c_str());
@@ -518,9 +546,6 @@ int Response::buildDirHtml()
     _response_body_str.append(HTML_ST);
     struct stat file_stat;
     std::string file_path;
-
-	// kapouet/pouic/toto/tmp/www/pouic/toto/pouet/poiet2.txt
-
     while ((structDirent = readdir(dir)) != NULL)
     {
         if (strcmp(structDirent->d_name, ".") == 0)
@@ -530,12 +555,16 @@ int Response::buildDirHtml()
         file_path = concatenatePaths(_target, structDirent->d_name, "");
 		std::cout << Red << "file_path en buildDirHtml línea 531: " << file_path << Reset << std::endl;
         stat(file_path.c_str(), &file_stat);
-        //file_path = removeRoot(file_path, root);
+		std::cout << Green << "root en 533: " << root << Reset << std::endl;
+        file_path = removeRoot(file_path, root);
+		if (_location_config->root.size() > 0)
+			file_path = concatenatePaths(cleanLocation, file_path, "");
+		std::cout << Yellow << "file_path en buildDirHtml línea 534: " << file_path << Reset << std::endl;
         bool isFile = !S_ISDIR(file_stat.st_mode);
         _response_body_str.append("<tr id=\"");
         _response_body_str.append(structDirent->d_name);
         _response_body_str.append("\" onclick=\"selectFile('" + file_path + "', " + (isFile ? "true" : "false") + ")\">\n");
-        _response_body_str.append("<td style=\"padding: 10px;\">\n<a href=\"http://loaclhost:8080/");
+        _response_body_str.append("<td style=\"padding: 10px;\">\n<a href=\"");
         _response_body_str.append(file_path);
         if (S_ISDIR(file_stat.st_mode))
             _response_body_str.append("/");
@@ -569,7 +598,10 @@ int countCharsAfterEmptyLines(const std::string& _response_body_str)
 void Response::buildResponse()
 {	
 	if (isErrorCode() || buildBody())
+	{
+		std::cout << "en buildResponse línea 576" << std::endl;
 		buildErrorPage(_code);
+	}
 	if	(_cgiFlag)
 	{
 		if (_code == 0 || _code == 200)
@@ -589,10 +621,13 @@ void Response::buildResponse()
 		_responseString = _response_str;
 		return ;
 	}
-	else if (_auto_index_flag)
+	else if (!checkFileOrDirectory(_target, "dir") && _auto_index_flag)
     {
 		if (!isReadableDirectory(_target))
+		{	
+			std::cout << "en buildREsponse línea 600" << std::endl;
 			buildErrorPage(403);
+		}
 		else if (buildDirHtml()){
 			std::cout << Yellow << "en buildDirHtml línea 588"  << Reset << std::endl;
 			buildErrorPage(500);
@@ -600,8 +635,11 @@ void Response::buildResponse()
         else
             _code = 200;
 	}
-	else if (isReadableDirectory(_target) && !_auto_index_flag)
-			buildErrorPage(403);
+	else if (!checkFileOrDirectory(_target, "dir") && isReadableDirectory(_target) && !_auto_index_flag)
+	{
+		std::cout << "en buildResponse línea 611" << std::endl;	
+		buildErrorPage(403);
+	}
 	setStatusline();
 	setHeaders();
 	if(_request->getMethod() == GET || _code != 200)
