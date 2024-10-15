@@ -127,7 +127,7 @@ void Configuration::setLocationRoot()
 	if (str.find(";") != str.size() - 1)
 		throw std::runtime_error(logError("Error: syntax error in \"root\" directive"));
 	str.erase(str.size() - 1);
-	//Queda por hacer
+	_itConfig->locations.back().root = str;
 }
 
 void Configuration::setRedir()

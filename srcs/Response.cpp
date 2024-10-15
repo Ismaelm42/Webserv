@@ -247,6 +247,10 @@ std::string Response::getMatch(std::string path, std::vector<Location_config> lo
 	std::string longestMatch = "";
 	size_t longestMatchLength = 0;
 	std::string combinedPath = concatenatePaths(_config->root, path, "");
+	std::cout << Purple << "_config->root = " << _config->root << Reset << std::endl;
+	std::cout << Purple << "path = " << path << Reset << std::endl;
+	std::cout << Purple << "combinedPath = " << combinedPath << Reset << std::endl;
+
 	for (std::vector<Location_config>::iterator it = locations.begin(); it != locations.end(); it++)
 	{
 		std::string locationToFind = it->location;
@@ -343,53 +347,45 @@ int Response::getTarget()
 	locationMatch = getMatch(_request->getPath(), _config->locations);
 	if (!locationMatch.empty())
 	{ 
-	_location_config = find_location(*_config,locationMatch);
-	std::string body = _request->getBody();
-	if (_request->getBody().length() > _location_config->body_size)
-		return (setReturnCode(413));
-	if (!_location_config->methods.empty())
-	{	
-		if (isNotValidMethod())
-			return (501);
-	}
-	_request->set_basic(_location_config->auth_basic);
-	_request->set_basic_path(_location_config->auth_basic_user_file);
-	if (_request->getPath().find("login.html") != std::string::npos ||
-    _request->getPath().find("login.py") != std::string::npos ||
-    _request->getPath().find("register.html") != std::string::npos ||
-    _request->getPath().find("register.py") != std::string::npos) 
-	{
-		std::cout << "en login o register" << std::endl;
-		std::cout << "userStatus: " << _request->getUserStatus() << std::endl;
-	}
- 	else if (_location_config->auth_basic.length() > 0 && _request->getUserStatus() == 0
-		&& _location_config->auth_basic != "off")
-	{
-		if (DEBUG)
-			std::cout << "auth_basic: " << _location_config->auth_basic << std::endl;
-		return (setReturnCode(401));
-	}
-	if (setIndex())							
-		return (413);				
-	else if(_target.size() == 0 )
-		_target= concatenatePaths(_config->root, _request->getPath(), "");
-	if(_location_config->redir.first)
- 	{
-		_location = _location_config->redir.second;
-		_response_body_str = "";
-		_target = "";
-		return (setReturnCode(_location_config->redir.first));
-	}
-	if (!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
-		return(launchCgi());
-	if ((endsWith(_target, ".py") || endsWith(_target, ".sh"))) {
-    	return (setReturnCode(403));
-	}
-	if (!_hasIndexFlag && _location_config->autoindex && isReadableDirectory(_target))
-	{
-		_auto_index_flag = 1;
-		return (0);
-	}
+		_location_config = find_location(*_config,locationMatch);
+		std::string body = _request->getBody();
+		if (_request->getBody().length() > _location_config->body_size)
+			return (setReturnCode(413));
+		if (!_location_config->methods.empty())
+			if (isNotValidMethod())
+				return (501);
+		_request->set_basic(_location_config->auth_basic);
+		_request->set_basic_path(_location_config->auth_basic_user_file);
+		if (_location_config->auth_basic.length() > 0 && _request->getUserStatus() == 0 && _location_config->auth_basic != "off")
+			return (setReturnCode(401));
+
+
+
+		if (setIndex())							
+			return (413);				
+		else if(_target.size() == 0 )
+			_target= concatenatePaths(_config->root, _request->getPath(), "");
+
+		std::cout << Yellow << "_target = " << _target << Reset << std::endl;
+		std::cout << Yellow << "_location_config->location = " << _location_config->location << Reset << std::endl;
+		std::cout << Yellow << "_location_config->root = " << _location_config->root << Reset << std::endl;
+
+		if(_location_config->redir.first)
+ 		{
+			_location = _location_config->redir.second;
+			_response_body_str = "";
+			_target = "";
+			return (setReturnCode(_location_config->redir.first));
+		}
+		if (!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
+			return(launchCgi());
+		if ((endsWith(_target, ".py") || endsWith(_target, ".sh")))
+    		return (setReturnCode(403));
+		if (!_hasIndexFlag && _location_config->autoindex && isReadableDirectory(_target))
+		{
+			_auto_index_flag = 1;
+			return (0);
+		}
 	}
 	else
 		_target= concatenatePaths(_config->root, _request->getPath(), "");
@@ -475,9 +471,25 @@ int Response::buildDirHtml()
         if (strcmp(structDirent->d_name, ".") == 0)
             continue;
         file_path = concatenatePaths(_target, structDirent->d_name, "");
+
+
+
+		std::cout << Green << "_target = " << _target << Reset << std::endl;
+		std::cout << Green << "structDirent->d_name = " << structDirent->d_name << Reset << std::endl;
+		std::cout << Green << "file_path = " << file_path << Reset << std::endl;
+
+
+
         stat(file_path.c_str(), &file_stat);
         file_path = removeRoot(file_path, root);
-        bool isFile = !S_ISDIR(file_stat.st_mode);
+
+
+
+		std::cout << Green << "file_path2 = " << file_path << Reset << std::endl;
+        
+		
+		
+		bool isFile = !S_ISDIR(file_stat.st_mode);
         _response_body_str.append("<tr id=\"");
         _response_body_str.append(structDirent->d_name);
         _response_body_str.append("\" onclick=\"selectFile('" + file_path + "', " + (isFile ? "true" : "false") + ")\">\n");

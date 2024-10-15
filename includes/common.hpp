@@ -54,6 +54,7 @@ struct Location_config
 	bool autoindex;
 	size_t body_size;
 	std::string location;
+	std::string root;
 	std::set<std::string> methods;
 	std::vector<std::string> index;
 	std::pair<int, std::string> redir;
