@@ -216,6 +216,8 @@ int Response::getFile()
 	// if (!_target.empty() && _target[(_target.size() - 1)] != '/')
 	// 	_target += '/';
 	std::cout << "target en getfile: " << _target << std::endl;
+	if (checkFileOrDirectory(_target,""))
+		return (setReturnCode(checkFileOrDirectory(_target,"")));
 	if (checkDirectoriesPath(_target.c_str()))
 	{
 		std::cout << "en checkDirectoriesPath linea 221" << std::endl;
@@ -429,18 +431,12 @@ int Response::getTarget()
 		}
 		if (!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
 			return(launchCgi());
-//		Se podríanpermitir en algunas locations como upload, pero por segurida mejor no permitir que suban scipts y los lancen
-//		En caso de escalar el proyecto sería recomendable incluir un mapa de extensiones permitidas por location o restringidas fuera de cgi.
-//		if ((endsWith(_target, ".py") || endsWith(_target, ".sh")) && (!endsWith(_locationMatch, "upload"))) {
 		if ((endsWith(_target, ".py") || endsWith(_target, ".sh"))) {
 			return (setReturnCode(403));
 		}
-		std::cout << "en getTarget línea 413" << std::endl;
-		// VEr si es necesario incluir un apartado para tratar a los directorios
-		// incluido para evitar problemas con la primera barra
+		std::cout << "en getTarget línea 413 Code: " << _code << std::endl;
 		if (!_target.empty() && _target[0] == '/')
 			_target.erase(0, 1);
-		///////////////////////////////	
 		if (!_hasIndexFlag && _location_config->autoindex && isReadableDirectory(_target))
 		{
 			_auto_index_flag = 1;
@@ -550,10 +546,8 @@ int Response::buildDirHtml()
     {
         if (strcmp(structDirent->d_name, ".") == 0)
             continue;
-		std::cout << Red << "_target en buildDirHtml línea 528: " << _target << Reset << std::endl;
-		std::cout << Red << "structDirent->d_name en buildDirHtml línea 529: " << structDirent->d_name << Reset << std::endl;
+
         file_path = concatenatePaths(_target, structDirent->d_name, "");
-		std::cout << Red << "file_path en buildDirHtml línea 531: " << file_path << Reset << std::endl;
         stat(file_path.c_str(), &file_stat);
 		std::cout << Green << "root en 533: " << root << Reset << std::endl;
         file_path = removeRoot(file_path, root);
@@ -600,6 +594,7 @@ void Response::buildResponse()
 	if (isErrorCode() || buildBody())
 	{
 		std::cout << "en buildResponse línea 576" << std::endl;
+		std::cout<< "Code: " << _code << std::endl;
 		buildErrorPage(_code);
 	}
 	if	(_cgiFlag)

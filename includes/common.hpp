@@ -169,6 +169,7 @@ enum fillStatusEnum
 "		<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" \
 "		<title>WeBSeRV</title>\n" \
 "		<link rel=\"icon\" href=\"../favicon.ico\" type=\"image/x-icon\">\n" \
+"		<base href=\"http://localhost:8080/\">\n" \
 "		<style>\n" \
 "	        body {\n" \
 "	            font-family: 'Arial', sans-serif;\n" \
@@ -321,12 +322,12 @@ enum fillStatusEnum
 "			</header>\n" \
 "			<nav>\n" \
 "			    <ul>\n" \
-"			        <li><a href=\"../assets/staticindex.html\">Home</a></li>\n" \
-"					<li><a href=\"../assets/forms.html\">Forms</a></li>\n" \
-"					<li><a href=\"../assets/cookies.html\">Cookies</a></li>\n" \
-"					<li><a href=\"#\">Uploads</a></li>\n" \
-"					<li><a href=\"../assets/login.html\">Login</a></li>\n" \
-"					<li><a href=\"../private/privateindex.html\">Private</a></li>\n" \
+"			        <li><a href=\" ./assets/staticindex.html\">Home</a></li>\n" \
+"					<li><a href=\" ./assets/forms.html\">Forms</a></li>\n" \
+"					<li><a href=\" ./assets/cookies.html\">Cookies</a></li>\n" \
+"					<li><a href=\" ./upload\">Uploads</a></li>\n" \
+"					<li><a href=\" ./assets/login.html\">Login</a></li>\n" \
+"					<li><a href=\" ./private/privateindex.html\">Private</a></li>\n" \
 "				</ul>\n" \
 "			</nav>\n" \
 "            <table>\n" \
