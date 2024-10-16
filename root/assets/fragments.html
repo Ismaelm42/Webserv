@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+    	<meta charset="UTF-8">
+    	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    	<title>fragments</title>
+    	<link rel="icon" href="/favicon.ico" type="image/x-icon">
+    	<style>
+            body {
+                font-family: 'Arial', sans-serif;
+                background-color: #1a1a1a;
+                color: #e0e0e0;
+                margin: 0;
+                padding: 0;
+            }
+            header {
+                background-color: #000000;
+                border-bottom: 5px solid #ff0000;
+                padding-top: 20px;
+                text-align: center;
+                position: sticky;
+                top:0;
+            }
+            header h1 {
+                color: #ff0000;
+                font-size: 2.5em;
+                font-weight: bold;
+                text-transform: uppercase;
+                letter-spacing: 5px;
+                margin: 0;
+    			line-height: 1.5em;
+                margin-bottom:20px;
+            }
+            nav ul {
+                list-style: none;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                background-color: #ff0000;
+                margin: 0;
+    			line-height: 2.5em;
+            }
+            nav ul li {
+                position: relative;
+                margin: 0 15px;
+            }
+            nav ul li a {
+                color: #1a1a1a;
+                text-decoration: none;
+                font-size: 1.2em;
+                text-transform: uppercase;
+                font-weight: bold;
+                letter-spacing: 2px;
+            }
+            nav ul li a:hover {
+                color: #ffffff;
+            }
+            /* Estilos para los submenús */
+            nav ul li ul {
+                display: none; /* Ocultar submenú por defecto */
+                position: absolute;
+                top: 100%; /* Alinearlo justo debajo del elemento padre */
+                left: 0;
+                background-color: #ff0000;
+                padding: 0;
+                list-style: none;
+                margin: 0;
+            }
+            nav ul li ul li {
+                width: 150px; /* Tamaño de los elementos del submenú */
+                margin: 0;
+            }
+            nav ul li ul li a {
+                color: #1a1a1a;
+                text-transform: none;
+                font-size: 1em;
+                letter-spacing: 1px;
+                padding: 10px;
+                display: block;
+            }
+            nav ul li ul li a:hover {
+                color: #ffffff;
+            }
+            /* Mostrar el submenú al hacer hover en el elemento padre */
+            nav ul li:hover ul {
+                display: block;
+            }
+            /* Efecto de transición suave en el hover del submenú */
+            nav ul li ul li a {
+                transition: color 0.3s ease;
+            }
+            .content {
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+                padding: 50px 0;
+            }
+			.fragment {
+				height: 100vh;
+				width: 100vw;
+                text-align: center;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 10rem;
+                font-weight: 600;
+                text-transform: uppercase;
+			}
+            .image-container img {
+                width: 100%;
+                height: auto;
+            }
+    		.form_title {	
+    			text-decoration: none;
+    			/* color: #ff0000;	 */
+    		}
+    		.form_title:hover {	
+    		text-decoration: none;
+    			/* color: #f7ecec;	 */
+    		}
+            .button-container {
+                border: 2px solid #FF0000;
+                width: 150px;
+                height: 150px;
+                border-radius: 50%; /* Para darle forma circular */
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: pointer;
+                transition: background-color 0.3s, color 0.3s;
+                transform: rotate(-45deg); /* Rotación del botón */
+            }
+            .button-container a {
+                color: #fff;
+                text-decoration: none;
+                font-size: 1.5em; /* Aumenta el tamaño del texto */
+                font-weight: 900; /* Lo hace más grueso */
+                display: block;
+                text-align: center;
+                font-family: 'Poppins', sans-serif; /* Elegante y moderna */
+            }
+            .button-container:hover {
+                background-color: #FF0000;
+                color: #0f0f0f;
+            }
+    		footer {
+                margin-top: 40px;
+                font-size: 14px;
+                color: #666; /* Gris oscuro para el pie de página */
+    			text-align: center;
+            }
+            .footer-text {
+                margin: 0;		footer {
+                margin-top: 40px;
+                font-size: 14px;
+                color: #666; /* Gris oscuro para el pie de página */
+            }
+            .footer-text {
+                margin: 0;
+            }
+            }
+			h1 span{
+					font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+					font-size: 1.2em;
+					color: red;
+					font-weight: bold;
+				}
+            /* Responsiveness */
+            @media (max-width: 768px) {
+                header h1 {
+                    font-size: 2em;
+                }
+
+                nav ul li a {
+                    font-size: 1em;
+                }
+
+                .image-container {
+                    width: 100px;
+                    height: 100px;
+                }
+    			.image-container h2{
+    				font-size: 0.8em;
+                }
+            }
+    		@media (max-width: 480px) {
+                header h1 {
+                    font-size: 1.5em;
+                }
+                .image-container {
+                    width: 75px;
+                    height: 75px;
+                }
+                .image-container h2{
+    				font-size: 0.5em;
+                }
+                nav ul {
+                    flex-direction: column;
+    				text-align: center;
+                }
+                nav ul li {
+                    margin: 10px 0;
+                }
+            }
+        </style>
+    </head>
+<body>
+
+<header>
+    <h1>- <span>42 - </span>WEBSERVER<span> - 42</span> -</h1>	
+    
+    <nav>
+        <ul>
+            <li><a href="#first">first</a></li>
+            <li><a href="#second">second</a></li>
+            <li><a href="#third">third</a></li>
+            <li><a href="#fourth">fourth</a></li>
+            <li><a href="#fifth">fifth</a></li>
+            <li><a href="#sixth">sixth</a></li>
+        </ul>
+    </nav>
+</header>
+    
+<section class="content">
+<div class="fragment" id="first">
+    <h1>first</h1>
+</div>
+<div class="fragment" id="second">
+    <h1>second</h1>
+</div>
+<div class="fragment" id="third">
+    <h1>third</h1>
+</div>
+<div class="fragment" id="fourth">
+    <h1>fourth</h1>
+</div>
+<div class="fragment" id="fifth">
+    <h1>fifth</h1>
+</div>
+<div class="fragment" id="sixth">
+    <h1>sixth</h1>
+</div>
+</section>
+<footer>
+	<p class="footer-text">2024 Imoro-sa & Alfofern Webserv. All Rights Reserved.</p>
+</footer>	
+
+</body>
+</html>
