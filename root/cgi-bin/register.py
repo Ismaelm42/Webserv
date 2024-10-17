@@ -120,7 +120,7 @@ print(f"""
 	    </header>
     	<body>
 		<main>
-		    <h2>Registro almacenado con éxito!</h2>
+		    <h2>Thank you very much. <br> Your registration has been successful!</h2>
 			<p class="verbenas"><a href="http://localhost:8080/private/privateindex.html">let's have a walk on the private side!</a></p>
 		</main>
 		</body>

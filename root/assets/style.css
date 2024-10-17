@@ -12,6 +12,7 @@ header {
 	text-align: center;
 	position: sticky;
 	top:0;
+	z-index: 999;
 }
 header h1 {
 	color: #ff0000;
@@ -76,30 +77,11 @@ h1 span{
 		font-weight: bold;
 	}
 
-@media (max-width: 768px) {
-	header h1 {
-		font-size: 2em;
-	}
-
-	nav ul li a {
-		font-size: 1em;
-	}
-}
-@media (max-width: 480px) {
-	header h1 {
-		font-size: 1.5em;
-	}
-	nav ul {
-		flex-direction: column;
-		text-align: center;
-	}
-	nav ul li {
-		margin: 10px 0;
-	}
-}
 
 /* HOME */
-
+#home {	
+	margin-top: -150px; /* ajusta esto a la altura de tu header */
+}
 .home-container {
     margin: 20px;
     width: 300px;
@@ -111,6 +93,8 @@ h1 span{
     flex-direction: column;
     align-items: center;
     text-align: center;
+	top:0;
+
 }
 
 .home-container img {
@@ -214,7 +198,9 @@ text-decoration: none;
 	box-shadow: 0px 0px 10px #ff0000;
 	color: #fff;
 }
-
+.login{
+	width: 90%;;
+}
 /* COOKIE */
 
 .cookies {
@@ -286,21 +272,32 @@ text-decoration: none;
 }
 
 .cookie-img {
-	margin: 20px 0;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-}
-
-.cookie-img img {
-	width: auto;
-	height: auto;
-	max-width: 80%;
-	filter: drop-shadow(0 0 1rem #fff000);
+	margin: 20px 0;login
 }
 
 .cookie-img h2 {
 	margin-top: 10px;
+}
+@media (max-width: 768px) {
+	header h1 {
+		font-size: 2em;
+	}
+
+	nav ul li a {
+		font-size: 1em;
+	}
+}
+@media (max-width: 480px) {
+	header h1 {
+		font-size: 1.5em;
+	}
+	nav ul {
+		flex-direction: column;
+		text-align: center;
+	}
+	nav ul li {
+		margin: 10px 0;
+	}
 }
 
 /* PRIVATE */

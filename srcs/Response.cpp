@@ -540,6 +540,49 @@ int Response::buildDirHtml()
         return (1);
     }
     _response_body_str.append(HTML_ST);
+	std::cout << "en buildDirHtml línea 522" << std::endl;
+	std::string serverName = _request->getServerName();
+	std::string port = toStr(_request->getPort());
+	std::string ini_nav = "<nav>\n<ul>\n";
+	std::string home = "<li><a href=\"http://" + serverName + ":" + port + "\">Home</a></li>\n";
+	std::string forms = "<li><a href=\"http://" + serverName + ":" + port + "/assets/forms.html\">Forms</a></li>\n";
+	std::string cookies = "<li><a href=\"http://" + serverName + ":" + port + "/assets/cookies.html\">Cookies</a></li>\n";
+	std::string uploads = "<li><a href=\"http://" + serverName + ":" + port + "/upload\">Uploads</a></li>\n";
+	std::string login = "<li><a href=\"http://" + serverName + ":" + port + "/assets/login.html\">Login</a></li>\n";
+	std::string privateDir = "<li><a href=\"http://" + serverName + ":" + port + "/private/privateindex.html\">Private</a></li>\n";
+	std::string end_nav = "</ul>\n</nav>\n";
+	std::string table = "<table>\n<thead>\n<tr>\n<th>File Name</th>\n<th>Last Modification</th>\n<th>File Size</th>\n</tr>\n</thead>\n<tbody>\n";
+    _response_body_str.append(HTML_ST);
+	_response_body_str.append(ini_nav);
+	_response_body_str.append(home);
+	_response_body_str.append(forms);
+	_response_body_str.append(cookies);
+	_response_body_str.append(uploads);
+	_response_body_str.append(login);
+	_response_body_str.append(privateDir);
+	_response_body_str.append(end_nav);
+	_response_body_str.append(table);
+
+/*
+"			        <li><a href=\" ./assets/staticindex.html\">Home</a></li>\n" \
+"					<li><a href=\" ./assets/forms.html\">Forms</a></li>\n" \
+"					<li><a href=\" ./assets/cookies.html\">Cookies</a></li>\n" \
+"					<li><a href=\" ./upload\">Uploads</a></li>\n" \
+"					<li><a href=\" ./assets/login.html\">Login</a></li>\n" \
+"					<li><a href=\" ./private/privateindex.html\">Private</a></li>\n" \
+"				</ul>\n" \
+"			</nav>\n" \
+"            <table>\n" \
+"                <thead>\n" \
+"                    <tr>\n" \
+"                        <th>File Name</th>\n" \
+"                        <th>Last Modification</th>\n" \
+"                        <th>File Size</th>\n" \
+"                    </tr>\n" \
+"                </thead>\n" \
+"                <tbody>\n" \*/
+
+
     struct stat file_stat;
     std::string file_path;
     while ((structDirent = readdir(dir)) != NULL)

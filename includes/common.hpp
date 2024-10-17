@@ -169,7 +169,6 @@ enum fillStatusEnum
 "		<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" \
 "		<title>WeBSeRV</title>\n" \
 "		<link rel=\"icon\" href=\"../favicon.ico\" type=\"image/x-icon\">\n" \
-"		<base href=\"http://localhost:8080/\">\n" \
 "		<style>\n" \
 "	        body {\n" \
 "	            font-family: 'Arial', sans-serif;\n" \
@@ -320,25 +319,6 @@ enum fillStatusEnum
 "		    <header>\n" \
 "				<h1>- <span>42 - </span>WEBSERVER<span> - 42</span> -</h1>\n" \
 "			</header>\n" \
-"			<nav>\n" \
-"			    <ul>\n" \
-"			        <li><a href=\" ./assets/staticindex.html\">Home</a></li>\n" \
-"					<li><a href=\" ./assets/forms.html\">Forms</a></li>\n" \
-"					<li><a href=\" ./assets/cookies.html\">Cookies</a></li>\n" \
-"					<li><a href=\" ./upload\">Uploads</a></li>\n" \
-"					<li><a href=\" ./assets/login.html\">Login</a></li>\n" \
-"					<li><a href=\" ./private/privateindex.html\">Private</a></li>\n" \
-"				</ul>\n" \
-"			</nav>\n" \
-"            <table>\n" \
-"                <thead>\n" \
-"                    <tr>\n" \
-"                        <th>File Name</th>\n" \
-"                        <th>Last Modification</th>\n" \
-"                        <th>File Size</th>\n" \
-"                    </tr>\n" \
-"                </thead>\n" \
-"                <tbody>\n" \
 
 #define HTML_EN "                </tbody>\n" \
 "            </table>\n" \
@@ -387,4 +367,17 @@ enum fillStatusEnum
 "			</footer>\n" \
 "		</div>\n" \
 "	</body>\n" \
+"    <script>" \
+"       document.addEventListener(\"DOMContentLoaded\", function() { \n" \
+"            const currentUrl = window.location.href; \n" \
+"            const baseUrl = currentUrl.match(/^(.*:\\d+)/)[0];\n" \
+"            const navLinks = document.querySelectorAll(\"nav a\");\n" \
+"            navLinks.forEach(link => {\n" \
+"                const relativeHref = link.getAttribute(\"href\");\n" \
+"                if (relativeHref && !relativeHref.startsWith(\"http\")) {\n" \
+"                    link.setAttribute(\"href\", baseUrl + relativeHref);\n" \
+"                }\n" \
+"            });\n" \
+"        });\n" \
+"    </script>\n" \
 "</html>\n"

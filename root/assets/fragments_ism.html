@@ -9,15 +9,14 @@
 </head>
 <body>
     <header>
-        <h1>- <span>42 - </span>WEBSERVER<span> - 42</span> -</h1>
+        <h1>- <span>42 - </span>ONEPAGE SITE<span> - 42</span> -</h1>
         <nav>
             <ul>
+                <li><a href="staticindex.html">MainHome</a></li>
                 <li><a href="#home">Home</a></li>
                 <li><a href="#forms">Forms</a></li>
-                <li><a href="#upload">Upload</a></li>
                 <li><a href="#login">Login</a></li>
                 <li><a href="#cookies">Cookies</a></li>
-                <li><a href="#private">Private</a></li>
             </ul>
         </nav>
     </header>
@@ -48,11 +47,9 @@
                 <a class="form-text" href="./sum.html"><h2>SUM</h2></a>
             </div>
         </div>
-        <div class="fragment" id="upload">
-        </div>
         <div class="fragment" id="login">
             <div class="login-form">
-                <form action="/private/login.py" method="POST"><br />
+                <form class="login" action="/private/login.py" method="POST"><br />
                     <input class="login-input" type="text" id="username" name="username" placeholder="Name:"><br />
                     <input class="login-input" type="password" id="password" name="password" placeholder="Password:"/><br />
                     <input class="login-input cookieButtom" type="submit" value="Submit" /><br />
@@ -81,11 +78,6 @@
                     </form>
                 </div>
             </div>
-        </div>
-        <div class="fragment" id="private">
-            <section class="content">
-                Private
-            </section>
         </div>
     </section>
     
