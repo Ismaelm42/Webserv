@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webserv</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <h1>- <span>42 - </span>WEBSERVER<span> - 42</span> -</h1>
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#forms">Forms</a></li>
+                <li><a href="#upload">Upload</a></li>
+                <li><a href="#login">Login</a></li>
+                <li><a href="#cookies">Cookies</a></li>
+                <li><a href="#private">Private</a></li>
+            </ul>
+        </nav>
+    </header>
+    <section class="content">
+        <div class="fragment" id="home">
+            <div class="home-container">
+                <a href="https://github.com/Ismaelm42" target="_blank">
+                    <img src="./img1.jpg" alt="Image 1">
+                </a>
+            </div>
+            <div class="home-container">
+                <a href="https://github.com/AlfonsoFZ" target="_blank">
+                    <img src="./img2.png" alt="Image 2">
+                </a>
+            </div>
+        </div>
+        <div class="fragment" id="forms">
+            <div class="forms-image-container forms-button-container ">
+                <a class="form-text" href="./get.html"><h2>GET</h2></a>
+            </div>
+            <div class="forms-image-container forms-button-container ">
+                <a class="form-text" href="./post.html"><h2>POST</h2></a>
+            </div>
+            <div class="forms-image-container forms-button-container ">
+                <a class="form-text" href="./multipart.html"><h2>M.PART</h2></a>
+            </div>
+            <div class="forms-image-container forms-button-container ">
+                <a class="form-text" href="./sum.html"><h2>SUM</h2></a>
+            </div>
+        </div>
+        <div class="fragment" id="upload">
+        </div>
+        <div class="fragment" id="login">
+            <div class="login-form">
+                <form action="/private/login.py" method="POST"><br />
+                    <input class="login-input" type="text" id="username" name="username" placeholder="Name:"><br />
+                    <input class="login-input" type="password" id="password" name="password" placeholder="Password:"/><br />
+                    <input class="login-input cookieButtom" type="submit" value="Submit" /><br />
+                </form>
+            </div>
+        </div>
+        <div class="fragment" id="cookies">
+            <div class="fragment" id="login">
+                <div class="cookies setCookie">
+                    <h2>Set Cookie:</h2>
+                    <form action="../cgi-bin/setCookie.py" method="get">
+                        <input class="cookie-input" type="text" name="key" placeholder="Cookie name:"><br />
+                        <input class="cookie-input" type="text" name="value" placeholder="Cookie value:"><br />
+                        <input class="cookie-input" type="submit" value="Save cookie" /><br />
+                    </form>
+                </div>
+                <div class="cookie-img">
+                    <img src="/assets/triki.png" alt="The Cookie Monster">
+                    <div class="cookie-text">The Cookie Monster!</div>
+                </div>
+                <div class="cookies getCookie">
+                    <h2>Get Cookie:</h2>
+                    <form action="../cgi-bin/getCookie.py" method="get">
+                        <input class="cookie-input" type="text" name="key" placeholder="Cookie name:"><br />
+                        <input class="cookie-input" type="submit" value="Check out" /><br />
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="fragment" id="private">
+            <section class="content">
+                Private
+            </section>
+        </div>
+    </section>
+    

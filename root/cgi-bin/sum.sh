@@ -27,10 +27,10 @@ if [ -n "$DATA" ]; then
 fi
 
 if ! [[ "$num1" =~ ^[0-9]+$ ]] || ! [[ "$num2" =~ ^[0-9]+$ ]]; then
-  result="Error: num1 y num2 deben ser números."
+  result="Error: num1 and num2 must be numbers!"
 else
   sum=$(($num1 + $num2))
-  result="Total $num1 + $num2 = $sum"
+  result="Result: $num1 + $num2 = $sum"
 fi
 
 cat <<EOL
@@ -142,15 +142,17 @@ cat <<EOL
     </header>
     <nav>
       <ul>
-        <li><a href="/">Home</a></li>
+        <li><a href="../assets/staticindex.html">Home</a></li>
         <li><a href="../assets/forms.html">Forms</a></li>
         <li><a href="../assets/cookies.html">Cookies</a></li>
         <li><a href="../upload">Uploads</a></li>
+        <li><a href="../assets/login.html">login</a></li>
+        <li><a href="../private/privateindex.html">Private</a></li>
       </ul>
     </nav>
     <section class="content">
       <div class="form-container">
-        <h2>SUM</h2>
+        <h2>SUM NUMBERS</h2>
         <form method="GET" action="../cgi-bin/sum.sh">
           <input type="number" name="num1" placeholder="Number 1" required>
           <input type="number" name="num2" placeholder="Number 2" required>
