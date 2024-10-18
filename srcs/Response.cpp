@@ -168,7 +168,6 @@ bool isReadableDirectory(const std::string& path)
 	struct stat info;
 	if (stat(path.c_str(), &info) != 0)
 	{
-		std::cout << "path en isReadableDirectory: " << path << std::endl;
 		std::cerr << "&info stat() error" << std::endl;
 		return false;
 	}
@@ -208,37 +207,19 @@ int checkDirectoriesPath(const std::string& filepath)
 int Response::getFile()
 {
     struct stat buffer;
-	std::cout << "target en getfile: " << _target << std::endl;
 		if (!_target.empty() && _target[0] == '/')
 		_target.erase(0, 1);
-	// if (!_target.empty() && _target[0] == '/')
-	// 	_target = '.' + _target;
-	// if (!_target.empty() && _target[(_target.size() - 1)] != '/')
-	// 	_target += '/';
-	std::cout << "target en getfile: " << _target << std::endl;
 	if (checkFileOrDirectory(_target,""))
 		return (setReturnCode(checkFileOrDirectory(_target,"")));
 	if (checkDirectoriesPath(_target.c_str()))
-	{
-		std::cout << "en checkDirectoriesPath linea 221" << std::endl;
 		return (setReturnCode(403));
-	}
 	if (stat(_target.c_str(), &buffer) != 0)
-	{
-		std::cout << "en checkDirectoriesPath linea 226" << std::endl;
 		return (setReturnCode(404));
-	}
 	if (!(buffer.st_mode & S_IRUSR))
-	{
-		std::cout << "en checkDirectoriesPath linea 231" << std::endl;
 		return (setReturnCode(403));
-	}
 	std::ifstream file(_target.c_str());
     if (!file.is_open())
-    {
-		std::cout << "en checkDirectoriesPath linea 237" << std::endl;
 	    return (setReturnCode(404));
-	}
 	std::ostringstream ss;
     ss << file.rdbuf();
     if (file.rdstate() & std::ifstream::failbit || file.rdstate() & std::ifstream::badbit)
@@ -290,7 +271,6 @@ std::string Response::getMatch(std::string path, std::vector<Location_config> lo
 	}
 	if (longestMatchLength > 0)
 		_locationMatch = longestMatch;
-	std::cout <<Red<< "locationMatch: " << _locationMatch << Reset << std::endl;
 	return _locationMatch;
 }
 
@@ -371,8 +351,6 @@ bool endsWith(const std::string& str, const std::string& suffix)
 
 std::string removelocationMatch(std::string path, std::string locationMatch)
 {
-	std::cout <<Yellow << path << std::endl;
-	std::cout << "locationMatch: " << locationMatch << Reset << std::endl;
 	std::string::size_type pos = path.find(locationMatch);
 	if (pos != std::string::npos)
 		path.erase(pos, locationMatch.length());
@@ -386,38 +364,21 @@ int Response::getTarget()
 	if (!_locationMatch.empty())
 	{ 
 		_location_config = find_location(*_config,_locationMatch);
-		std::cout << Green << "_locationMatch: " << _locationMatch << Reset << std::endl;
 		if (_location_config->root.size() > 0)
 		{
 			std::string finalPath = removelocationMatch(concatenatePaths(_config->root, _request->getPath(), ""), _locationMatch);
 			_target= concatenatePaths(_location_config->root, finalPath, "");
 		}
-		std::cout << "concatenatePath (_target): " << _target << std::endl;
 		std::string body = _request->getBody();
 		if (_request->getBody().length() > _location_config->body_size)
 			return (setReturnCode(413));
 		if (!_location_config->methods.empty())
-		{	
 			if (isNotValidMethod())
 				return (501);
-		}
 		_request->set_basic(_location_config->auth_basic);
 		_request->set_basic_path(_location_config->auth_basic_user_file);
-		if (_request->getPath().find("login.html") != std::string::npos ||
-    		_request->getPath().find("login.py") != std::string::npos ||
-    		_request->getPath().find("register.html") != std::string::npos ||
-    		_request->getPath().find("register.py") != std::string::npos) 
-			{
-				std::cout << "en login o register" << std::endl;
-				std::cout << "userStatus: " << _request->getUserStatus() << std::endl;
-			}
- 		else if (_location_config->auth_basic.length() > 0 && _request->getUserStatus() == 0
-			&& _location_config->auth_basic != "off")
-		{
-			if (DEBUG)
-				std::cout << "auth_basic: " << _location_config->auth_basic << std::endl;
+		if (_location_config->auth_basic.length() > 0 && _request->getUserStatus() == 0 && _location_config->auth_basic != "off")
 			return (setReturnCode(401));
-		}
 		if (setIndex())							
 			return (413);				
 		else if(_target.size() == 0 )
@@ -434,14 +395,11 @@ int Response::getTarget()
 		if ((endsWith(_target, ".py") || endsWith(_target, ".sh"))) {
 			return (setReturnCode(403));
 		}
-		std::cout << "en getTarget línea 413 Code: " << _code << std::endl;
 		if (!_target.empty() && _target[0] == '/')
 			_target.erase(0, 1);
 		if (!_hasIndexFlag && _location_config->autoindex && isReadableDirectory(_target))
 		{
 			_auto_index_flag = 1;
-			std::cout << "en autoindex _auto_index_flag= " << _auto_index_flag << std::endl;
-
 			return (0);
 		}
 	}
@@ -498,7 +456,6 @@ int Response::buildBody()
 		return (setCode(204));
 	}
 	_code = 200;
-	std::cout << "en BUILDBODY linea 497" << std::endl;
 	return (0);
 }
 
@@ -516,19 +473,9 @@ int Response::buildDirHtml()
 	if (_location_config->root.size() > 0)
 		root = _location_config->root;
 	std::string cleanLocation = removeRoot(_locationMatch, _config->root);
-	if(DEBUG)
-	{
-		std::cout << Green << "En buildDirhtml _target: " << _target << std::endl;
-		std::cout << Green << "En buildDirhtml _locationMatch: " << _locationMatch << std::endl;
-		std::cout << Green << "En buildDirhtml _location_config->root: " << _location_config->root<< std::endl;
-		std::cout << Green << "En buildDirhtml _config->root: " << _config->root << std::endl;
-		std::cout << Green << "En buildDirhtml cleanLocation: " << cleanLocation << std::endl;
-	}
     struct dirent *structDirent;
     DIR *dir;
     _response_body_str = "";
-	std::cout << "target en buildDirHtml línea 509: " << _target << std::endl;
-
 	if (root.size() > 0 && root[0]== '/')
 		root.erase(0, 1);
 	if(_target[0] == '/')
@@ -540,7 +487,6 @@ int Response::buildDirHtml()
         return (1);
     }
     _response_body_str.append(HTML_ST);
-	std::cout << "en buildDirHtml línea 522" << std::endl;
 	std::string serverName = _request->getServerName();
 	std::string port = toStr(_request->getPort());
 	std::string ini_nav = "<nav>\n<ul>\n";
@@ -562,27 +508,6 @@ int Response::buildDirHtml()
 	_response_body_str.append(privateDir);
 	_response_body_str.append(end_nav);
 	_response_body_str.append(table);
-
-/*
-"			        <li><a href=\" ./assets/staticindex.html\">Home</a></li>\n" \
-"					<li><a href=\" ./assets/forms.html\">Forms</a></li>\n" \
-"					<li><a href=\" ./assets/cookies.html\">Cookies</a></li>\n" \
-"					<li><a href=\" ./upload\">Uploads</a></li>\n" \
-"					<li><a href=\" ./assets/login.html\">Login</a></li>\n" \
-"					<li><a href=\" ./private/privateindex.html\">Private</a></li>\n" \
-"				</ul>\n" \
-"			</nav>\n" \
-"            <table>\n" \
-"                <thead>\n" \
-"                    <tr>\n" \
-"                        <th>File Name</th>\n" \
-"                        <th>Last Modification</th>\n" \
-"                        <th>File Size</th>\n" \
-"                    </tr>\n" \
-"                </thead>\n" \
-"                <tbody>\n" \*/
-
-
     struct stat file_stat;
     std::string file_path;
     while ((structDirent = readdir(dir)) != NULL)
@@ -592,11 +517,9 @@ int Response::buildDirHtml()
 
         file_path = concatenatePaths(_target, structDirent->d_name, "");
         stat(file_path.c_str(), &file_stat);
-		std::cout << Green << "root en 533: " << root << Reset << std::endl;
         file_path = removeRoot(file_path, root);
 		if (_location_config->root.size() > 0)
 			file_path = concatenatePaths(cleanLocation, file_path, "");
-		std::cout << Yellow << "file_path en buildDirHtml línea 534: " << file_path << Reset << std::endl;
         bool isFile = !S_ISDIR(file_stat.st_mode);
         _response_body_str.append("<tr id=\"");
         _response_body_str.append(structDirent->d_name);
@@ -635,11 +558,7 @@ int countCharsAfterEmptyLines(const std::string& _response_body_str)
 void Response::buildResponse()
 {	
 	if (isErrorCode() || buildBody())
-	{
-		std::cout << "en buildResponse línea 576" << std::endl;
-		std::cout<< "Code: " << _code << std::endl;
 		buildErrorPage(_code);
-	}
 	if	(_cgiFlag)
 	{
 		if (_code == 0 || _code == 200)
@@ -662,22 +581,14 @@ void Response::buildResponse()
 	else if (!checkFileOrDirectory(_target, "dir") && _auto_index_flag)
     {
 		if (!isReadableDirectory(_target))
-		{	
-			std::cout << "en buildREsponse línea 600" << std::endl;
 			buildErrorPage(403);
-		}
-		else if (buildDirHtml()){
-			std::cout << Yellow << "en buildDirHtml línea 588"  << Reset << std::endl;
+		else if (buildDirHtml())
 			buildErrorPage(500);
-		}
         else
             _code = 200;
 	}
 	else if (!checkFileOrDirectory(_target, "dir") && isReadableDirectory(_target) && !_auto_index_flag)
-	{
-		std::cout << "en buildResponse línea 611" << std::endl;	
 		buildErrorPage(403);
-	}
 	setStatusline();
 	setHeaders();
 	if(_request->getMethod() == GET || _code != 200)
