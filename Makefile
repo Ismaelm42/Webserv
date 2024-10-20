@@ -15,6 +15,7 @@ HEADERS =	includes/lib.hpp			\
 			includes/Cgi.hpp			\
 			includes/Client.hpp			\
 			includes/Configuration.hpp	\
+			includes/error.hpp			\
 			includes/MimeType.hpp		\
 			includes/Request.hpp		\
 			includes/Response.hpp		\
@@ -28,19 +29,13 @@ OBJT = $(addprefix $(OBJT_DIR), $(patsubst %.cpp, %.o, $(SRC)))
 
 C++ = c++
 
-CFLAGS = -Wall -Wextra -Werror -D DEBUG=$(DEBUG)
+CFLAGS = -Wall -Wextra -Werror
 
 C++FLAG = -std=c++98
 
 RM = rm -f
 
 MAKEFLAGS += --quiet
-
-ifdef DEBUG
-        DEBUG = 1
-else
-        DEBUG = 0
-endif
 
 all: $(NAME)
 
@@ -50,9 +45,6 @@ $(NAME): $(OBJT)
 $(OBJT_DIR)%.o: %.cpp $(HEADERS)
 	mkdir -p $(@D)
 	$(C++) $(CFLAGS) $(C++FLAG) -c $< -o $@
-
-debug:
-	make re DEBUG=1
 
 clean:
 	$(RM) -r $(OBJT_DIR)

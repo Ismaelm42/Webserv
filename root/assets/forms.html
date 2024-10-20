@@ -52,11 +52,10 @@
             nav ul li a:hover {
                 color: #ffffff;
             }
-            /* Estilos para los submenús */
             nav ul li ul {
-                display: none; /* Ocultar submenú por defecto */
+                display: none;
                 position: absolute;
-                top: 100%; /* Alinearlo justo debajo del elemento padre */
+                top: 100%;
                 left: 0;
                 background-color: #ff0000;
                 padding: 0;
@@ -64,7 +63,7 @@
                 margin: 0;
             }
             nav ul li ul li {
-                width: 150px; /* Tamaño de los elementos del submenú */
+                width: 150px;
                 margin: 0;
             }
             nav ul li ul li a {
@@ -78,11 +77,9 @@
             nav ul li ul li a:hover {
                 color: #ffffff;
             }
-            /* Mostrar el submenú al hacer hover en el elemento padre */
             nav ul li:hover ul {
                 display: block;
             }
-            /* Efecto de transición suave en el hover del submenú */
             nav ul li ul li a {
                 transition: color 0.3s ease;
             }
@@ -109,32 +106,30 @@
             }
     		.form_title {	
     			text-decoration: none;
-    			/* color: #ff0000;	 */
     		}
     		.form_title:hover {	
     		text-decoration: none;
-    			/* color: #f7ecec;	 */
     		}
             .button-container {
                 border: 2px solid #FF0000;
                 width: 150px;
                 height: 150px;
-                border-radius: 50%; /* Para darle forma circular */
+                border-radius: 50%;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 cursor: pointer;
                 transition: background-color 0.3s, color 0.3s;
-                transform: rotate(-45deg); /* Rotación del botón */
+                transform: rotate(-45deg);
             }
             .button-container a {
                 color: #fff;
                 text-decoration: none;
-                font-size: 1.5em; /* Aumenta el tamaño del texto */
-                font-weight: 900; /* Lo hace más grueso */
+                font-size: 1.5em;
+                font-weight: 900;
                 display: block;
                 text-align: center;
-                font-family: 'Poppins', sans-serif; /* Elegante y moderna */
+                font-family: 'Poppins', sans-serif;
             }
             .button-container:hover {
                 background-color: #FF0000;
@@ -143,14 +138,14 @@
     		footer {
                 margin-top: 40px;
                 font-size: 14px;
-                color: #666; /* Gris oscuro para el pie de página */
+                color: #666;
     			text-align: center;
             }
             .footer-text {
                 margin: 0;		footer {
                 margin-top: 40px;
                 font-size: 14px;
-                color: #666; /* Gris oscuro para el pie de página */
+                color: #666;
             }
             .footer-text {
                 margin: 0;
@@ -162,7 +157,6 @@
 					color: red;
 					font-weight: bold;
 				}
-            /* Responsiveness */
             @media (max-width: 768px) {
                 header h1 {
                     font-size: 2em;
@@ -220,20 +214,16 @@
 
 <section class="content">
     <div class="image-container button-container ">
-    	<!-- <img src="./assets/img1.jpg" alt="Image 1"> -->
 		<a class="form_title" href="./get.html"><h2>GET</h2></a>
 
     </div>
     <div class="image-container button-container ">
-		<!-- <img src="./assets/img2.png" alt="Image 2"> -->
 		<a class="form_title" href="./post.html"><h2>POST</h2></a>
     </div>
 	<div class="image-container button-container ">
-		<!-- <img src="./assets/img2.png" alt="Image 2"> -->
 		<a class="form_title" href="./multipart.html"><h2>M.PART</h2></a>
     </div>
     <div class="image-container button-container ">
-		<!-- <img src="./assets/img2.png" alt="Image 2"> -->
 		<a class="form_title" href="./sum.html"><h2>SUM</h2></a>
     </div>
 </section>

@@ -167,19 +167,11 @@ bool isReadableDirectory(const std::string& path)
 {
 	struct stat info;
 	if (stat(path.c_str(), &info) != 0)
-	{
-		std::cerr << "&info stat() error" << std::endl;
 		return false;
-	}
 	else if (!(info.st_mode & S_IFDIR))
-	{
-		std::cerr << "S_IFDIR stat() error" << std::endl;
 		return false;
-	}
-	if (access(path.c_str(), R_OK) != 0){
-			std::cerr << "Access R_OK stat() error" << std::endl;
+	if (access(path.c_str(), R_OK) != 0)
 		return false;
-	}
 	return true;
 }
 

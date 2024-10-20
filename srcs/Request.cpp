@@ -122,12 +122,10 @@ void	Request::saveHeader(std::string &name, std::string &value)
 	_headers[name] = value;
 }
 
-void Request::_returnErr(int err, std::string msg, uint8_t charRead = 0)
+void Request::_returnErr(int err)
 {
 	_error_code = err;
 	_fillStatus = Parsed;
-	if (DEBUG)
-		std::cerr << Red << "Error = " << err <<": "<< msg << ": " << charRead << Reset << std::endl;
 }
 
 bool	allowedURIChar(uint8_t ch)
@@ -219,7 +217,7 @@ bool authenticate(const std::string& username, const std::string& password, cons
     std::ifstream file(auth_file.c_str());
     
     if (!file.is_open()) {
-        std::cerr << "Error: No se pudo abrir el archivo de autenticación." << std::endl;
+        std::cerr << "Error: Authentication file could not be opened." << std::endl;
         return false;
     }
 
@@ -254,7 +252,7 @@ void	Request::_handle_headers(){
 		std::istringstream iss(_headers["content-length"]);
 		iss >> _body_size;
 		if (_body_size > _config->body_size)
-			return (_returnErr(413, "Request Entity Too Large", 0));
+			return (_returnErr(413));
 	}
 	if (_headers.count("transfer-encoding"))
 	{
@@ -359,7 +357,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				else if (charRead == 'D')
 					_method = DELETE;
 				else
-					return (_returnErr(501, "Method not Implemented, detected in char", charRead));
+					return (_returnErr(501));
 				_ix++;
 				_fillStatus = get_Method;
 				break ;	 
@@ -369,7 +367,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				if (charRead == _methods_str[_method][_ix])
 					_ix++;
 				else
-					return (_returnErr(501, "Method Error, charRead is = ", charRead));
+					return (_returnErr(501));
 				if (size_t(_ix) == _methods_str[_method].length())
 					_fillStatus = get_First_Space;
 				break ;
@@ -378,7 +376,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 			{
 				_ix = 0;
 				if (charRead != ' ')
-					return (_returnErr(400, "Bad charRead", charRead));
+					return (_returnErr(400));
  				_fillStatus = get_First_Slash;
 				continue ;
 			}   
@@ -390,7 +388,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_temp.clear();
 				}
 				else
-					return (_returnErr(400, "Bad charRead", charRead));
+					return (_returnErr(400));
 				break ;
 			}
 			case get_URI_Path:
@@ -402,9 +400,9 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_path = decode(_path);
 					_temp.clear();
 					if ( !isValidUri())
-						return (_returnErr(414, "URI Too Long", charRead));
+						return (_returnErr(414));
 					if (checkPath(_path))
-						return (_returnErr(400, "wrong path address", charRead));
+						return (_returnErr(400));
 					continue ;
 				}
 				else if (charRead == '?')
@@ -412,7 +410,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_fillStatus = get_URI_Query;
 					_path.append(_temp);
 					if (checkPath(_path))
-						return (_returnErr(400, "wrong path address", charRead));
+						return (_returnErr(400));
 					_temp.clear();
 					continue ;	
 				}
@@ -421,14 +419,14 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_fillStatus = get_URI_Fragment;
 					_path.append(_temp);
 					if (checkPath(_path))
-						return (_returnErr(400, "wrong path address", charRead));
+						return (_returnErr(400));
 					_temp.clear();
 					continue ;
 				}
 				else if (!allowedURIChar(charRead))
-					return (_returnErr(400, "character not allowed", charRead));
+					return (_returnErr(400));
 				else if ( i > URI_MAX_LENGTH)
-					return (_returnErr(414, "URI Too Long", charRead));
+					return (_returnErr(414));
 				break ;
 			}
 			case get_URI_Query:
@@ -439,7 +437,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				_query.append(_temp);
 				_temp.clear();
 				if ( !isValidUri())
-					return (_returnErr(414, "URI Too Long", charRead));
+					return (_returnErr(414));
 				continue ;
 				}
 				else if (charRead == '#')
@@ -450,9 +448,9 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				continue ;
 				}
 				else if (!allowedURIChar(charRead))
-					return (_returnErr(400, "character not allowed", charRead));
+					return (_returnErr(400));
 				else if ( i > URI_MAX_LENGTH)
-					return (_returnErr(414, "URI Too Long", charRead));
+					return (_returnErr(414));
 				break ;
 			}
 			case get_URI_Fragment:
@@ -463,19 +461,19 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					_temp.clear();
 					_fillStatus = get_Protocol;
 					if ( !isValidUri())
-						return (_returnErr(414, "URI Too Long", charRead));
+						return (_returnErr(414));
 					continue ;
 				}
 				else if (!allowedURIChar(charRead))
-					return (_returnErr(400, "character not allowed", charRead));
+					return (_returnErr(400));
 				else if ( i > URI_MAX_LENGTH)
-					return (_returnErr(414, "URI Too Long", charRead));
+					return (_returnErr(414));
 				break ;
 			}
 			case get_Protocol:
 			{
 				if (charRead != protocol[_ix])
-					return (_returnErr(400, "wrong protocol or protocol not admitted", charRead));
+					return (_returnErr(400));
 				_ix++;
 				if (size_t(_ix) == protocol.length())
 					_fillStatus = get_CR;
@@ -485,14 +483,14 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 			{
 				_ix= 0;
 				if (charRead != '\r')
-					return (_returnErr(400, "wrong CR", charRead));
+					return (_returnErr(400));
 				_fillStatus = get_LF;
 				break ;
 			}
 			case get_LF:
 			{
 				if (charRead != '\n')
-					return (_returnErr(400, "wrong CR", charRead));
+					return (_returnErr(400));
 				_fillStatus = header_Name_Start;
 				_temp.clear();
 				continue ;
@@ -504,7 +502,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				else if (isValidChar(charRead))
 					_fillStatus = header_Name;
 				else
-					return (_returnErr(400, "wrong char in header name", charRead));	
+					return (_returnErr(400));	
 				break ;
 			}	
 			case headers_End:
@@ -527,7 +525,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					continue ;
 				}
 				else
-					return (_returnErr(400, "wrong char at the end of headers", charRead));	
+					return (_returnErr(400));	
 				break ;
 			}
 			case header_Name:
@@ -540,7 +538,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					continue ;
 				}
 				else if (!isValidChar(charRead))
-					return (_returnErr(400, "wrong char in header name", charRead));
+					return (_returnErr(400));
 				break ;
 			}
 			case header_Value:
@@ -563,7 +561,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 					continue ;
 				}
 				else
-					return (_returnErr(400, "wrong char after header value", charRead));
+					return (_returnErr(400));
 				break ;
 			}
 			case get_Body:
@@ -580,7 +578,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 			case Chunk_Length_Begin:
 			{
 				if (!isxdigit(charRead))
-					return (_returnErr(400, "wrong chunk size", charRead));
+					return (_returnErr(400));
 				s.str("");
 				s.clear();
 				s << charRead;
@@ -614,7 +612,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				if (charRead == '\r')
 					_fillStatus = Chunk_Length_LF;
 				else
-					return (_returnErr(400, "wrong chunk size", charRead));
+					return (_returnErr(400));
 				continue ;
 			}
 			case Chunk_Length_LF:
@@ -627,7 +625,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 						_fillStatus = Chunk_body;
 				}
 				else
-					return (_returnErr(400, "wrong chunk LF", charRead));
+					return (_returnErr(400));
 				continue ;
 			}
 			case Chunk_Ignore:
@@ -649,7 +647,7 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				if ( charRead == '\r')
 					_fillStatus = Chunk_body_LF;
 				else
-					return (_returnErr(400, "wrong chunk CR", charRead));
+					return (_returnErr(400));
 				continue ;
 			}
 			case Chunk_body_LF:
@@ -657,20 +655,20 @@ void	Request::fillRequest(char *dt, size_t bytesRead)
 				if ( charRead == '\n')
 					_fillStatus = Chunk_Length_Begin;
 				else
-					return (_returnErr(400, "wrong chunk LF", charRead));
+					return (_returnErr(400));
 				continue ;
 			}
 			case Chunk_End_CR:
 			{
 				if (charRead != '\r')
-					return (_returnErr(400, "wrong chunk CR", charRead));
+					return (_returnErr(400));
 				_fillStatus = Chunk_End_LF;
 				continue ;
 			}
 			case Chunk_End_LF:
 			{
 				if (charRead != '\n')
-					return (_returnErr(400, "Bad charRead (Chunk_End_LF)", charRead));
+					return (_returnErr(400));
 				_body_parsed = true;
 				_fillStatus = Parsed;
 				continue ;

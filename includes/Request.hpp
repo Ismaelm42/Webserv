@@ -73,7 +73,7 @@ class Request
 		bool								_chunked_body_flag;
 		bool								_multiform_flag;
 		void		_initMethodStr(); 
-		void		_returnErr(int err, std::string msg,uint8_t charRead);
+		void		_returnErr(int err);
 		void		_handle_headers();
 		bool 		isValidUri();
 		std::string _username;
