@@ -33,6 +33,7 @@ class Response
 		void 														reset();
 		std::string 												getStatusDescription(int statusCode);
 		std::string 												statusString(int statusCode);
+		void														setPath(std::string const path);
 
 	private:
 		int 														_code;

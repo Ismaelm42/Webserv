@@ -41,6 +41,7 @@ class Request
 		std::string 								&get_basic_path();
 		void 										set_basic(std::string basic);
 		void 										set_basic_path(std::string basic_path);
+		void										setPath(std::string const path);
 		
 
 	private: 

@@ -47,6 +47,11 @@ void Request::setBodyStr(std::string body)
 	_body_str = body;
 }
 
+void   Request::setPath(std::string const path)
+{
+	_path = path;
+}
+
 int		Request::getErrorCode()
 {
     return _error_code;

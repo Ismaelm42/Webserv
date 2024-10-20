@@ -341,12 +341,27 @@ bool endsWith(const std::string& str, const std::string& suffix)
     return str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
+static bool hasValidCGIExtension(const std::string& path)
+{
+	if (endsWith(path, ".py") || endsWith(path, ".sh"))
+		return true;
+	return (false);
+}
+
 std::string removelocationMatch(std::string path, std::string locationMatch)
 {
 	std::string::size_type pos = path.find(locationMatch);
 	if (pos != std::string::npos)
 		path.erase(pos, locationMatch.length());
 	return path;
+}
+
+std::string removeRoot(std::string target, std::string root)
+{
+	std::string::size_type pos = target.find(root);
+	if (pos != std::string::npos)
+		target.erase(pos, root.length());
+	return target;
 }
 
 int Response::getTarget()
@@ -382,9 +397,14 @@ int Response::getTarget()
 			_target = "";
 			return (setReturnCode(_location_config->redir.first));
 		}
-		if (!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
+		if ((!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
+			|| (!_location_config->cgi.empty() && hasValidExtension(_target, _location_config->cgi)))
+		{
+			if (_hasIndexFlag == 1 and hasValidCGIExtension(_target))
+				_request->setPath(removeRoot(_target, _config->root));
 			return(launchCgi());
-		if ((endsWith(_target, ".py") || endsWith(_target, ".sh"))) {
+		}
+		if (hasValidCGIExtension(_target)) {
 			return (setReturnCode(403));
 		}
 		if (!_target.empty() && _target[0] == '/')
@@ -449,14 +469,6 @@ int Response::buildBody()
 	}
 	_code = 200;
 	return (0);
-}
-
-std::string removeRoot(std::string target, std::string root)
-{
-	std::string::size_type pos = target.find(root);
-	if (pos != std::string::npos)
-		target.erase(pos, root.length());
-	return target;
 }
 
 int Response::buildDirHtml()
