@@ -97,15 +97,9 @@ inline int checkFileOrDirectory(std::string &path, const std::string type)
     if (stat(path.c_str(), &stat_buffer) < 0)
     {
 		if (errno == ENOENT)
-		{
-			std::cout << Log << Red << "Error: " << path << " not found" << Reset << std::endl;
 			return 404;
-		}
 		else if (errno == EACCES || !(stat_buffer.st_mode & S_IRUSR))
-		{
-			std::cout << Log << Red << "Error line 106: " << path << " permission denied" << Reset << std::endl;
 			return 403;
-		}
 		else
 			return 500;
     }
