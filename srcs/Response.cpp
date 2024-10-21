@@ -380,11 +380,18 @@ int Response::getTarget()
 		if (_request->getBody().length() > _location_config->body_size)
 			return (setReturnCode(413));
 		if (!_location_config->methods.empty())
+		{
 			if (isNotValidMethod())
 				return (501);
+		}
 		_request->set_basic(_location_config->auth_basic);
 		_request->set_basic_path(_location_config->auth_basic_user_file);
-		if (_location_config->auth_basic.length() > 0 && _request->getUserStatus() == 0 && _location_config->auth_basic != "off")
+		if (_request->getPath().find("login.html") != std::string::npos ||
+    		_request->getPath().find("login.py") != std::string::npos ||
+    		_request->getPath().find("register.html") != std::string::npos ||
+    		_request->getPath().find("register.py") != std::string::npos) 
+			{}
+		else if (_location_config->auth_basic.length() > 0 && _request->getUserStatus() == 0 && _location_config->auth_basic != "off")
 			return (setReturnCode(401));
 		if (setIndex())							
 			return (413);				
@@ -397,7 +404,7 @@ int Response::getTarget()
 			_target = "";
 			return (setReturnCode(_location_config->redir.first));
 		}
-		if ((!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
+		else if ((!_location_config->cgi.empty() && hasValidExtension(_request->getPath(), _location_config->cgi))
 			|| (!_location_config->cgi.empty() && hasValidExtension(_target, _location_config->cgi)))
 		{
 			if (_hasIndexFlag == 1 and hasValidCGIExtension(_target))
